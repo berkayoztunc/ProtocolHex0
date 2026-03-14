@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/beam_bullet.gd" id="1_bullet"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_beam"]
+size = Vector2(240, 14)
+
+[node name="Bullet" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_bullet")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_left = 0.0
+offset_top = -7.0
+offset_right = 240.0
+offset_bottom = 7.0
+color = Color(0.45, 0.95, 1, 0.9)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(120, 0)
+shape = SubResource("RectangleShape2D_beam")
+
+[node name="LifetimeTimer" type="Timer" parent="."]
