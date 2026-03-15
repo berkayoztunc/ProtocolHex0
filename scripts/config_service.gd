@@ -315,7 +315,7 @@ var config: Dictionary = {
 		"target_px": {
 			"hero": 112.0,
 			"enemy": 56.0,
-			"pickup": 32.0,
+			"pickup": 20.0,
 			"chest": 64.0,
 			"projectile": 48.0,
 			"projectile_orbit": 30.0,

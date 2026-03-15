@@ -77,7 +77,7 @@ var upgrade_catalog: Dictionary = {
 @onready var spawn_timer: Timer = $SpawnTimer
 @onready var hud: CanvasLayer = $HUD
 @onready var camera: Camera2D = $Player/Camera2D
-@onready var game_over_label: Label = $HUD/GameOverLabel
+# Game over panel is managed by hud.gd (show_game_over / hide_game_over)
 
 
 func _ready() -> void:
@@ -99,6 +99,8 @@ func _ready() -> void:
 	hud.menu_requested.connect(_on_menu_requested)
 	hud.perk_tree_requested.connect(_on_perk_tree_requested)
 	hud.projectile_switch_requested.connect(_on_projectile_switch_requested)
+	hud.game_over_restart_requested.connect(_on_game_over_restart)
+	hud.game_over_menu_requested.connect(_on_game_over_menu)
 	player.weapons_changed.connect(_on_weapons_changed)
 	player.targeting_changed.connect(_on_targeting_changed)
 	player.projectile_class_changed.connect(_on_projectile_class_changed)
@@ -108,7 +110,6 @@ func _ready() -> void:
 	hud.update_level(1)
 	hud.update_kills(0)
 	hud.update_perk_charges(player.bomb_charges, player.heal_charges)
-	game_over_label.visible = false
 	_apply_start_state()
 	_persist_run_state()
 	# Init weapon and targeting display
@@ -192,11 +193,25 @@ func _spawn_xp_gem_deferred(pos: Vector2, tier: String) -> void:
 func _on_player_died() -> void:
 	game_over = true
 	spawn_timer.stop()
-	game_over_label.visible = true
+	var held_def: Variant = ConfigService.get_value("weapons.definitions.%s" % player.current_held_weapon, null)
+	var weapon_name: String = "Plasma Rifle"
+	if held_def != null and typeof(held_def) == TYPE_DICTIONARY:
+		weapon_name = str((held_def as Dictionary).get("name", weapon_name))
+	hud.show_game_over({"kills": kill_count, "level": player.level, "weapon": weapon_name})
 	_persist_run_state()
 	Session.finalize_run()
 	MockApiClient.queue_event("run_finished", {"kills": kill_count, "level": player.level})
 	get_tree().paused = true
+
+
+func _on_game_over_restart() -> void:
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+
+
+func _on_game_over_menu() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/start_menu.tscn")
 
 
 func _on_menu_requested() -> void:
@@ -380,7 +395,10 @@ func _try_spawn_chest(pos: Vector2) -> void:
 	var should_drop: bool = (kill_count % maxi(drop_every, 1) == 0) or (randf() <= random_drop_chance)
 	if not should_drop:
 		return
+	call_deferred("_spawn_chest_deferred", pos)
 
+
+func _spawn_chest_deferred(pos: Vector2) -> void:
 	var chest: Node2D = chest_scene.instantiate()
 	chest.global_position = pos
 	chest.opened.connect(_on_chest_opened)

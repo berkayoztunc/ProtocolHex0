@@ -145,19 +145,28 @@ func _build_tree() -> void:
 	_margin_left = UiTextureUtils.scale_dimension(float(MARGIN_LEFT), _layout_scale, 4, 160.0)
 	_content_top = UiTextureUtils.scale_dimension(108.0, _layout_scale, 2, 88.0)
 
-	# Background
+	# Background - deep sci-fi dark with subtle gradient feel
 	var bg: ColorRect = ColorRect.new()
-	bg.color = Color(0.05, 0.05, 0.1, 0.95)
+	bg.color = Color(0.04, 0.03, 0.02, 0.97)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# Title
+	# Decorative top accent bar
+	var accent_bar: ColorRect = ColorRect.new()
+	accent_bar.color = Color(0.7, 0.42, 0.1, 0.35)
+	accent_bar.position = Vector2(0, 0)
+	accent_bar.size = Vector2(viewport_size.x, 3)
+	add_child(accent_bar)
+
+	# Title with Sci-Fi neon
 	var title: Label = Label.new()
-	title.text = "PERK AĞACI"
+	title.text = "◆ PERK AĞACI ◆"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(30.0, _layout_scale, 1, 24.0)))
-	title.add_theme_color_override("font_color", Color(0.9, 0.85, 0.5))
-	title.position = Vector2(0, 14)
+	title.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(32.0, _layout_scale, 1, 24.0)))
+	title.add_theme_color_override("font_color", Color(1.0, 0.78, 0.35))
+	title.add_theme_constant_override("outline_size", 3)
+	title.add_theme_color_override("font_outline_color", Color(0.15, 0.08, 0.02, 0.95))
+	title.position = Vector2(0, 10)
 	title.size = Vector2(viewport_size.x, 50)
 	add_child(title)
 
@@ -165,18 +174,24 @@ func _build_tree() -> void:
 	var close_hint: Label = Label.new()
 	close_hint.text = "[P] veya [ESC] ile kapat"
 	close_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	close_hint.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(16.0, _layout_scale, 1, 13.0)))
-	close_hint.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
-	close_hint.position = Vector2(0, 50)
-	close_hint.size = Vector2(viewport_size.x, 26)
+	close_hint.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(14.0, _layout_scale, 1, 11.0)))
+	close_hint.add_theme_color_override("font_color", Color(0.5, 0.38, 0.22))
+	close_hint.position = Vector2(0, 48)
+	close_hint.size = Vector2(viewport_size.x, 22)
 	add_child(close_hint)
 
 	var points_label: Label = Label.new()
-	points_label.text = "Kullanılabilir Perk Puanı: %d" % _available_points
+	var points_text: String = "★ Kullanılabilir Perk Puanı: %d" % _available_points
+	points_label.text = points_text
 	points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	points_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(18.0, _layout_scale, 1, 14.0)))
-	points_label.add_theme_color_override("font_color", Color(0.6, 0.9, 0.6) if _available_points > 0 else Color(0.55, 0.55, 0.55))
-	points_label.position = Vector2(0, 76)
+	points_label.add_theme_constant_override("outline_size", 2)
+	points_label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.9))
+	if _available_points > 0:
+		points_label.add_theme_color_override("font_color", Color(0.95, 0.75, 0.3))
+	else:
+		points_label.add_theme_color_override("font_color", Color(0.45, 0.35, 0.25))
+	points_label.position = Vector2(0, 72)
 	points_label.size = Vector2(viewport_size.x, 26)
 	add_child(points_label)
 
@@ -199,12 +214,32 @@ func _build_tree() -> void:
 	_draw_node = Node2D.new()
 	content.add_child(_draw_node)
 
-	# Category labels
+	# Category labels with Sci-Fi accent bars
+	var cat_colors: Dictionary = {
+		0: Color(0.5, 0.7, 0.9),    # TEMEL - blue
+		1: Color(0.4, 0.8, 0.6),    # GELİŞMİŞ - green
+		2: Color(0.7, 0.5, 0.9),    # İLERİ - purple
+		3: Color(0.9, 0.7, 0.3),    # UZMANLIK - gold
+		4: Color(0.3, 0.85, 0.85),  # PASİF SİLAH - cyan
+		5: Color(0.3, 0.75, 0.75),  # PASİF GÜÇ - teal
+		6: Color(0.9, 0.4, 0.3),    # AKTİF SİLAH - red
+		7: Color(0.85, 0.35, 0.35), # AKTİF GÜÇ - dark red
+	}
 	for row_idx in CATEGORY_LABELS:
+		var cat_color: Color = cat_colors.get(row_idx, Color(0.5, 0.6, 0.7))
+		# Accent line before label
+		var accent_line: ColorRect = ColorRect.new()
+		accent_line.color = Color(cat_color.r, cat_color.g, cat_color.b, 0.4)
+		var accent_y: float = row_idx * (_node_height + _row_gap) + _node_height * 0.5
+		accent_line.position = Vector2(4, accent_y - 1)
+		accent_line.size = Vector2(_margin_left - 12, 2)
+		content.add_child(accent_line)
 		var cat_label: Label = Label.new()
 		cat_label.text = CATEGORY_LABELS[row_idx]
-		cat_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(14.0, _layout_scale, 1, 11.0)))
-		cat_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.4))
+		cat_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(13.0, _layout_scale, 1, 10.0)))
+		cat_label.add_theme_color_override("font_color", Color(cat_color.r, cat_color.g, cat_color.b, 0.85))
+		cat_label.add_theme_constant_override("outline_size", 1)
+		cat_label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.8))
 		cat_label.position = Vector2(UiTextureUtils.scale_dimension(8.0, _layout_scale, 1, 6.0), row_idx * (_node_height + _row_gap) + _node_height * 0.3)
 		cat_label.size = Vector2(_margin_left - UiTextureUtils.scale_dimension(12.0, _layout_scale, 1, 8.0), UiTextureUtils.scale_dimension(24.0, _layout_scale, 1, 20.0))
 		content.add_child(cat_label)
@@ -267,17 +302,25 @@ func _create_perk_node(perk_id: String, perk_data: Dictionary, stacks: int, max_
 	panel.tooltip_text = str(perk_data.get("description", ""))
 	panel.gui_input.connect(_on_perk_node_gui_input.bind(perk_id, is_selectable))
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.12, 0.18, 0.96)
+	style.bg_color = Color(0.08, 0.06, 0.04, 0.97)
 	style.border_width_left = 2
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
-	style.border_color = Color(0.24, 0.28, 0.38, 1.0)
-	style.corner_radius_top_left = 8
-	style.corner_radius_top_right = 8
-	style.corner_radius_bottom_right = 8
-	style.corner_radius_bottom_left = 8
-	panel.add_theme_stylebox_override("panel", style)
+	style.border_color = Color(0.4, 0.25, 0.1, 0.9)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_right = 6
+	style.corner_radius_bottom_left = 6
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.25)
+	style.shadow_size = 4
+	# Try to load pixel art perk node texture; fall back to StyleBoxFlat
+	var perk_node_path := "res://assets/ui/panels/perk_node_base.png"
+	var tex_style: StyleBoxTexture = UiTextureUtils.load_stylebox_texture(perk_node_path, 12) if ResourceLoader.exists(perk_node_path) else null
+	if tex_style != null:
+		panel.add_theme_stylebox_override("panel", tex_style)
+	else:
+		panel.add_theme_stylebox_override("panel", style)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", int(UiTextureUtils.scale_dimension(2.0, _layout_scale, 1, 1.0)))
@@ -303,40 +346,84 @@ func _create_perk_node(perk_id: String, perk_data: Dictionary, stacks: int, max_
 	var next_cost: int = base_cost * (stacks + 1)
 
 	if is_locked:
-		name_label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
-		stack_label.text = "🔒 💎 %d" % next_cost
-		stack_label.add_theme_color_override("font_color", Color(0.4, 0.3, 0.3))
-		panel.modulate = Color(0.5, 0.5, 0.5, 0.8)
+		name_label.add_theme_color_override("font_color", Color(0.35, 0.3, 0.22))
+		stack_label.text = "🔒 ◇ %d" % next_cost
+		stack_label.add_theme_color_override("font_color", Color(0.3, 0.22, 0.15))
+		panel.modulate = Color(0.45, 0.4, 0.35, 0.75)
 	elif is_maxed:
 		name_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 		if max_stacks == 1:
-			stack_label.text = "✓ Aktif"
+			stack_label.text = "◆ Aktif"
 		else:
-			stack_label.text = "✓ MAX (%d/%d)" % [stacks, max_stacks]
-		stack_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))
+			stack_label.text = "◆ MAX (%d/%d)" % [stacks, max_stacks]
+		stack_label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.2))
 	elif is_unlocked:
 		name_label.add_theme_color_override("font_color", rarity_color)
 		if max_stacks > 0:
-			stack_label.text = "💎 %d | %d/%d" % [next_cost, stacks, max_stacks]
+			stack_label.text = "◇ %d | %d/%d" % [next_cost, stacks, max_stacks]
 		elif max_stacks < 0:
-			stack_label.text = "💎 %d | ×%d" % [next_cost, stacks]
+			stack_label.text = "◇ %d | ×%d" % [next_cost, stacks]
 		else:
 			stack_label.text = "✓"
-		stack_label.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
+		stack_label.add_theme_color_override("font_color", Color(0.5, 0.85, 0.75))
 	else:
-		name_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		name_label.add_theme_color_override("font_color", Color(0.4, 0.35, 0.25))
 		if max_stacks > 0:
-			stack_label.text = "💎 %d | 0/%d" % [next_cost, max_stacks]
+			stack_label.text = "◇ %d | 0/%d" % [next_cost, max_stacks]
 		else:
-			stack_label.text = "💎 %d" % next_cost
-		stack_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+			stack_label.text = "◇ %d" % next_cost
+		stack_label.add_theme_color_override("font_color", Color(0.35, 0.3, 0.22))
+
+	# Apply state-based tint to pixel art texture, or border overrides to flat style
+	if tex_style != null:
+		if is_maxed:
+			tex_style.modulate_color = Color(1.0, 0.85, 0.25, 1.0)
+		elif is_selectable:
+			tex_style.modulate_color = Color(0.4, 1.0, 0.55, 1.0)
+		elif is_unlocked and not is_locked:
+			tex_style.modulate_color = Color(rarity_color.r * 0.7 + 0.3, rarity_color.g * 0.7 + 0.3, rarity_color.b * 0.7 + 0.3, 1.0)
+		elif is_locked:
+			tex_style.modulate_color = Color(0.3, 0.25, 0.2, 0.6)
+	else:
+		if is_maxed:
+			style.border_color = Color(1.0, 0.78, 0.2, 1.0)
+			style.border_width_left = 2
+			style.border_width_top = 2
+			style.border_width_right = 2
+			style.border_width_bottom = 2
+			style.bg_color = Color(0.1, 0.08, 0.03, 0.97)
+			style.shadow_color = Color(1.0, 0.7, 0.1, 0.15)
+			style.shadow_size = 6
+		elif is_unlocked and not is_locked:
+			style.border_color = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.85)
+			style.border_width_left = 2
+			style.border_width_top = 2
+			style.border_width_right = 2
+			style.border_width_bottom = 2
+			style.shadow_color = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.12)
+			style.shadow_size = 5
+
+		if is_selectable:
+			style.border_color = Color(0.3, 1.0, 0.55, 1.0)
+			style.border_width_left = 3
+			style.border_width_top = 3
+			style.border_width_right = 3
+			style.border_width_bottom = 3
+			style.bg_color = Color(0.04, 0.12, 0.06, 0.98)
+			style.shadow_color = Color(0.2, 1.0, 0.4, 0.2)
+			style.shadow_size = 8
+		elif is_locked:
+			style.bg_color = Color(0.05, 0.04, 0.03, 0.85)
+			style.border_color = Color(0.2, 0.18, 0.12, 0.4)
+			style.border_width_left = 1
+			style.border_width_top = 1
+			style.border_width_right = 1
+			style.border_width_bottom = 1
 
 	if is_selectable:
-		name_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.55))
-		stack_label.text = "💎 %d — SEÇ" % next_cost
-		stack_label.add_theme_color_override("font_color", Color(0.45, 1.0, 0.55))
-		style.border_color = Color(0.55, 0.92, 0.42, 1.0)
-		style.bg_color = Color(0.12, 0.18, 0.12, 0.98)
+		name_label.add_theme_color_override("font_color", Color(0.85, 1.0, 0.7))
+		stack_label.text = "◆ %d — SEÇ" % next_cost
+		stack_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.55))
 
 	vbox.add_child(name_label)
 	vbox.add_child(stack_label)
@@ -369,13 +456,23 @@ func _on_draw_connections() -> void:
 		var from_pos: Vector2 = line["from"] as Vector2
 		var to_pos: Vector2 = line["to"] as Vector2
 		var met: bool = line["met"] as bool
-		var color: Color = Color(0.3, 0.8, 0.3, 0.6) if met else Color(0.5, 0.3, 0.3, 0.4)
-		_draw_node.draw_line(from_pos, to_pos, color, UiTextureUtils.scale_dimension(2.0, _layout_scale, 1, 1.0))
+		var color: Color = Color(0.3, 0.85, 0.35, 0.9) if met else Color(0.6, 0.25, 0.25, 0.6)
+		var glow_color: Color = Color(color.r, color.g, color.b, 0.2)
+		var base_width: float = UiTextureUtils.scale_dimension(2.0, _layout_scale, 1, 1.5)
+		# Glow pass (wide soft aura)
+		_draw_node.draw_line(from_pos, to_pos, glow_color, base_width * 4.0, true)
+		# Core line
+		_draw_node.draw_line(from_pos, to_pos, color, base_width, true)
 		# Arrow head
 		var dir: Vector2 = (to_pos - from_pos).normalized()
-		var arrow_size: float = UiTextureUtils.scale_dimension(6.0, _layout_scale, 1, 4.0)
-		var left: Vector2 = to_pos - dir * arrow_size + dir.rotated(PI * 0.7) * arrow_size * 0.5
-		var right: Vector2 = to_pos - dir * arrow_size + dir.rotated(-PI * 0.7) * arrow_size * 0.5
+		var arrow_size: float = UiTextureUtils.scale_dimension(10.0, _layout_scale, 1, 6.0)
+		var left: Vector2 = to_pos - dir * arrow_size + dir.rotated(PI * 0.7) * arrow_size * 0.6
+		var right: Vector2 = to_pos - dir * arrow_size + dir.rotated(-PI * 0.7) * arrow_size * 0.6
+		var glow_left: Vector2 = to_pos - dir * arrow_size * 1.2 + dir.rotated(PI * 0.7) * arrow_size * 0.8
+		var glow_right: Vector2 = to_pos - dir * arrow_size * 1.2 + dir.rotated(-PI * 0.7) * arrow_size * 0.8
+		# Arrow glow
+		_draw_node.draw_polygon([to_pos, glow_left, glow_right], [glow_color, glow_color, glow_color])
+		# Arrow core
 		_draw_node.draw_polygon([to_pos, left, right], [color, color, color])
 
 

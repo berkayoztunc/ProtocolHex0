@@ -1,88 +1,88 @@
-[gd_scene load_steps=2 format=3 uid="uid://crhud0000001"]
+[gd_scene format=3 uid="uid://crhud0000001"]
 
-[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Script" uid="uid://bqfp25foim353" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" uid="uid://kmekytd466jx" path="res://UI.png" id="2_oo0fn"]
 
-[node name="HUD" type="CanvasLayer"]
+[node name="HUD" type="CanvasLayer" unique_id=590231360]
 script = ExtResource("1_hud")
 
-[node name="StatsBGPanel" type="PanelContainer" parent="."]
-layout_mode = 1
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_right = 290.0
-offset_bottom = 235.0
-grow_horizontal = 1
-grow_vertical = 1
+[node name="StatsBGPanel" type="PanelContainer" parent="." unique_id=1601660125]
+offset_right = 260.0
+offset_bottom = 140.0
 mouse_filter = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 260.0
-grow_horizontal = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1745787334]
+offset_right = 360.0
+offset_bottom = 140.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=729695894]
 layout_mode = 2
 
-[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1239040861]
 layout_mode = 2
-text = "Level: 1"
+text = "LVL 1"
 
-[node name="HealthBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+[node name="HealthBar" type="ProgressBar" parent="MarginContainer/VBoxContainer" unique_id=500222128]
+custom_minimum_size = Vector2(280, 24)
 layout_mode = 2
-custom_minimum_size = Vector2(384, 36)
-max_value = 100.0
+size_flags_horizontal = 0
 value = 100.0
 show_percentage = false
 
-[node name="XPBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+[node name="Sprite2D" type="Sprite2D" parent="MarginContainer/VBoxContainer/HealthBar" unique_id=1349688358]
+position = Vector2(140, 9)
+scale = Vector2(2.7407405, 2.2857141)
+texture = ExtResource("2_oo0fn")
+region_enabled = true
+region_rect = Rect2(38, 47.75, 108.5, 25)
+
+[node name="XPBar" type="ProgressBar" parent="MarginContainer/VBoxContainer" unique_id=1650652705]
+custom_minimum_size = Vector2(280, 16)
 layout_mode = 2
-custom_minimum_size = Vector2(384, 36)
+size_flags_horizontal = 0
 max_value = 10.0
-value = 0.0
 show_percentage = false
 
-[node name="StatsRow1" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="StatsRow1" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1685971310]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="KillLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow1"]
+[node name="KillLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow1" unique_id=298056335]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Kills: 0"
+text = "☠ 0"
 
-[node name="BombLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow1"]
+[node name="BombLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow1" unique_id=394272265]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Bomb (Q): 0"
+text = "💣 0"
 
-[node name="StatsRow2" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="StatsRow2" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=818190592]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="HealLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow2"]
+[node name="HealLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow2" unique_id=870698012]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Heal (E): 0"
 
-[node name="TargetingLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow2"]
+[node name="TargetingLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow2" unique_id=1222639060]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Targeting: Forward"
 
-[node name="WeaponLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="WeaponLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=638580746]
 layout_mode = 2
 text = "Weapon: Plasma Rifle"
 
-[node name="ProjectileLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="ProjectileLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1897901600]
 layout_mode = 2
 text = "Projectile: Standard"
 
-[node name="TopRightContainer" type="HBoxContainer" parent="."]
+[node name="TopRightContainer" type="HBoxContainer" parent="." unique_id=23773592]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -92,22 +92,22 @@ grow_horizontal = 0
 theme_override_constants/separation = 10
 alignment = 2
 
-[node name="PerkTreeButton" type="Button" parent="TopRightContainer"]
+[node name="PerkTreeButton" type="Button" parent="TopRightContainer" unique_id=497114115]
+custom_minimum_size = Vector2(100, 34)
 layout_mode = 2
-custom_minimum_size = Vector2(110, 38)
-text = "Perks [P]"
+text = "Perks"
 
-[node name="ProjectileSwitchButton" type="Button" parent="TopRightContainer"]
+[node name="ProjectileSwitchButton" type="Button" parent="TopRightContainer" unique_id=201629699]
+custom_minimum_size = Vector2(110, 34)
 layout_mode = 2
-custom_minimum_size = Vector2(130, 38)
-text = "Projectile [C]"
+text = "Projectile"
 
-[node name="MenuButton" type="Button" parent="TopRightContainer"]
+[node name="MenuButton" type="Button" parent="TopRightContainer" unique_id=1171046177]
+custom_minimum_size = Vector2(72, 34)
 layout_mode = 2
-custom_minimum_size = Vector2(100, 38)
 text = "Menu"
 
-[node name="ActiveWeaponsPanel" type="HBoxContainer" parent="."]
+[node name="ActiveWeaponsPanel" type="HBoxContainer" parent="." unique_id=2128184727]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
@@ -121,7 +121,7 @@ grow_vertical = 0
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="ControlsPanel" type="PanelContainer" parent="."]
+[node name="ControlsPanel" type="PanelContainer" parent="." unique_id=74559280]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -134,58 +134,58 @@ offset_bottom = -20.0
 grow_horizontal = 0
 grow_vertical = 0
 
-[node name="MarginContainer" type="MarginContainer" parent="ControlsPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="ControlsPanel" unique_id=1544247547]
 layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 12
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ControlsPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="ControlsPanel/MarginContainer" unique_id=1697979060]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="TitleLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=2031893005]
 layout_mode = 2
 text = "Controls"
 
-[node name="MoveLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="MoveLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=1860874063]
 layout_mode = 2
 text = "Move: WASD / Arrow Keys"
 
-[node name="DashLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="DashLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=417318856]
 layout_mode = 2
 text = "Dash: Shift"
 
-[node name="BombHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="BombHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=1420231756]
 layout_mode = 2
 text = "Bomb: Q"
 
-[node name="HealHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="HealHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=1847198823]
 layout_mode = 2
 text = "Heal: E"
 
-[node name="TargetingHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="TargetingHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=1233645920]
 layout_mode = 2
 text = "Targeting mode: Tab"
 
-[node name="ProjectileHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="ProjectileHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=899525235]
 layout_mode = 2
 text = "Projectile type: C / button"
 
-[node name="PerkHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="PerkHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=705198838]
 layout_mode = 2
 text = "Perk tree: P"
 
-[node name="ActiveWeaponsHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="ActiveWeaponsHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=1028748418]
 layout_mode = 2
 text = "Active weapons: 1-5"
 
-[node name="MenuHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+[node name="MenuHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer" unique_id=268912209]
 layout_mode = 2
 text = "Menu / Close: Esc"
 
-[node name="ModalBackdrop" type="ColorRect" parent="."]
+[node name="ModalBackdrop" type="ColorRect" parent="." unique_id=932729994]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -195,7 +195,7 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0.7)
 
-[node name="LevelUpPanel" type="PanelContainer" parent="."]
+[node name="LevelUpPanel" type="PanelContainer" parent="." unique_id=297209840]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -209,38 +209,38 @@ offset_bottom = 290.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="LevelUpPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="LevelUpPanel" unique_id=686650443]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBoxContainer" type="VBoxContainer" parent="LevelUpPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="LevelUpPanel/MarginContainer" unique_id=1412137618]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="TitleLabel" type="Label" parent="LevelUpPanel/MarginContainer/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="LevelUpPanel/MarginContainer/VBoxContainer" unique_id=147543880]
 layout_mode = 2
 text = "Level Up! Choose an upgrade"
 horizontal_alignment = 1
 
-[node name="OptionButtonA" type="Button" parent="LevelUpPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
+[node name="OptionButtonA" type="Button" parent="LevelUpPanel/MarginContainer/VBoxContainer" unique_id=1624769519]
 custom_minimum_size = Vector2(0, 82)
+layout_mode = 2
 text = "Option A"
 
-[node name="OptionButtonB" type="Button" parent="LevelUpPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
+[node name="OptionButtonB" type="Button" parent="LevelUpPanel/MarginContainer/VBoxContainer" unique_id=985792545]
 custom_minimum_size = Vector2(0, 82)
+layout_mode = 2
 text = "Option B"
 
-[node name="OptionButtonC" type="Button" parent="LevelUpPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
+[node name="OptionButtonC" type="Button" parent="LevelUpPanel/MarginContainer/VBoxContainer" unique_id=357658017]
 custom_minimum_size = Vector2(0, 82)
+layout_mode = 2
 text = "Option C"
 
-[node name="ConfirmMenuPanel" type="PanelContainer" parent="."]
+[node name="ConfirmMenuPanel" type="PanelContainer" parent="." unique_id=1296139913]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -254,97 +254,138 @@ offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="ConfirmMenuPanel"]
+[node name="VBox" type="VBoxContainer" parent="ConfirmMenuPanel" unique_id=203747642]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="ConfirmLabel" type="Label" parent="ConfirmMenuPanel/VBox"]
+[node name="ConfirmLabel" type="Label" parent="ConfirmMenuPanel/VBox" unique_id=363069877]
 layout_mode = 2
 text = "Are you sure you want to return to main menu?"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="ControlsToggleButton" type="Button" parent="ConfirmMenuPanel/VBox"]
-layout_mode = 2
+[node name="ControlsToggleButton" type="Button" parent="ConfirmMenuPanel/VBox" unique_id=880241551]
 custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
 text = "Controls"
 
-[node name="MenuControlsPanel" type="VBoxContainer" parent="ConfirmMenuPanel/VBox"]
+[node name="MenuControlsPanel" type="VBoxContainer" parent="ConfirmMenuPanel/VBox" unique_id=1774867705]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="MenuControlsTitle" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsTitle" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=406091647]
 layout_mode = 2
 text = "Controls"
 
-[node name="MenuControlsMove" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsMove" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=1122829111]
 layout_mode = 2
 text = "Move: WASD / Arrow Keys"
 
-[node name="MenuControlsDash" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsDash" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=1345060653]
 layout_mode = 2
 text = "Dash: Shift"
 
-[node name="MenuControlsBomb" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsBomb" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=102223389]
 layout_mode = 2
 text = "Bomb: Q"
 
-[node name="MenuControlsHeal" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsHeal" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=1417977604]
 layout_mode = 2
 text = "Heal: E"
 
-[node name="MenuControlsTarget" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsTarget" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=1729056866]
 layout_mode = 2
 text = "Targeting mode: Tab"
 
-[node name="MenuControlsProjectile" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsProjectile" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=1072538600]
 layout_mode = 2
 text = "Projectile type: C / button"
 
-[node name="MenuControlsPerk" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsPerk" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=405218068]
 layout_mode = 2
 text = "Perk tree: P"
 
-[node name="MenuControlsWeapons" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsWeapons" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=1041503202]
 layout_mode = 2
 text = "Active weapons: 1-5"
 
-[node name="MenuControlsBack" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+[node name="MenuControlsBack" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel" unique_id=604693220]
 layout_mode = 2
 text = "Menu / Close: Esc"
 
-[node name="ButtonRow" type="HBoxContainer" parent="ConfirmMenuPanel/VBox"]
+[node name="ButtonRow" type="HBoxContainer" parent="ConfirmMenuPanel/VBox" unique_id=1249741632]
 layout_mode = 2
-alignment = 1
 theme_override_constants/separation = 12
+alignment = 1
 
-[node name="ConfirmYes" type="Button" parent="ConfirmMenuPanel/VBox/ButtonRow"]
-layout_mode = 2
+[node name="ConfirmYes" type="Button" parent="ConfirmMenuPanel/VBox/ButtonRow" unique_id=161026036]
 custom_minimum_size = Vector2(110, 46)
+layout_mode = 2
 text = "Yes"
 
-[node name="ConfirmNo" type="Button" parent="ConfirmMenuPanel/VBox/ButtonRow"]
-layout_mode = 2
+[node name="ConfirmNo" type="Button" parent="ConfirmMenuPanel/VBox/ButtonRow" unique_id=1220685223]
 custom_minimum_size = Vector2(110, 46)
+layout_mode = 2
 text = "No"
 
-[node name="GameOverLabel" type="Label" parent="."]
+[node name="GameOverPanel" type="PanelContainer" parent="." unique_id=184428718]
+visible = false
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -50.0
-offset_right = 260.0
-offset_bottom = 50.0
+offset_left = -320.0
+offset_top = -220.0
+offset_right = 320.0
+offset_bottom = 220.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="GameOverPanel" unique_id=1437823740]
+layout_mode = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="GameOverTitle" type="Label" parent="GameOverPanel/VBox" unique_id=746515710]
+layout_mode = 2
 text = "GAME OVER"
 horizontal_alignment = 1
-vertical_alignment = 1
+
+[node name="StatsContainer" type="VBoxContainer" parent="GameOverPanel/VBox" unique_id=1040520699]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="KillsStatLabel" type="Label" parent="GameOverPanel/VBox/StatsContainer" unique_id=285278607]
+layout_mode = 2
+text = "Kills: 0"
+horizontal_alignment = 1
+
+[node name="LevelStatLabel" type="Label" parent="GameOverPanel/VBox/StatsContainer" unique_id=1866978432]
+layout_mode = 2
+text = "Level: 1"
+horizontal_alignment = 1
+
+[node name="WeaponStatLabel" type="Label" parent="GameOverPanel/VBox/StatsContainer" unique_id=1935037973]
+layout_mode = 2
+text = "Weapon: —"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="GameOverPanel/VBox" unique_id=2025591360]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="RestartButton" type="Button" parent="GameOverPanel/VBox" unique_id=1276910696]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "Play Again"
+
+[node name="MenuButton" type="Button" parent="GameOverPanel/VBox" unique_id=655305394]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "Main Menu"
 
 [connection signal="pressed" from="TopRightContainer/PerkTreeButton" to="." method="_on_perk_tree_button_pressed"]
 [connection signal="pressed" from="TopRightContainer/MenuButton" to="." method="_on_menu_button_pressed"]

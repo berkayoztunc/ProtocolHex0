@@ -49,6 +49,11 @@ layout_mode = 2
 text = "GENI HERO"
 horizontal_alignment = 1
 
+[node name="Subtitle" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "SCI-FI ARENA SURVIVOR"
+horizontal_alignment = 1
+
 [node name="NameInput" type="LineEdit" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 placeholder_text = "Enter your name"
@@ -135,6 +140,17 @@ text = "Active weapons: 1-5"
 [node name="ControlsBack" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
 layout_mode = 2
 text = "Menu / Close: Esc"
+
+[node name="VersionLabel" type="Label" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "v2.0 — GENI HERO"
+horizontal_alignment = 1
 
 [connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ContinueButton" to="." method="_on_continue_button_pressed"]

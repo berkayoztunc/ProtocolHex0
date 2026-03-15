@@ -1,0 +1,353 @@
+[gd_scene load_steps=2 format=3 uid="uid://crhud0000001"]
+
+[ext_resource type="Script" path="res://scripts/v1_backup/hud_v1.gd" id="1_hud"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="StatsBGPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_right = 290.0
+offset_bottom = 235.0
+grow_horizontal = 1
+grow_vertical = 1
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 260.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Level: 1"
+
+[node name="HealthBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(384, 36)
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="XPBar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(384, 36)
+max_value = 10.0
+value = 0.0
+show_percentage = false
+
+[node name="StatsRow1" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="KillLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow1"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Kills: 0"
+
+[node name="BombLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow1"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Bomb (Q): 0"
+
+[node name="StatsRow2" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HealLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow2"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Heal (E): 0"
+
+[node name="TargetingLabel" type="Label" parent="MarginContainer/VBoxContainer/StatsRow2"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Targeting: Forward"
+
+[node name="WeaponLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Weapon: Plasma Rifle"
+
+[node name="ProjectileLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Projectile: Standard"
+
+[node name="TopRightContainer" type="HBoxContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -380.0
+offset_bottom = 50.0
+grow_horizontal = 0
+theme_override_constants/separation = 10
+alignment = 2
+
+[node name="PerkTreeButton" type="Button" parent="TopRightContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(110, 38)
+text = "Perks [P]"
+
+[node name="ProjectileSwitchButton" type="Button" parent="TopRightContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(130, 38)
+text = "Projectile [C]"
+
+[node name="MenuButton" type="Button" parent="TopRightContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 38)
+text = "Menu"
+
+[node name="ActiveWeaponsPanel" type="HBoxContainer" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -64.0
+offset_right = 300.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="ControlsPanel" type="PanelContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -370.0
+offset_top = -310.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="ControlsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ControlsPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TitleLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Controls"
+
+[node name="MoveLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Move: WASD / Arrow Keys"
+
+[node name="DashLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Dash: Shift"
+
+[node name="BombHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Bomb: Q"
+
+[node name="HealHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Heal: E"
+
+[node name="TargetingHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Targeting mode: Tab"
+
+[node name="ProjectileHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Projectile type: C / button"
+
+[node name="PerkHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Perk tree: P"
+
+[node name="ActiveWeaponsHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Active weapons: 1-5"
+
+[node name="MenuHintLabel" type="Label" parent="ControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Menu / Close: Esc"
+
+[node name="ModalBackdrop" type="ColorRect" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="LevelUpPanel" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -290.0
+offset_right = 400.0
+offset_bottom = 290.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="LevelUpPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="LevelUpPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="LevelUpPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Level Up! Choose an upgrade"
+horizontal_alignment = 1
+
+[node name="OptionButtonA" type="Button" parent="LevelUpPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 82)
+text = "Option A"
+
+[node name="OptionButtonB" type="Button" parent="LevelUpPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 82)
+text = "Option B"
+
+[node name="OptionButtonC" type="Button" parent="LevelUpPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 82)
+text = "Option C"
+
+[node name="ConfirmMenuPanel" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -180.0
+offset_right = 280.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="ConfirmMenuPanel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="ConfirmLabel" type="Label" parent="ConfirmMenuPanel/VBox"]
+layout_mode = 2
+text = "Are you sure you want to return to main menu?"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ControlsToggleButton" type="Button" parent="ConfirmMenuPanel/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "Controls"
+
+[node name="MenuControlsPanel" type="VBoxContainer" parent="ConfirmMenuPanel/VBox"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="MenuControlsTitle" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Controls"
+
+[node name="MenuControlsMove" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Move: WASD / Arrow Keys"
+
+[node name="MenuControlsDash" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Dash: Shift"
+
+[node name="MenuControlsBomb" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Bomb: Q"
+
+[node name="MenuControlsHeal" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Heal: E"
+
+[node name="MenuControlsTarget" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Targeting mode: Tab"
+
+[node name="MenuControlsProjectile" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Projectile type: C / button"
+
+[node name="MenuControlsPerk" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Perk tree: P"
+
+[node name="MenuControlsWeapons" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Active weapons: 1-5"
+
+[node name="MenuControlsBack" type="Label" parent="ConfirmMenuPanel/VBox/MenuControlsPanel"]
+layout_mode = 2
+text = "Menu / Close: Esc"
+
+[node name="ButtonRow" type="HBoxContainer" parent="ConfirmMenuPanel/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="ConfirmYes" type="Button" parent="ConfirmMenuPanel/VBox/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(110, 46)
+text = "Yes"
+
+[node name="ConfirmNo" type="Button" parent="ConfirmMenuPanel/VBox/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(110, 46)
+text = "No"
+
+[node name="GameOverLabel" type="Label" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -50.0
+offset_right = 260.0
+offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "GAME OVER"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="pressed" from="TopRightContainer/PerkTreeButton" to="." method="_on_perk_tree_button_pressed"]
+[connection signal="pressed" from="TopRightContainer/MenuButton" to="." method="_on_menu_button_pressed"]
+[connection signal="pressed" from="ConfirmMenuPanel/VBox/ControlsToggleButton" to="." method="_on_controls_toggle_button_pressed"]
+[connection signal="pressed" from="ConfirmMenuPanel/VBox/ButtonRow/ConfirmYes" to="." method="_on_confirm_menu_yes"]
+[connection signal="pressed" from="ConfirmMenuPanel/VBox/ButtonRow/ConfirmNo" to="." method="_on_confirm_menu_no"]

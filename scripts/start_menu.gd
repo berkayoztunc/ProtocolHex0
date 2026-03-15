@@ -10,6 +10,7 @@ const UiTextureUtils = preload("res://scripts/ui_texture_utils.gd")
 @onready var background: ColorRect = $Background
 @onready var panel_container: PanelContainer = $CenterContainer/PanelContainer
 @onready var title_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/Title
+@onready var subtitle_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/Subtitle
 @onready var main_vbox: VBoxContainer = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer
 @onready var start_button: Button = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/StartButton
 @onready var continue_action_button: Button = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ContinueButton
@@ -19,6 +20,7 @@ const UiTextureUtils = preload("res://scripts/ui_texture_utils.gd")
 @onready var controls_heal_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel/ControlsHeal
 @onready var controls_target_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel/ControlsTarget
 @onready var controls_perk_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel/ControlsPerk
+@onready var version_label: Label = $VersionLabel
 
 var _hero_preview_sprite: AnimatedSprite2D = null
 var _hero_preview_node: Node2D = null
@@ -38,6 +40,7 @@ func _ready() -> void:
 	_apply_ux_style()
 	_apply_menu_icons()
 	_setup_hero_preview()
+	_start_title_glow()
 	call_deferred("_refresh_layout")
 
 
@@ -127,36 +130,53 @@ func _on_master_volume_slider_value_changed(value: float) -> void:
 	AudioServer.set_bus_volume_db(0, linear_to_db(clamped))
 
 
+func _start_title_glow() -> void:
+	var glow_tween: Tween = create_tween().set_loops()
+	glow_tween.tween_property(title_label, "modulate", Color(1.2, 0.9, 0.6, 1.0), 1.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	glow_tween.tween_property(title_label, "modulate", Color(1.0, 1.0, 1.0, 1.0), 1.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+
 func _apply_ux_style() -> void:
 	var menu_scale: float = _get_menu_scale()
-	background.color = Color(0.045, 0.055, 0.09, 1.0)
+	background.color = Color(0.04, 0.03, 0.02, 1.0)
 	UiTextureUtils.apply_nearest_filter(self)
 	UiTextureUtils.apply_nearest_filter(panel_container)
 	UiTextureUtils.apply_nearest_filter(name_input)
 	UiTextureUtils.apply_nearest_filter(master_slider)
-	var textured_panel: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/panel_main_9slice.png", 24, StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT)
-	if textured_panel != null:
-		panel_container.add_theme_stylebox_override("panel", textured_panel)
+	var panel_tex: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/panel_frame_orange.png", 14, StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH)
+	if panel_tex != null:
+		panel_container.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		panel_container.add_theme_stylebox_override("panel", panel_tex)
 	else:
 		var panel_style: StyleBoxFlat = StyleBoxFlat.new()
-		panel_style.bg_color = Color(0.09, 0.12, 0.18, 0.95)
-		panel_style.border_color = Color(0.28, 0.48, 0.7, 0.9)
+		panel_style.bg_color = Color(0.07, 0.05, 0.03, 0.95)
+		panel_style.border_color = Color(0.7, 0.42, 0.1, 0.9)
 		panel_style.border_width_left = 2
 		panel_style.border_width_top = 2
 		panel_style.border_width_right = 2
 		panel_style.border_width_bottom = 2
-		panel_style.corner_radius_top_left = 12
-		panel_style.corner_radius_top_right = 12
-		panel_style.corner_radius_bottom_right = 12
-		panel_style.corner_radius_bottom_left = 12
-		panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.35)
-		panel_style.shadow_size = 8
+		panel_style.corner_radius_top_left = 8
+		panel_style.corner_radius_top_right = 8
+		panel_style.corner_radius_bottom_right = 8
+		panel_style.corner_radius_bottom_left = 8
+		panel_style.shadow_color = Color(0.5, 0.25, 0.0, 0.3)
+		panel_style.shadow_size = 10
 		panel_container.add_theme_stylebox_override("panel", panel_style)
 
 	title_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(64.0, menu_scale, 1, 42.0)))
-	title_label.add_theme_color_override("font_color", Color(0.85, 0.94, 1.0))
-	title_label.add_theme_constant_override("outline_size", 3)
-	title_label.add_theme_color_override("font_outline_color", Color(0.05, 0.08, 0.12, 0.9))
+	title_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.2))
+	title_label.add_theme_constant_override("outline_size", 4)
+	title_label.add_theme_color_override("font_outline_color", Color(0.2, 0.1, 0.0, 0.95))
+
+	subtitle_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(16.0, menu_scale, 1, 12.0)))
+	subtitle_label.add_theme_color_override("font_color", Color(0.75, 0.55, 0.3, 0.85))
+	subtitle_label.add_theme_constant_override("outline_size", 1)
+	subtitle_label.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.0, 0.9))
+	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	version_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(12.0, menu_scale, 1, 10.0)))
+	version_label.add_theme_color_override("font_color", Color(0.45, 0.32, 0.18, 0.6))
+
 	main_vbox.add_theme_constant_override("separation", int(UiTextureUtils.scale_dimension(18.0, menu_scale, 1, 14.0)))
 
 	for child in main_vbox.get_children():
@@ -174,7 +194,7 @@ func _apply_ux_style() -> void:
 		elif child is Label and child != title_label:
 			var section_label: Label = child as Label
 			section_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(18.0, menu_scale, 1, 14.0)))
-			section_label.add_theme_color_override("font_color", Color(0.78, 0.84, 0.93))
+			section_label.add_theme_color_override("font_color", Color(0.85, 0.65, 0.38))
 			section_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	for nested_label in find_children("", "Label", true, false):
@@ -189,33 +209,33 @@ func _apply_ux_style() -> void:
 		name_input.add_theme_stylebox_override("focus", input_tex)
 	else:
 		var input_normal: StyleBoxFlat = StyleBoxFlat.new()
-		input_normal.bg_color = Color(0.07, 0.09, 0.13, 1.0)
-		input_normal.border_color = Color(0.24, 0.36, 0.52, 1.0)
+		input_normal.bg_color = Color(0.06, 0.04, 0.03, 1.0)
+		input_normal.border_color = Color(0.45, 0.28, 0.12, 1.0)
 		input_normal.border_width_left = 1
 		input_normal.border_width_top = 1
 		input_normal.border_width_right = 1
 		input_normal.border_width_bottom = 1
-		input_normal.corner_radius_top_left = 8
-		input_normal.corner_radius_top_right = 8
-		input_normal.corner_radius_bottom_right = 8
-		input_normal.corner_radius_bottom_left = 8
+		input_normal.corner_radius_top_left = 6
+		input_normal.corner_radius_top_right = 6
+		input_normal.corner_radius_bottom_right = 6
+		input_normal.corner_radius_bottom_left = 6
 		name_input.add_theme_stylebox_override("normal", input_normal)
 
 		var input_focus: StyleBoxFlat = input_normal.duplicate()
-		input_focus.border_color = Color(0.35, 0.68, 1.0, 1.0)
+		input_focus.border_color = Color(0.85, 0.55, 0.15, 1.0)
 		input_focus.border_width_left = 2
 		input_focus.border_width_top = 2
 		input_focus.border_width_right = 2
 		input_focus.border_width_bottom = 2
 		name_input.add_theme_stylebox_override("focus", input_focus)
-	name_input.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
-	name_input.add_theme_color_override("font_placeholder_color", Color(0.5, 0.58, 0.7, 0.9))
+	name_input.add_theme_color_override("font_color", Color(0.92, 0.78, 0.5))
+	name_input.add_theme_color_override("font_placeholder_color", Color(0.5, 0.38, 0.22, 0.9))
 	name_input.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(18.0, menu_scale, 1, 15.0)))
 	name_input.custom_minimum_size = Vector2(0, UiTextureUtils.scale_dimension(44.0, menu_scale, 2, 38.0))
 	name_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	_style_slider(master_slider)
-	master_slider.modulate = Color(0.75, 0.86, 1.0, 1.0)
+	master_slider.modulate = Color(0.9, 0.7, 0.45, 1.0)
 
 
 func _apply_responsive_layout() -> void:
@@ -247,91 +267,91 @@ func _style_button(button: Button) -> void:
 	button.custom_minimum_size = Vector2(0, UiTextureUtils.scale_dimension(60.0, menu_scale, 2, 48.0))
 	button.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(20.0, menu_scale, 1, 16.0)))
 
-	var normal_tex: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/button_primary_normal.png", 24, StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT)
-	var hover_tex: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/button_primary_hover.png", 24, StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT)
-	var pressed_tex: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/button_primary_pressed.png", 24, StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT)
-	var disabled_tex: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/button_primary_disabled.png", 24, StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT)
-	if normal_tex != null and hover_tex != null and pressed_tex != null and disabled_tex != null:
-		button.add_theme_stylebox_override("normal", normal_tex)
-		button.add_theme_stylebox_override("hover", hover_tex)
-		button.add_theme_stylebox_override("pressed", pressed_tex)
-		button.add_theme_stylebox_override("disabled", disabled_tex)
-		button.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
-		button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
-		button.add_theme_color_override("font_pressed_color", Color(0.82, 0.9, 1.0))
-		button.add_theme_color_override("font_disabled_color", Color(0.45, 0.5, 0.58))
-		return
-
-	var normal: StyleBoxFlat = StyleBoxFlat.new()
-	normal.bg_color = Color(0.12, 0.17, 0.25, 1.0)
-	normal.border_color = Color(0.28, 0.42, 0.62, 1.0)
-	normal.border_width_left = 1
-	normal.border_width_top = 1
-	normal.border_width_right = 1
-	normal.border_width_bottom = 1
-	normal.corner_radius_top_left = 8
-	normal.corner_radius_top_right = 8
-	normal.corner_radius_bottom_right = 8
-	normal.corner_radius_bottom_left = 8
-
-	var hover: StyleBoxFlat = normal.duplicate()
-	hover.bg_color = Color(0.18, 0.26, 0.36, 1.0)
-	hover.border_color = Color(0.4, 0.64, 0.92, 1.0)
-
-	var pressed: StyleBoxFlat = normal.duplicate()
-	pressed.bg_color = Color(0.09, 0.13, 0.19, 1.0)
-	pressed.border_color = Color(0.34, 0.52, 0.76, 1.0)
-
-	var disabled: StyleBoxFlat = normal.duplicate()
-	disabled.bg_color = Color(0.1, 0.1, 0.12, 0.9)
-	disabled.border_color = Color(0.22, 0.24, 0.3, 0.9)
-
-	button.add_theme_stylebox_override("normal", normal)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", pressed)
-	button.add_theme_stylebox_override("disabled", disabled)
-	button.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
-	button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
-	button.add_theme_color_override("font_pressed_color", Color(0.82, 0.9, 1.0))
-	button.add_theme_color_override("font_disabled_color", Color(0.45, 0.5, 0.58))
+	# Pixel art button frames
+	var tex_normal: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/btn_frame_normal.png", 6, StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH)
+	var tex_hover: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/btn_frame_hover.png", 6, StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH)
+	if tex_normal != null and tex_hover != null:
+		button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		var tex_pressed: StyleBoxTexture = tex_normal.duplicate()
+		tex_pressed.modulate_color = Color(0.7, 0.7, 0.7, 1.0)
+		var tex_disabled: StyleBoxTexture = tex_normal.duplicate()
+		tex_disabled.modulate_color = Color(0.4, 0.4, 0.4, 0.7)
+		button.add_theme_stylebox_override("normal", tex_normal)
+		button.add_theme_stylebox_override("hover", tex_hover)
+		button.add_theme_stylebox_override("pressed", tex_pressed)
+		button.add_theme_stylebox_override("disabled", tex_disabled)
+	else:
+		var normal: StyleBoxFlat = StyleBoxFlat.new()
+		normal.bg_color = Color(0.14, 0.09, 0.04, 1.0)
+		normal.border_color = Color(0.6, 0.38, 0.12, 1.0)
+		normal.border_width_left = 1
+		normal.border_width_top = 1
+		normal.border_width_right = 1
+		normal.border_width_bottom = 1
+		normal.corner_radius_top_left = 6
+		normal.corner_radius_top_right = 6
+		normal.corner_radius_bottom_right = 6
+		normal.corner_radius_bottom_left = 6
+		var hover: StyleBoxFlat = normal.duplicate()
+		hover.bg_color = Color(0.22, 0.14, 0.06, 1.0)
+		hover.border_color = Color(0.85, 0.55, 0.15, 1.0)
+		var pressed: StyleBoxFlat = normal.duplicate()
+		pressed.bg_color = Color(0.1, 0.06, 0.03, 1.0)
+		pressed.border_color = Color(0.5, 0.3, 0.1, 1.0)
+		var disabled: StyleBoxFlat = normal.duplicate()
+		disabled.bg_color = Color(0.08, 0.06, 0.05, 0.9)
+		disabled.border_color = Color(0.25, 0.18, 0.1, 0.9)
+		button.add_theme_stylebox_override("normal", normal)
+		button.add_theme_stylebox_override("hover", hover)
+		button.add_theme_stylebox_override("pressed", pressed)
+		button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_color_override("font_color", Color(0.92, 0.72, 0.38))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.85, 0.5))
+	button.add_theme_color_override("font_pressed_color", Color(0.75, 0.55, 0.3))
+	button.add_theme_color_override("font_disabled_color", Color(0.35, 0.25, 0.15))
 
 
 func _style_button_secondary(button: Button) -> void:
 	var menu_scale: float = _get_menu_scale()
 	button.custom_minimum_size = Vector2(0, UiTextureUtils.scale_dimension(44.0, menu_scale, 2, 38.0))
 	button.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(16.0, menu_scale, 1, 13.0)))
-	var normal_tex: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/button_secondary_normal.png", 24, StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT)
-	var hover_tex: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/button_secondary_hover.png", 24, StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT)
-	var pressed_tex: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/button_secondary_pressed.png", 24, StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT)
-	if normal_tex != null and hover_tex != null and pressed_tex != null:
-		button.add_theme_stylebox_override("normal", normal_tex)
-		button.add_theme_stylebox_override("hover", hover_tex)
-		button.add_theme_stylebox_override("pressed", pressed_tex)
-		button.add_theme_color_override("font_color", Color(0.78, 0.88, 0.98))
-		button.add_theme_color_override("font_hover_color", Color(0.92, 0.97, 1.0))
-		return
-	var normal: StyleBoxFlat = StyleBoxFlat.new()
-	normal.bg_color = Color(0.09, 0.13, 0.20, 0.9)
-	normal.border_color = Color(0.22, 0.34, 0.52, 0.85)
-	normal.border_width_left = 1
-	normal.border_width_top = 1
-	normal.border_width_right = 1
-	normal.border_width_bottom = 1
-	normal.corner_radius_top_left = 7
-	normal.corner_radius_top_right = 7
-	normal.corner_radius_bottom_right = 7
-	normal.corner_radius_bottom_left = 7
-	var hover: StyleBoxFlat = normal.duplicate()
-	hover.bg_color = Color(0.13, 0.20, 0.30, 0.95)
-	hover.border_color = Color(0.34, 0.52, 0.76, 1.0)
-	var pressed: StyleBoxFlat = normal.duplicate()
-	pressed.bg_color = Color(0.07, 0.10, 0.16, 0.9)
-	button.add_theme_stylebox_override("normal", normal)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", pressed)
-	button.add_theme_color_override("font_color", Color(0.78, 0.88, 0.98))
-	button.add_theme_color_override("font_hover_color", Color(0.92, 0.97, 1.0))
-	button.add_theme_color_override("font_pressed_color", Color(0.70, 0.80, 0.92))
+	# Pixel art button frame (dimmed for secondary)
+	var tex_normal: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/btn_frame_normal.png", 6, StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH)
+	var tex_hover: StyleBoxTexture = UiTextureUtils.load_stylebox_texture("res://assets/ui/panels/btn_frame_hover.png", 6, StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH)
+	if tex_normal != null and tex_hover != null:
+		button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		var dim_normal: StyleBoxTexture = tex_normal.duplicate()
+		dim_normal.modulate_color = Color(0.75, 0.75, 0.75, 0.9)
+		var dim_hover: StyleBoxTexture = tex_hover.duplicate()
+		dim_hover.modulate_color = Color(0.9, 0.9, 0.9, 1.0)
+		var dim_pressed: StyleBoxTexture = tex_normal.duplicate()
+		dim_pressed.modulate_color = Color(0.55, 0.55, 0.55, 0.85)
+		button.add_theme_stylebox_override("normal", dim_normal)
+		button.add_theme_stylebox_override("hover", dim_hover)
+		button.add_theme_stylebox_override("pressed", dim_pressed)
+	else:
+		var normal: StyleBoxFlat = StyleBoxFlat.new()
+		normal.bg_color = Color(0.1, 0.07, 0.04, 0.9)
+		normal.border_color = Color(0.45, 0.28, 0.1, 0.85)
+		normal.border_width_left = 1
+		normal.border_width_top = 1
+		normal.border_width_right = 1
+		normal.border_width_bottom = 1
+		normal.corner_radius_top_left = 6
+		normal.corner_radius_top_right = 6
+		normal.corner_radius_bottom_right = 6
+		normal.corner_radius_bottom_left = 6
+		var hover: StyleBoxFlat = normal.duplicate()
+		hover.bg_color = Color(0.16, 0.1, 0.05, 0.95)
+		hover.border_color = Color(0.7, 0.45, 0.12, 1.0)
+		var pressed: StyleBoxFlat = normal.duplicate()
+		pressed.bg_color = Color(0.07, 0.05, 0.03, 0.9)
+		button.add_theme_stylebox_override("normal", normal)
+		button.add_theme_stylebox_override("hover", hover)
+		button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_color_override("font_color", Color(0.78, 0.6, 0.35))
+	button.add_theme_color_override("font_hover_color", Color(0.95, 0.75, 0.45))
+	button.add_theme_color_override("font_pressed_color", Color(0.6, 0.45, 0.25))
 
 
 func _style_button_tertiary(button: Button) -> void:
@@ -340,7 +360,7 @@ func _style_button_tertiary(button: Button) -> void:
 	button.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(15.0, menu_scale, 1, 12.0)))
 	var empty: StyleBoxEmpty = StyleBoxEmpty.new()
 	var hover: StyleBoxFlat = StyleBoxFlat.new()
-	hover.bg_color = Color(0.15, 0.22, 0.32, 0.5)
+	hover.bg_color = Color(0.18, 0.12, 0.06, 0.5)
 	hover.corner_radius_top_left = 6
 	hover.corner_radius_top_right = 6
 	hover.corner_radius_bottom_right = 6
@@ -348,8 +368,8 @@ func _style_button_tertiary(button: Button) -> void:
 	button.add_theme_stylebox_override("normal", empty)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", empty)
-	button.add_theme_color_override("font_color", Color(0.52, 0.58, 0.66))
-	button.add_theme_color_override("font_hover_color", Color(0.72, 0.80, 0.90))
+	button.add_theme_color_override("font_color", Color(0.5, 0.38, 0.22))
+	button.add_theme_color_override("font_hover_color", Color(0.8, 0.6, 0.35))
 
 
 func _style_slider(slider: HSlider) -> void:
@@ -494,7 +514,7 @@ func _setup_hero_preview() -> void:
 			glow_sprite.texture = glow_tex
 			glow_sprite.position = Vector2(0, 28)
 			glow_sprite.scale = Vector2(preview_scale * 0.9, preview_scale * 0.4)
-			glow_sprite.modulate = Color(0.2, 0.8, 1.0, 0.3)
+			glow_sprite.modulate = Color(0.9, 0.5, 0.1, 0.3)
 			canvas_container.add_child(glow_sprite)
 			_hero_preview_glow = glow_sprite
 	canvas_container.add_child(sprite)
