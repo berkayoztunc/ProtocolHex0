@@ -1,0 +1,6 @@
+{
+  "archetype": "skirmisher",
+  "character_id": "7611be13-1786-4687-b313-61e537cfaf64",
+  "animation_style": "east_west_only",
+  "template": "walking-6-frames"
+}

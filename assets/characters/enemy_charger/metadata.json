@@ -1,0 +1,6 @@
+{
+  "archetype": "charger",
+  "character_id": "d8b21eb0-c192-4181-8842-3dbf9c4ec5d5",
+  "animation_style": "east_west_only",
+  "template": "walking-6-frames"
+}

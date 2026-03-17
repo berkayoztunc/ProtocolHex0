@@ -1,23 +1,29 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://1f2xqpajt3e7"]
 
-[ext_resource type="Script" path="res://scripts/chest.gd" id="1_chest"]
+[ext_resource type="Script" uid="uid://b12lepdpto08d" path="res://scripts/chest.gd" id="1_chest"]
+[ext_resource type="Texture2D" uid="uid://ghjkejp52jkb" path="res://assets/ui/icons/icon_chest.png" id="2_sy5e1"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_chest"]
-radius = 10.0
 
-[node name="Chest" type="Node2D"]
+[node name="Chest" type="Node2D" unique_id=1517900599]
 script = ExtResource("1_chest")
 
-[node name="Sprite" type="ColorRect" parent="."]
+[node name="Sprite" type="ColorRect" parent="." unique_id=113741421]
+visible = false
 offset_left = -8.0
 offset_top = -8.0
 offset_right = 8.0
 offset_bottom = 8.0
 color = Color(0.95, 0.75, 0.25, 1)
 
-[node name="Area2D" type="Area2D" parent="."]
+[node name="Area2D" type="Area2D" parent="." unique_id=1048999952]
 collision_layer = 8
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1079558600]
 shape = SubResource("CircleShape2D_chest")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1082702125]
+position = Vector2(2.3841858e-07, 1.0000001)
+scale = Vector2(0.6875, 0.65625006)
+texture = ExtResource("2_sy5e1")

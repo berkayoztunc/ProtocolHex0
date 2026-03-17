@@ -20,8 +20,28 @@ var _generated_sprite: Sprite2D = null
 var _use_generated_sprite: bool = false
 var _animated_sprite: AnimatedSprite2D = null
 var _enemy_direction: String = "south"
+var archetype_id: String = "runner"
+var archetype_data: Dictionary = {}
+var _east_west_only: bool = false
+var can_shoot: bool = false
+var fire_cooldown: float = 1.6
+var fire_range: float = 260.0
+var projectile_speed: float = 280.0
+var projectile_lifetime: float = 1.4
+var projectile_damage_ratio: float = 0.8
+var projectile_scene_type: String = "standard"
+var projectile_damage_type: String = "physical"
+var projectile_aoe_enabled: bool = false
+var projectile_aoe_radius: float = 60.0
+var projectile_aoe_damage_ratio: float = 0.65
+var projectile_color: Color = Color(1.0, 0.6, 0.3, 1.0)
+var projectile_name: String = "plasma_rifle"
+var _fire_timer: float = 0.0
+var _behavior_time: float = 0.0
 
 var damage_number_scene: PackedScene = preload("res://scenes/damage_number.tscn")
+var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
+var aoe_bullet_scene: PackedScene = preload("res://scenes/aoe_bullet.tscn")
 
 @onready var damage_timer: Timer = $DamageTimer
 @onready var health_bar: ProgressBar = $HealthBar
@@ -30,6 +50,10 @@ var damage_number_scene: PackedScene = preload("res://scenes/damage_number.tscn"
 
 func _ready() -> void:
 	add_to_group("enemies")
+	if archetype_data.is_empty():
+		var default_archetype: Variant = ConfigService.get_value("enemies.archetypes.runner", null)
+		if default_archetype != null and typeof(default_archetype) == TYPE_DICTIONARY:
+			setup_from_archetype("runner", default_archetype as Dictionary)
 	max_health = health
 	damage_timer.wait_time = damage_cooldown
 	damage_timer.one_shot = true
@@ -40,6 +64,44 @@ func _ready() -> void:
 	_setup_animated_sprite()
 	if _animated_sprite == null:
 		_setup_generated_sprite()
+	_fire_timer = randf_range(0.0, fire_cooldown)
+
+
+func setup_from_archetype(new_archetype_id: String, data: Dictionary) -> void:
+	archetype_id = new_archetype_id
+	archetype_data = data.duplicate(true)
+	health = int(archetype_data.get("base_health", health))
+	max_health = health
+	speed = float(archetype_data.get("base_speed", speed))
+	damage = int(archetype_data.get("base_damage", damage))
+	physical_resistance = float(archetype_data.get("physical_resistance", physical_resistance))
+	explosive_resistance = float(archetype_data.get("explosive_resistance", explosive_resistance))
+	can_shoot = bool(archetype_data.get("is_ranged", false))
+	_setup_fire_profile(str(archetype_data.get("fire_profile_id", "")))
+
+
+func _setup_fire_profile(fire_profile_id: String) -> void:
+	if fire_profile_id.is_empty():
+		can_shoot = false if not bool(archetype_data.get("is_ranged", false)) else can_shoot
+		return
+	var profile: Variant = ConfigService.get_value("enemies.fire_profiles.%s" % fire_profile_id, null)
+	if profile == null or typeof(profile) != TYPE_DICTIONARY:
+		return
+	var data: Dictionary = profile as Dictionary
+	projectile_scene_type = str(data.get("projectile_scene", projectile_scene_type))
+	fire_cooldown = maxf(0.2, float(data.get("cooldown", fire_cooldown)))
+	fire_range = maxf(40.0, float(data.get("range", fire_range)))
+	projectile_speed = maxf(80.0, float(data.get("bullet_speed", projectile_speed)))
+	projectile_lifetime = maxf(0.2, float(data.get("bullet_lifetime", projectile_lifetime)))
+	projectile_damage_ratio = clampf(float(data.get("damage_ratio", projectile_damage_ratio)), 0.1, 2.2)
+	projectile_damage_type = str(data.get("damage_type", projectile_damage_type))
+	projectile_aoe_enabled = bool(data.get("is_aoe", projectile_aoe_enabled))
+	projectile_aoe_radius = maxf(20.0, float(data.get("aoe_radius", projectile_aoe_radius)))
+	projectile_aoe_damage_ratio = clampf(float(data.get("aoe_damage_ratio", projectile_aoe_damage_ratio)), 0.1, 1.0)
+	projectile_name = str(data.get("projectile_name", projectile_name))
+	var color_arr: Array = data.get("color", []) as Array
+	if color_arr.size() >= 3:
+		projectile_color = Color(float(color_arr[0]), float(color_arr[1]), float(color_arr[2]), 1.0)
 
 
 func _setup_generated_sprite() -> void:
@@ -69,17 +131,27 @@ func _setup_generated_sprite() -> void:
 
 
 func _get_enemy_sprite_path() -> String:
+	var archetype_sprite: String = str(archetype_data.get("sprite_path", ""))
+	if not archetype_sprite.is_empty() and ResourceLoader.exists(archetype_sprite):
+		return archetype_sprite
 	return "res://assets/enemies/enemy_elite.png" if is_elite else "res://assets/enemies/enemy_basic.png"
 
 
 func _get_enemy_char_base_path() -> String:
+	var archetype_char_path: String = str(archetype_data.get("char_base_path", ""))
+	var archetype_walk_probe: String = "%s/animations/walking-6-frames/south/frame_000.png" % archetype_char_path
+	if not archetype_char_path.is_empty() and ResourceLoader.exists(archetype_walk_probe):
+		return archetype_char_path
 	return "res://assets/characters/enemy_elite" if is_elite else "res://assets/characters/enemy_basic"
 
 
 func _setup_animated_sprite() -> void:
 	var base_path: String = _get_enemy_char_base_path()
-	var walk_south_path: String = "%s/animations/walking-6-frames/south/frame_000.png" % base_path
-	if not ResourceLoader.exists(walk_south_path):
+	var east_path: String = "%s/animations/walking-6-frames/east/frame_000.png" % base_path
+	var south_path: String = "%s/animations/walking-6-frames/south/frame_000.png" % base_path
+	var has_east: bool = ResourceLoader.exists(east_path)
+	var has_south: bool = ResourceLoader.exists(south_path)
+	if not has_east and not has_south:
 		return
 	var body: ColorRect = $Body
 	if body:
@@ -89,24 +161,44 @@ func _setup_animated_sprite() -> void:
 	sprite.position = Vector2.ZERO
 	var frames: SpriteFrames = SpriteFrames.new()
 	frames.remove_animation("default")
-	for direction in ["south", "north", "east", "west"]:
-		_add_enemy_animation_frames(frames, base_path, "walk_%s" % direction, direction, 10.0)
+	if has_east:
+		# East/west only mode (new archetypes — side-scrolling movement)
+		_east_west_only = true
+		_add_enemy_animation_frames(frames, base_path, "walk_east", "east", 10.0)
+		var west_path: String = "%s/animations/walking-6-frames/west/frame_000.png" % base_path
+		if ResourceLoader.exists(west_path):
+			_add_enemy_animation_frames(frames, base_path, "walk_west", "west", 10.0)
+		# Also load south/north when present (legacy / elite characters)
+		if has_south:
+			_east_west_only = false
+			for direction in ["south", "north", "west"]:
+				_add_enemy_animation_frames(frames, base_path, "walk_%s" % direction, direction, 10.0)
+	else:
+		# South/north/east/west mode (basic/elite legacy characters)
+		_east_west_only = false
+		for direction in ["south", "north", "east", "west"]:
+			_add_enemy_animation_frames(frames, base_path, "walk_%s" % direction, direction, 10.0)
 	sprite.sprite_frames = frames
-	var ref_tex: Texture2D = load(walk_south_path) as Texture2D
+	var ref_path: String = east_path if has_east else south_path
+	var ref_tex: Texture2D = load(ref_path) as Texture2D
 	if ref_tex != null:
 		var base_target_px: float = ConfigService.get_value("visual.target_px.enemy", 56.0)
 		var enemy_target_px: float = base_target_px * (1.4 if is_elite else 1.0)
 		var side: float = maxf(float(ref_tex.get_width()), float(ref_tex.get_height()))
 		if side > 1.0:
 			sprite.scale = Vector2(enemy_target_px / side, enemy_target_px / side)
-	sprite.play("walk_south")
+	var start_anim: String = "walk_east" if _east_west_only else "walk_south"
+	sprite.play(start_anim)
 	add_child(sprite)
 	_animated_sprite = sprite
 	_use_generated_sprite = true
 
 
 func _add_enemy_animation_frames(frames: SpriteFrames, base_path: String, anim_name: String, direction: String, speed: float) -> void:
-	frames.add_animation(anim_name)
+	if frames.has_animation(anim_name) and frames.get_frame_count(anim_name) > 0:
+		return
+	if not frames.has_animation(anim_name):
+		frames.add_animation(anim_name)
 	frames.set_animation_speed(anim_name, speed)
 	frames.set_animation_loop(anim_name, true)
 	for i in range(8):
@@ -115,9 +207,10 @@ func _add_enemy_animation_frames(frames: SpriteFrames, base_path: String, anim_n
 			var tex: Texture2D = load(path) as Texture2D
 			if tex:
 				frames.add_frame(anim_name, tex)
-	if frames.get_frame_count(anim_name) == 0 and direction != "south":
+	if frames.get_frame_count(anim_name) == 0:
+		var fallback_dir: String = "east" if ResourceLoader.exists("%s/animations/walking-6-frames/east/frame_000.png" % base_path) else "south"
 		for i in range(8):
-			var fallback_path: String = "%s/animations/walking-6-frames/south/frame_%03d.png" % [base_path, i]
+			var fallback_path: String = "%s/animations/walking-6-frames/%s/frame_%03d.png" % [base_path, fallback_dir, i]
 			if ResourceLoader.exists(fallback_path):
 				var tex: Texture2D = load(fallback_path) as Texture2D
 				if tex:
@@ -127,14 +220,35 @@ func _add_enemy_animation_frames(frames: SpriteFrames, base_path: String, anim_n
 func _update_enemy_animation(move_dir: Vector2) -> void:
 	if _animated_sprite == null:
 		return
-	if move_dir.length_squared() > 0.01:
+	if move_dir.length_squared() < 0.01:
+		return
+	if _east_west_only:
+		# Side-scrolling mode: use east/west based on x, flip when west animation missing
+		var going_right: bool = move_dir.x >= 0.0
+		var has_west_anim: bool = _animated_sprite.sprite_frames.has_animation("walk_west") \
+			and _animated_sprite.sprite_frames.get_frame_count("walk_west") > 0
+		if has_west_anim:
+			_enemy_direction = "east" if going_right else "west"
+			_animated_sprite.flip_h = false
+			var walk_anim: String = "walk_%s" % _enemy_direction
+			if _animated_sprite.animation != walk_anim:
+				_animated_sprite.play(walk_anim)
+		else:
+			# Flip east animation for west movement
+			_enemy_direction = "east" if going_right else "west"
+			_animated_sprite.flip_h = not going_right
+			if _animated_sprite.animation != "walk_east":
+				_animated_sprite.play("walk_east")
+	else:
+		# 4-directional mode (legacy basic/elite)
 		if absf(move_dir.x) > absf(move_dir.y):
 			_enemy_direction = "east" if move_dir.x > 0.0 else "west"
 		else:
 			_enemy_direction = "south" if move_dir.y > 0.0 else "north"
 		var walk_anim: String = "walk_%s" % _enemy_direction
-		if _animated_sprite.animation != walk_anim:
-			_animated_sprite.play(walk_anim)
+		if _animated_sprite.sprite_frames.has_animation(walk_anim):
+			if _animated_sprite.animation != walk_anim:
+				_animated_sprite.play(walk_anim)
 
 
 func _update_generated_sprite_texture() -> void:
@@ -150,9 +264,13 @@ func _update_generated_sprite_texture() -> void:
 
 func _physics_process(delta: float) -> void:
 	var dir: Vector2 = Vector2.ZERO
+	_behavior_time += delta
+	_fire_timer = maxf(0.0, _fire_timer - delta)
 	if target and is_instance_valid(target):
-		dir = (target.global_position - global_position).normalized()
+		var to_target: Vector2 = target.global_position - global_position
+		dir = _compute_behavior_direction(to_target)
 		velocity = dir * speed
+		_try_ranged_attack(to_target)
 	else:
 		velocity = Vector2.ZERO
 	move_and_slide()
@@ -168,6 +286,78 @@ func _physics_process(delta: float) -> void:
 				collider.take_damage(damage)
 				can_damage = false
 				damage_timer.start()
+
+
+func _compute_behavior_direction(to_target: Vector2) -> Vector2:
+	if to_target.length_squared() < 0.01:
+		return Vector2.ZERO
+	var base_dir: Vector2 = to_target.normalized()
+	var dist: float = to_target.length()
+	var behavior: String = str(archetype_data.get("behavior", "runner"))
+	match behavior:
+		"zigzag":
+			var side_wave: float = sin(_behavior_time * 6.0)
+			var lateral: Vector2 = base_dir.orthogonal() * side_wave * 0.55
+			return (base_dir + lateral).normalized()
+		"skirmisher":
+			var desired_mid: float = fire_range * 0.78
+			if dist < desired_mid * 0.75:
+				return (-base_dir + (base_dir.orthogonal() * sin(_behavior_time * 5.5) * 0.35)).normalized()
+			if dist > desired_mid * 1.25:
+				return (base_dir + (base_dir.orthogonal() * sin(_behavior_time * 5.5) * 0.35)).normalized()
+			return base_dir.orthogonal().normalized() * signf(sin(_behavior_time * 2.1))
+		"sniper":
+			if dist < fire_range * 0.65:
+				return -base_dir
+			if dist > fire_range * 1.15:
+				return base_dir
+			return Vector2.ZERO
+		"mortar":
+			if dist < fire_range * 0.7:
+				return -base_dir
+			if dist > fire_range * 1.05:
+				return base_dir
+			return Vector2.ZERO
+		"charger":
+			return base_dir * 1.1
+		_:
+			return base_dir
+
+
+func _try_ranged_attack(to_target: Vector2) -> void:
+	if not can_shoot:
+		return
+	if _fire_timer > 0.0:
+		return
+	if to_target.length() > fire_range:
+		return
+	if bullet_scene == null:
+		return
+	var shot_scene: PackedScene = aoe_bullet_scene if projectile_scene_type == "aoe" else bullet_scene
+	if shot_scene == null:
+		return
+	var shot: Node2D = shot_scene.instantiate()
+	if shot == null:
+		return
+	var fire_dir: Vector2 = to_target.normalized()
+	shot.global_position = global_position
+	if shot.has_method("set_direction"):
+		shot.set_direction(fire_dir)
+	if shot.has_method("set_damage"):
+		shot.set_damage(maxi(1, int(round(float(damage) * projectile_damage_ratio))))
+	if shot.has_method("set_damage_type"):
+		shot.set_damage_type(projectile_damage_type)
+	shot.speed = projectile_speed
+	shot.lifetime = projectile_lifetime
+	shot.weapon_type = projectile_name
+	shot.target_group = "player"
+	shot.modulate = projectile_color
+	if projectile_aoe_enabled:
+		shot.is_aoe = true
+		shot.aoe_radius = projectile_aoe_radius
+		shot.aoe_damage_ratio = projectile_aoe_damage_ratio
+	get_tree().current_scene.add_child(shot)
+	_fire_timer = fire_cooldown
 
 
 func take_damage(amount: int, damage_type: String = "physical", is_crit: bool = false) -> void:
@@ -292,3 +482,4 @@ func apply_scaling(progress_ratio: float, elite: bool, health_growth: float, spe
 	max_health = health
 	_update_health_bar()
 	_update_generated_sprite_texture()
+	_fire_timer = randf_range(0.0, fire_cooldown)

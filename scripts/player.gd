@@ -18,7 +18,7 @@ signal projectile_class_changed(projectile_class: String)
 
 var health: int
 var xp: int = 0
-var level: int = 1
+var level: int = 20
 var xp_to_next_level: int = 10
 var can_shoot: bool = true
 var bomb_charges: int = 0
@@ -1088,8 +1088,9 @@ func _spawn_vfx_ring(vfx_path: String, pos: Vector2, radius: float) -> void:
 
 # ---- Hero Sprite System ----
 var _hero_sprite: AnimatedSprite2D = null
-var _last_move_dir: Vector2 = Vector2.DOWN
-var _hero_direction: String = "south"
+var _last_move_dir: Vector2 = Vector2.RIGHT
+var _hero_direction: String = "east"
+var _hero_base_path: String = "res://assets/characters/main_hero_copper_golem"
 
 # ---- Weapon Visual System ----
 var _weapon_sprite: Sprite2D = null
@@ -1108,8 +1109,8 @@ func _setup_hero_sprite() -> void:
 		body.visible = false
 
 	# Check if PixelLab sprite sheets exist
-	var idle_south: String = "res://assets/characters/genihero_ui/animations/breathing-idle/south/frame_000.png"
-	if not ResourceLoader.exists(idle_south):
+	var idle_east: String = "%s/rotations/east.png" % _hero_base_path
+	if not ResourceLoader.exists(idle_east):
 		return  # Assets not imported yet; keep ColorRect visible
 
 	if body:
@@ -1120,7 +1121,7 @@ func _setup_hero_sprite() -> void:
 	sprite.position = Vector2.ZERO
 	var hero_scale: float = ConfigService.get_value("visual.sprite_scale.hero", 1.8)
 	var hero_target_px: float = ConfigService.get_value("visual.target_px.hero", 96.0)
-	var idle_tex: Texture2D = load(idle_south) as Texture2D
+	var idle_tex: Texture2D = load(idle_east) as Texture2D
 	if idle_tex != null:
 		var hero_side: float = maxf(float(idle_tex.get_width()), float(idle_tex.get_height()))
 		if hero_side > 1.0:
@@ -1129,16 +1130,16 @@ func _setup_hero_sprite() -> void:
 
 	var frames: SpriteFrames = SpriteFrames.new()
 	frames.remove_animation("default")
-
-	for direction in ["south", "north", "east", "west"]:
-		_add_directional_animation_frames(frames, "breathing-idle", "idle_%s" % direction, direction, 8.0)
-		_add_directional_animation_frames(frames, "walk", "walk_%s" % direction, direction, 10.0)
+	_add_idle_rotation_frame(frames, "east")
+	_add_idle_rotation_frame(frames, "west")
+	_add_directional_animation_frames(frames, "walk", "walk_east", "east", 10.0)
+	_add_directional_animation_frames(frames, "walk", "walk_west", "west", 10.0)
 
 	sprite.sprite_frames = frames
-	sprite.play("idle_south")
+	sprite.play("idle_east")
 	add_child(sprite)
 	_hero_sprite = sprite
-	_hero_direction = "south"
+	_hero_direction = "east"
 	_setup_weapon_sprite()
 
 
@@ -1183,24 +1184,31 @@ func _add_directional_animation_frames(frames: SpriteFrames, source_anim: String
 	frames.set_animation_speed(target_anim, speed)
 	frames.set_animation_loop(target_anim, true)
 	for i in range(6):
-		var path: String = "res://assets/characters/genihero_ui/animations/%s/%s/frame_%03d.png" % [source_anim, direction, i]
+		var path: String = "%s/animations/%s/%s/frame_%03d.png" % [_hero_base_path, source_anim, direction, i]
 		if ResourceLoader.exists(path):
 			var tex: Texture2D = load(path) as Texture2D
 			if tex:
 				frames.add_frame(target_anim, tex)
-	if frames.get_frame_count(target_anim) == 0 and direction != "south":
-		for i in range(6):
-			var fallback_path: String = "res://assets/characters/genihero_ui/animations/%s/south/frame_%03d.png" % [source_anim, i]
-			if ResourceLoader.exists(fallback_path):
-				var fallback_tex: Texture2D = load(fallback_path) as Texture2D
-				if fallback_tex:
-					frames.add_frame(target_anim, fallback_tex)
+
+
+func _add_idle_rotation_frame(frames: SpriteFrames, direction: String) -> void:
+	var anim_name: String = "idle_%s" % direction
+	frames.add_animation(anim_name)
+	frames.set_animation_speed(anim_name, 8.0)
+	frames.set_animation_loop(anim_name, true)
+	var path: String = "%s/rotations/%s.png" % [_hero_base_path, direction]
+	if ResourceLoader.exists(path):
+		var tex: Texture2D = load(path) as Texture2D
+		if tex:
+			frames.add_frame(anim_name, tex)
 
 
 func _get_cardinal_direction(move_dir: Vector2) -> String:
-	if absf(move_dir.x) > absf(move_dir.y):
-		return "east" if move_dir.x > 0.0 else "west"
-	return "south" if move_dir.y > 0.0 else "north"
+	if move_dir.x > 0.01:
+		return "east"
+	if move_dir.x < -0.01:
+		return "west"
+	return _hero_direction
 
 
 func _update_hero_animation(move_dir: Vector2) -> void:

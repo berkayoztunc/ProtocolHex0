@@ -8,6 +8,7 @@ var direction: Vector2 = Vector2.RIGHT
 var damage_type: String = "physical"
 var weapon_type: String = "plasma_rifle"
 var is_crit: bool = false
+var target_group: String = "enemies"
 var _proj_sprite: Sprite2D = null
 var burn_chance: float = 0.0
 var burn_damage: int = 0
@@ -112,13 +113,13 @@ func _process_orbit(delta: float) -> void:
 
 
 func _on_body_entered(body: Node2D) -> void:
-	if not body.is_in_group("enemies") or not body.has_method("take_damage"):
+	if not body.is_in_group(target_group) or not body.has_method("take_damage"):
 		return
 	if body in _hit_enemies:
 		return
 
-	body.take_damage(damage, damage_type, is_crit)
-	if burn_chance > 0.0 and burn_damage > 0 and randf() <= burn_chance and body.has_method("apply_burn"):
+	_apply_damage_to_target(body, damage)
+	if target_group == "enemies" and burn_chance > 0.0 and burn_damage > 0 and randf() <= burn_chance and body.has_method("apply_burn"):
 		body.apply_burn(burn_damage, burn_duration)
 	_hit_enemies.append(body)
 
@@ -149,7 +150,7 @@ func _on_body_entered(body: Node2D) -> void:
 
 func _do_aoe_explosion() -> void:
 	_spawn_explosion_vfx()
-	var enemies: Array = get_tree().get_nodes_in_group("enemies")
+	var enemies: Array = get_tree().get_nodes_in_group(target_group)
 	var aoe_dmg: int = maxi(1, int(round(float(damage) * aoe_damage_ratio)))
 	for enemy in enemies:
 		if enemy in _hit_enemies:
@@ -157,12 +158,12 @@ func _do_aoe_explosion() -> void:
 		if enemy.has_method("take_damage"):
 			var dist: float = global_position.distance_to(enemy.global_position)
 			if dist <= aoe_radius:
-				enemy.take_damage(aoe_dmg, "explosive")
+				_apply_damage_to_target(enemy, aoe_dmg)
 				_hit_enemies.append(enemy)
 
 
 func _find_chain_target() -> Node2D:
-	var enemies: Array = get_tree().get_nodes_in_group("enemies")
+	var enemies: Array = get_tree().get_nodes_in_group(target_group)
 	var nearest: Node2D = null
 	var nearest_dist: float = chain_range
 	for enemy in enemies:
@@ -173,6 +174,13 @@ func _find_chain_target() -> Node2D:
 			nearest_dist = dist
 			nearest = enemy
 	return nearest
+
+
+func _apply_damage_to_target(target: Node2D, amount: int) -> void:
+	if target_group == "player":
+		target.take_damage(amount)
+		return
+	target.take_damage(amount, damage_type, is_crit)
 
 
 func _setup_projectile_sprite() -> void:

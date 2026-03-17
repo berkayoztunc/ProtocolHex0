@@ -1,0 +1,6 @@
+{
+  "archetype": "mortar",
+  "character_id": "d287eefc-feff-406f-ad3c-313e5a7026cb",
+  "animation_style": "east_west_only",
+  "template": "walking-6-frames"
+}

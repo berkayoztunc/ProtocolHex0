@@ -16,7 +16,7 @@ var elapsed_seconds: float = 0.0
 var upgrade_stacks: Dictionary = {}
 var weapon_display_timer: float = 0.0
 var perk_tree_instance: Control = null
-var perk_points: int = 0
+var perk_points: int = 100
 
 var upgrade_catalog: Dictionary = {
 	# --- Tier 1: Temel İstatistikler (Maliyet: 1) ---
@@ -110,6 +110,7 @@ func _ready() -> void:
 	hud.update_level(1)
 	hud.update_kills(0)
 	hud.update_perk_charges(player.bomb_charges, player.heal_charges)
+	hud.update_perk_points(perk_points)
 	_apply_start_state()
 	_persist_run_state()
 	# Init weapon and targeting display
@@ -148,14 +149,20 @@ func _spawn_enemy() -> void:
 	var dist: float = randf_range(min_spawn_distance, max_spawn_distance)
 	enemy.global_position = player.global_position + Vector2(cos(angle), sin(angle)) * dist
 	enemy.target = player
+	var archetype_id: String = _pick_enemy_archetype_id()
+	var archetype_data: Dictionary = _get_enemy_archetype_data(archetype_id)
+	if enemy.has_method("setup_from_archetype"):
+		enemy.setup_from_archetype(archetype_id, archetype_data)
 	var progress_ratio: float = _compute_difficulty_progress()
 	var elite_chance: float = _compute_elite_chance()
 	var is_elite: bool = randf() <= elite_chance
 	var health_growth: float = float(ConfigService.get_value("difficulty.enemy_health_growth", 0.09))
 	var speed_growth: float = float(ConfigService.get_value("difficulty.enemy_speed_growth", 0.03))
 	var damage_growth: float = float(ConfigService.get_value("difficulty.enemy_damage_growth", 0.05))
-	enemy.physical_resistance = clampf(progress_ratio * float(ConfigService.get_value("difficulty.physical_resist_growth", 0.02)), 0.0, 0.65)
-	enemy.explosive_resistance = clampf(progress_ratio * float(ConfigService.get_value("difficulty.explosive_resist_growth", 0.01)), 0.0, 0.5)
+	var base_physical_resist: float = float(archetype_data.get("physical_resistance", 0.0))
+	var base_explosive_resist: float = float(archetype_data.get("explosive_resistance", 0.0))
+	enemy.physical_resistance = clampf(base_physical_resist + (progress_ratio * float(ConfigService.get_value("difficulty.physical_resist_growth", 0.02))), 0.0, 0.65)
+	enemy.explosive_resistance = clampf(base_explosive_resist + (progress_ratio * float(ConfigService.get_value("difficulty.explosive_resist_growth", 0.01))), 0.0, 0.5)
 	if enemy.has_method("apply_scaling"):
 		enemy.apply_scaling(progress_ratio, is_elite, health_growth, speed_growth, damage_growth)
 	enemy.died.connect(_on_enemy_died)
@@ -277,7 +284,9 @@ func _toggle_perk_tree() -> void:
 func _on_perk_tree_closed() -> void:
 	perk_tree_instance = null
 	if not game_over:
-		get_tree().paused = false
+		var tree := get_tree()
+		if tree:
+			tree.paused = false
 
 
 func _on_player_level_changed(new_level: int) -> void:
@@ -285,6 +294,7 @@ func _on_player_level_changed(new_level: int) -> void:
 		return
 	MockApiClient.queue_event("level_up", {"level": new_level})
 	perk_points += 1
+	hud.update_perk_points(perk_points)
 	_persist_run_state()
 	if game_over:
 		return
@@ -300,6 +310,7 @@ func _apply_start_state() -> void:
 		upgrade_stacks = Session.last_run.get("upgrade_stacks", {}).duplicate(true)
 		perk_points = int(Session.last_run.get("perk_points", 0))
 		hud.update_kills(kill_count)
+		hud.update_perk_points(perk_points)
 	Session.pending_continue = false
 
 
@@ -320,6 +331,7 @@ func _on_perk_tree_upgrade_selected(upgrade_id: String) -> void:
 	player.apply_upgrade(upgrade_id)
 	_upgrade_stack_increment(upgrade_id)
 	perk_points -= cost
+	hud.update_perk_points(perk_points)
 	MockApiClient.queue_event("perk_tree_selected", {"id": upgrade_id, "cost": cost, "remaining_points": perk_points})
 	_persist_run_state()
 	if perk_points <= 0 and perk_tree_instance and is_instance_valid(perk_tree_instance):
@@ -355,6 +367,81 @@ func _compute_elite_chance() -> float:
 	var max_chance: float = float(ConfigService.get_value("difficulty.max_elite_chance", 0.2))
 	var minutes: float = elapsed_seconds / 60.0
 	return clampf(base + (minutes * per_minute), base, max_chance)
+
+
+func _pick_enemy_archetype_id() -> String:
+	var available_ids: Array[String] = _get_available_enemy_archetype_ids()
+	if available_ids.is_empty():
+		return "runner"
+	var total_weight: float = 0.0
+	for archetype_id in available_ids:
+		var data: Dictionary = _get_enemy_archetype_data(archetype_id)
+		total_weight += _get_effective_archetype_weight(data)
+	var roll: float = randf() * maxf(total_weight, 0.01)
+	var cursor: float = 0.0
+	for archetype_id in available_ids:
+		var data: Dictionary = _get_enemy_archetype_data(archetype_id)
+		cursor += _get_effective_archetype_weight(data)
+		if roll <= cursor:
+			return archetype_id
+	return available_ids.back()
+
+
+func _get_available_enemy_archetype_ids() -> Array[String]:
+	var result: Array[String] = []
+	var archetypes: Dictionary = ConfigService.get_value("enemies.archetypes", {}) as Dictionary
+	if archetypes.is_empty():
+		result.append("runner")
+		return result
+	var unlock_mode: String = str(ConfigService.get_value("enemies.spawn_unlock_mode", "hybrid_or"))
+	for key in archetypes.keys():
+		var archetype_id: String = str(key)
+		var data: Dictionary = archetypes[archetype_id] as Dictionary
+		if _is_enemy_archetype_unlocked(data, unlock_mode):
+			result.append(archetype_id)
+	if result.is_empty():
+		result.append("runner")
+	return result
+
+
+func _is_enemy_archetype_unlocked(archetype_data: Dictionary, unlock_mode: String) -> bool:
+	var req_kills: int = int(archetype_data.get("unlock_kills", 0))
+	var req_seconds: float = float(archetype_data.get("unlock_seconds", 0.0))
+	if unlock_mode == "hybrid_and":
+		return kill_count >= req_kills and elapsed_seconds >= req_seconds
+	return kill_count >= req_kills or elapsed_seconds >= req_seconds
+
+
+func _get_enemy_archetype_data(archetype_id: String) -> Dictionary:
+	var data: Variant = ConfigService.get_value("enemies.archetypes.%s" % archetype_id, null)
+	if data != null and typeof(data) == TYPE_DICTIONARY:
+		return data as Dictionary
+	var fallback: Variant = ConfigService.get_value("enemies.archetypes.runner", null)
+	if fallback != null and typeof(fallback) == TYPE_DICTIONARY:
+		return fallback as Dictionary
+	return {}
+
+
+func _get_effective_archetype_weight(archetype_data: Dictionary) -> float:
+	var base_weight: float = maxf(0.01, float(archetype_data.get("spawn_weight", 1.0)))
+	var req_kills: int = int(archetype_data.get("unlock_kills", 0))
+	var req_seconds: float = float(archetype_data.get("unlock_seconds", 0.0))
+	var kill_progress: float = 1.0
+	if req_kills > 0:
+		kill_progress = clampf(float(kill_count) / float(req_kills), 0.0, 1.6)
+	var time_progress: float = 1.0
+	if req_seconds > 0.0:
+		time_progress = clampf(elapsed_seconds / req_seconds, 0.0, 1.6)
+	var hybrid_progress: float = _compute_enemy_unlock_progress(kill_progress, time_progress)
+	var ramp: float = clampf((hybrid_progress - 0.95) / 0.45, 0.25, 1.0)
+	return base_weight * ramp
+
+
+func _compute_enemy_unlock_progress(kill_progress: float, time_progress: float) -> float:
+	var unlock_mode: String = str(ConfigService.get_value("enemies.spawn_unlock_mode", "hybrid_or"))
+	if unlock_mode == "hybrid_and":
+		return minf(kill_progress, time_progress)
+	return maxf(kill_progress, time_progress)
 
 
 func _roll_xp_tier() -> String:
@@ -429,6 +516,7 @@ func _on_chest_opened(_pos: Vector2) -> void:
 		"perk_points":
 			var amount: int = _roll_perk_point_amount()
 			perk_points += amount
+			hud.update_perk_points(perk_points)
 			hud.show_notification("⭐ +%d Perk Puanı!" % amount)
 	_persist_run_state()
 	MockApiClient.queue_event("chest_opened", {"reward": reward, "kills": kill_count})

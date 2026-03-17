@@ -857,7 +857,6 @@ func _style_button(button: Button) -> void:
 		return
 
 	var normal: StyleBoxFlat = StyleBoxFlat.new()
-	normal.bg_color = Color(0.08, 0.12, 0.2, 1.0)
 	normal.border_color = Color(0.22, 0.36, 0.58, 1.0)
 	normal.border_width_left = 1
 	normal.border_width_top = 1

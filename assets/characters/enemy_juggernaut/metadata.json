@@ -1,0 +1,6 @@
+{
+  "archetype": "juggernaut",
+  "character_id": "f3d3d857-0d35-4c76-9ef0-06f56d4813ca",
+  "animation_style": "east_west_only",
+  "template": "walking-6-frames"
+}

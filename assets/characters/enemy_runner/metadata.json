@@ -1,0 +1,6 @@
+{
+  "archetype": "runner",
+  "character_id": "1d7fda18-d204-4284-95ef-6e134cf5f878",
+  "animation_style": "east_west_only",
+  "template": "walking-6-frames"
+}

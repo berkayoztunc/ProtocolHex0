@@ -1,8 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://dsikh2is1iv0h"]
 
-[ext_resource type="Script" path="res://scripts/start_menu.gd" id="1_menu"]
+[ext_resource type="Script" uid="uid://uhrvw7658hq7" path="res://scripts/start_menu.gd" id="1_menu"]
+[ext_resource type="Texture2D" uid="uid://d36j6xuq8aumi" path="res://background.png" id="2_thu50"]
+[ext_resource type="Texture2D" uid="uid://dlhtrecl3qcfr" path="res://mainUi.png" id="3_m7x51"]
 
-[node name="StartMenu" type="Control"]
+[node name="StartMenu" type="Control" unique_id=1790955470]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,138 +13,203 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=1930732772]
+texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -15.0
+offset_top = -6.0
+offset_right = 22.0
+offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.08, 0.12, 1)
+mouse_filter = 2
+texture = ExtResource("2_thu50")
+expand_mode = 2
+stretch_mode = 6
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1591942501]
 layout_mode = 1
-anchor_left = 0.0
-anchor_top = 0.0
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 5.0
+offset_right = -734.0
+offset_bottom = -132.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PanelContainer" type="PanelContainer" parent="CenterContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer" unique_id=1209144292]
+custom_minimum_size = Vector2(516, 300)
 layout_mode = 2
-custom_minimum_size = Vector2(520, 640)
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer" unique_id=1111831391]
 layout_mode = 2
 theme_override_constants/margin_left = 40
 theme_override_constants/margin_top = 40
 theme_override_constants/margin_right = 40
 theme_override_constants/margin_bottom = 40
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer" unique_id=41902362]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="Title" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="Title" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=536893317]
 layout_mode = 2
 text = "GENI HERO"
 horizontal_alignment = 1
 
-[node name="Subtitle" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-text = "SCI-FI ARENA SURVIVOR"
-horizontal_alignment = 1
-
-[node name="NameInput" type="LineEdit" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="NameInput" type="LineEdit" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=648213198]
 layout_mode = 2
 placeholder_text = "Enter your name"
 
-[node name="StartButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/NameInput" unique_id=711425100]
+show_behind_parent = true
+position = Vector2(218.87502, 16)
+scale = Vector2(3.2045455, 2.452381)
+texture = ExtResource("3_m7x51")
+region_enabled = true
+region_rect = Rect2(139.28964, 16.820171, 143.93811, 21.798317)
+
+[node name="StartButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=1224392845]
 layout_mode = 2
 text = "Play"
+flat = true
 
-[node name="ContinueButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/StartButton" unique_id=1170550022]
+show_behind_parent = true
+position = Vector2(218.87502, 16)
+scale = Vector2(3.2045455, 2.452381)
+texture = ExtResource("3_m7x51")
+region_enabled = true
+region_rect = Rect2(139.28964, 16.820171, 143.93811, 21.798317)
+
+[node name="ContinueButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=228713463]
 layout_mode = 2
 text = "Continue"
+flat = true
 
-[node name="PrimarySeparator" type="HSeparator" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ContinueButton" unique_id=761919842]
+show_behind_parent = true
+position = Vector2(218.87502, 16)
+scale = Vector2(3.2045455, 2.452381)
+texture = ExtResource("3_m7x51")
+region_enabled = true
+region_rect = Rect2(139.28964, 16.820171, 143.93811, 21.798317)
+
+[node name="PrimarySeparator" type="HSeparator" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=1072054680]
 layout_mode = 2
 
-[node name="SettingsButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="SettingsButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=1906139219]
 layout_mode = 2
 text = "Settings"
+flat = true
 
-[node name="ControlsButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SettingsButton" unique_id=1511478635]
+show_behind_parent = true
+position = Vector2(218.87502, 16)
+scale = Vector2(3.2045455, 2.452381)
+texture = ExtResource("3_m7x51")
+region_enabled = true
+region_rect = Rect2(139.28964, 16.820171, 143.93811, 21.798317)
+
+[node name="ControlsButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=745554667]
 layout_mode = 2
 text = "Controls"
+flat = true
 
-[node name="SecondarySeparator" type="HSeparator" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsButton" unique_id=1793361476]
+show_behind_parent = true
+position = Vector2(218.87502, 16)
+scale = Vector2(3.2045455, 2.452381)
+texture = ExtResource("3_m7x51")
+region_enabled = true
+region_rect = Rect2(139.28964, 16.820171, 143.93811, 21.798317)
+
+[node name="SecondarySeparator" type="HSeparator" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=417844007]
 layout_mode = 2
 
-[node name="QuitButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="QuitButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=1295102495]
 layout_mode = 2
 text = "Quit"
+flat = true
 
-[node name="SettingsPanel" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/QuitButton" unique_id=715106547]
+show_behind_parent = true
+position = Vector2(218.87502, 16)
+scale = Vector2(3.2045455, 2.452381)
+texture = ExtResource("3_m7x51")
+region_enabled = true
+region_rect = Rect2(139.28964, 16.820171, 143.93811, 21.798317)
+
+[node name="SettingsPanel" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=948548328]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="MasterVolumeLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SettingsPanel"]
+[node name="MasterVolumeLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SettingsPanel" unique_id=1466603989]
 layout_mode = 2
 text = "Master Volume"
 
-[node name="MasterVolumeSlider" type="HSlider" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SettingsPanel"]
+[node name="MasterVolumeSlider" type="HSlider" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SettingsPanel" unique_id=1735885092]
 layout_mode = 2
-min_value = 0.0
 max_value = 1.0
-value = 1.0
 step = 0.05
+value = 1.0
 
-[node name="ControlsPanel" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="ControlsPanel" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=916341855]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="ControlsTitle" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
+[node name="ControlsTitle" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel" unique_id=729197641]
 layout_mode = 2
 text = "Controls"
 
-[node name="ControlsMove" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
+[node name="ControlsMove" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel" unique_id=1750615413]
 layout_mode = 2
 text = "Move: WASD / Arrow Keys"
 
-[node name="ControlsDash" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
+[node name="ControlsDash" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel" unique_id=665951230]
 layout_mode = 2
 text = "Dash: Shift"
 
-[node name="ControlsBomb" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
+[node name="ControlsBomb" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel" unique_id=2004622386]
 layout_mode = 2
 text = "Bomb: Q"
 
-[node name="ControlsHeal" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
+[node name="ControlsHeal" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel" unique_id=712746145]
 layout_mode = 2
 text = "Heal: E"
 
-[node name="ControlsTarget" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
+[node name="ControlsTarget" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel" unique_id=743053084]
 layout_mode = 2
 text = "Targeting mode: Tab"
 
-[node name="ControlsPerk" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
+[node name="ControlsPerk" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel" unique_id=320857550]
 layout_mode = 2
 text = "Perk tree: P"
 
-[node name="ControlsWeapons" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
+[node name="ControlsWeapons" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel" unique_id=163102227]
 layout_mode = 2
 text = "Active weapons: 1-5"
 
-[node name="ControlsBack" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel"]
+[node name="ControlsBack" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsPanel" unique_id=964998055]
 layout_mode = 2
 text = "Menu / Close: Esc"
 
-[node name="VersionLabel" type="Label" parent="."]
-anchors_preset = 12
+[node name="marginFrame" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=612570235]
+position = Vector2(216, 183.625)
+scale = Vector2(2.7135627, 2.650615)
+texture = ExtResource("3_m7x51")
+region_enabled = true
+region_rect = Rect2(10.09346, 151.8615, 247.45705, 244.46965)
+
+[node name="VersionLabel" type="Label" parent="." unique_id=440958747]
+layout_mode = 0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -151,6 +218,40 @@ grow_horizontal = 2
 grow_vertical = 0
 text = "v2.0 — GENI HERO"
 horizontal_alignment = 1
+
+[node name="DetailContainer" type="CenterContainer" parent="." unique_id=776688948]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 682.0
+offset_top = -224.0
+offset_right = -58.0
+offset_bottom = 75.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="DetailContainer" unique_id=802357220]
+custom_minimum_size = Vector2(516, 300)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="DetailContainer/PanelContainer" unique_id=227884078]
+layout_mode = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DetailContainer/PanelContainer/MarginContainer" unique_id=2009335188]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="marginFrame" type="Sprite2D" parent="DetailContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=958075260]
+position = Vector2(217, 126)
+scale = Vector2(2.7135627, 2.650615)
+texture = ExtResource("3_m7x51")
+region_enabled = true
+region_rect = Rect2(10.09346, 151.8615, 247.45705, 244.46965)
 
 [connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ContinueButton" to="." method="_on_continue_button_pressed"]

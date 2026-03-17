@@ -1,17 +1,16 @@
 extends Control
 
-const UiTextureUtils = preload("res://scripts/ui_texture_utils.gd")
-
 signal perk_selected(upgrade_id: String)
 
-# Layout: category -> row, col positions for each perk
+const PerkCardScene: PackedScene = preload("res://scenes/perk_card.tscn")
+
+# ---- Layout: category -> row/col positions for each perk ----
 const PERK_LAYOUT: Dictionary = {
 	# Row 0 - Temel İstatistikler
 	"attack_speed": {"row": 0, "col": 0},
 	"weapon_damage": {"row": 0, "col": 2},
 	"max_health": {"row": 0, "col": 4},
 	"move_speed": {"row": 0, "col": 6},
-
 	# Row 1 - Gelişmiş Yetenekler
 	"crit_chance": {"row": 1, "col": 0},
 	"cooldown_mastery": {"row": 1, "col": 1},
@@ -19,7 +18,6 @@ const PERK_LAYOUT: Dictionary = {
 	"life_regen": {"row": 1, "col": 4},
 	"dash": {"row": 1, "col": 6},
 	"xp_magnet": {"row": 1, "col": 7},
-
 	# Row 2 - İleri Seviye
 	"pierce": {"row": 2, "col": 0},
 	"burn_dot": {"row": 2, "col": 1},
@@ -27,7 +25,6 @@ const PERK_LAYOUT: Dictionary = {
 	"side_sweep": {"row": 2, "col": 3},
 	"armor": {"row": 2, "col": 4},
 	"xp_multiplier": {"row": 2, "col": 7},
-
 	# Row 3 - Uzmanlık
 	"unlock_aoe_projectile": {"row": 3, "col": 0},
 	"unlock_beam_projectile": {"row": 3, "col": 1},
@@ -35,27 +32,23 @@ const PERK_LAYOUT: Dictionary = {
 	"orbital_fire": {"row": 3, "col": 3},
 	"shield": {"row": 3, "col": 4},
 	"luck": {"row": 3, "col": 7},
-
 	# Row 4 - Pasif Silahlar
 	"unlock_nano": {"row": 4, "col": 0},
 	"unlock_tesla": {"row": 4, "col": 1},
 	"unlock_scatter": {"row": 4, "col": 2},
 	"unlock_orbital_sentinel": {"row": 4, "col": 3},
 	"unlock_bouncing_projectile": {"row": 4, "col": 4},
-
 	# Row 5 - Pasif Güçlendirme
 	"upgrade_nano": {"row": 5, "col": 0},
 	"upgrade_tesla": {"row": 5, "col": 1},
 	"upgrade_scatter": {"row": 5, "col": 2},
 	"upgrade_orbital": {"row": 5, "col": 3},
-
 	# Row 6 - Aktif Silahlar
 	"unlock_railgun": {"row": 6, "col": 0},
 	"unlock_void": {"row": 6, "col": 1},
 	"unlock_arc": {"row": 6, "col": 2},
 	"unlock_phase": {"row": 6, "col": 3},
 	"unlock_gravity": {"row": 6, "col": 4},
-
 	# Row 7 - Aktif Güçlendirme
 	"upgrade_railgun": {"row": 7, "col": 0},
 	"upgrade_void": {"row": 7, "col": 1},
@@ -75,35 +68,39 @@ const CATEGORY_LABELS: Dictionary = {
 	7: "AKTİF GÜÇLENDİRME",
 }
 
-const NODE_WIDTH: int = 180
-const NODE_HEIGHT: int = 76
-const COL_GAP: int = 22
-const ROW_GAP: int = 16
-const MARGIN_LEFT: int = 220
-const MARGIN_TOP: int = 80
-
-const RARITY_COLORS: Dictionary = {
-	"common": Color(0.7, 0.7, 0.7),
-	"uncommon": Color(0.3, 0.9, 0.3),
-	"rare": Color(0.3, 0.5, 1.0),
-	"epic": Color(0.7, 0.3, 1.0),
-	"legendary": Color(1.0, 0.7, 0.1)
-}
+# Card spacing
+const CARD_GAP := Vector2(16.0, 16.0)
+const MARGIN_LEFT: float = 150.0
+const MARGIN_TOP: float = 0.0
+const HEADER_HEIGHT: float = 70.0
+const SCROLL_STEP: float = 40.0
+const MAX_COLS: int = 9
+const MAX_ROWS: int = 8
+const CLICK_DRAG_THRESHOLD: float = 6.0
 
 var _upgrade_stacks: Dictionary = {}
 var _upgrade_catalog: Dictionary = {}
-var _perk_nodes: Dictionary = {}  # perk_id -> Control
-var _connection_lines: Array[Dictionary] = []
-var _draw_node: Node2D = null
 var _available_points: int = 0
 var _selectable_ids: Dictionary = {}
-var _layout_scale: float = 1.0
-var _node_width: float = NODE_WIDTH
-var _node_height: float = NODE_HEIGHT
-var _col_gap: float = COL_GAP
-var _row_gap: float = ROW_GAP
-var _margin_left: float = MARGIN_LEFT
-var _content_top: float = 108.0
+
+var _cards: Dictionary = {}            # perk_id -> PerkCard
+var _content_root: Node2D = null
+var _draw_node: Node2D = null
+var _clip_region: Control = null
+var _connection_lines: Array[Dictionary] = []
+
+var _scroll_offset: float = 0.0
+var _max_scroll: float = 0.0
+var _h_scroll_offset: float = 0.0
+var _max_h_scroll: float = 0.0
+var _card_size: Vector2 = Vector2(140, 180)   # texture native size
+var _display_size: Vector2 = Vector2(80, 100) # actual on-screen size
+var _card_scale: float = 1.0
+
+# Drag tracking
+var _is_dragging: bool = false
+var _last_mouse_pos: Vector2 = Vector2.ZERO
+var _drag_motion: float = 0.0
 
 
 func _ready() -> void:
@@ -115,366 +112,272 @@ func refresh(stacks: Dictionary, catalog: Dictionary, available_points: int = 0,
 	_upgrade_catalog = catalog
 	_available_points = available_points
 	_selectable_ids.clear()
-	for perk_id in selectable_ids:
-		_selectable_ids[str(perk_id)] = true
+	for pid in selectable_ids:
+		_selectable_ids[str(pid)] = true
 	_build_tree()
 
 
-func _get_safe_viewport_size() -> Vector2:
-	var viewport: Viewport = get_viewport()
-	if viewport != null:
-		return viewport.get_visible_rect().size
-	var tree: SceneTree = get_tree()
-	if tree != null and tree.root != null:
-		return tree.root.get_visible_rect().size
-	return Vector2(1920.0, 1080.0)
+# ---------- internal helpers ----------
+
+func _get_viewport_size() -> Vector2:
+	var vp := get_viewport()
+	if vp:
+		return vp.get_visible_rect().size
+	return Vector2(1920, 1080)
 
 
 func _build_tree() -> void:
-	# Clear previous
-	for child in get_children():
-		child.queue_free()
-	_perk_nodes.clear()
+	for c in get_children():
+		c.queue_free()
+	_cards.clear()
 	_connection_lines.clear()
-	var viewport_size: Vector2 = _get_safe_viewport_size()
-	_layout_scale = UiTextureUtils.get_viewport_scale(viewport_size, Vector2(1920.0, 1080.0), 0.72, 1.0)
-	_node_width = UiTextureUtils.scale_dimension(float(NODE_WIDTH), _layout_scale, 2, 136.0)
-	_node_height = UiTextureUtils.scale_dimension(float(NODE_HEIGHT), _layout_scale, 2, 62.0)
-	_col_gap = UiTextureUtils.scale_dimension(float(COL_GAP), _layout_scale, 2, 14.0)
-	_row_gap = UiTextureUtils.scale_dimension(float(ROW_GAP), _layout_scale, 2, 10.0)
-	_margin_left = UiTextureUtils.scale_dimension(float(MARGIN_LEFT), _layout_scale, 4, 160.0)
-	_content_top = UiTextureUtils.scale_dimension(108.0, _layout_scale, 2, 88.0)
+	_scroll_offset = 0.0
+	_h_scroll_offset = 0.0
 
-	# Background - deep sci-fi dark with subtle gradient feel
-	var bg: ColorRect = ColorRect.new()
-	bg.color = Color(0.04, 0.03, 0.02, 0.97)
+	var vp_size := _get_viewport_size()
+
+	# Card design size is always 140x180 (PerkCard.DESIGN_SIZE)
+	_card_size = Vector2(140.0, 180.0)
+	const ACTUAL_COLS := 8  # col 0..7 in layout
+	var avail_w := vp_size.x - MARGIN_LEFT - 20.0
+	var target_w := (avail_w - CARD_GAP.x * (ACTUAL_COLS - 1)) / float(ACTUAL_COLS)
+	# Never scale up beyond 1:1, never below 0.4
+	_card_scale = clampf(target_w / _card_size.x, 0.4, 1.0)
+	_display_size = _card_size * _card_scale
+
+	# ── Background (perkbg.png stretched) ──
+	var bg := TextureRect.new()
+	var bg_tex := load("res://perkbg.png") as Texture2D
+	if bg_tex:
+		bg.texture = bg_tex
+		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 
-	# Decorative top accent bar
-	var accent_bar: ColorRect = ColorRect.new()
-	accent_bar.color = Color(0.7, 0.42, 0.1, 0.35)
-	accent_bar.position = Vector2(0, 0)
-	accent_bar.size = Vector2(viewport_size.x, 3)
-	add_child(accent_bar)
+	# Dark overlay for contrast
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.05, 0.55)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(overlay)
 
-	# Title with Sci-Fi neon
-	var title: Label = Label.new()
-	title.text = "◆ PERK AĞACI ◆"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(32.0, _layout_scale, 1, 24.0)))
-	title.add_theme_color_override("font_color", Color(1.0, 0.78, 0.35))
-	title.add_theme_constant_override("outline_size", 3)
-	title.add_theme_color_override("font_outline_color", Color(0.15, 0.08, 0.02, 0.95))
-	title.position = Vector2(0, 10)
-	title.size = Vector2(viewport_size.x, 50)
-	add_child(title)
+	# ── Header (title, points, hint) ──
+	_build_header(vp_size)
 
-	# Close instruction
-	var close_hint: Label = Label.new()
-	close_hint.text = "[P] veya [ESC] ile kapat"
-	close_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	close_hint.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(14.0, _layout_scale, 1, 11.0)))
-	close_hint.add_theme_color_override("font_color", Color(0.5, 0.38, 0.22))
-	close_hint.position = Vector2(0, 48)
-	close_hint.size = Vector2(viewport_size.x, 22)
-	add_child(close_hint)
+	# ── Clip region for scrollable content ──
+	_clip_region = Control.new()
+	_clip_region.clip_contents = true
+	_clip_region.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_clip_region.position = Vector2(0, HEADER_HEIGHT)
+	_clip_region.size = Vector2(vp_size.x, vp_size.y - HEADER_HEIGHT)
+	add_child(_clip_region)
 
-	var points_label: Label = Label.new()
-	var points_text: String = "★ Kullanılabilir Perk Puanı: %d" % _available_points
-	points_label.text = points_text
-	points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	points_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(18.0, _layout_scale, 1, 14.0)))
-	points_label.add_theme_constant_override("outline_size", 2)
-	points_label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.9))
-	if _available_points > 0:
-		points_label.add_theme_color_override("font_color", Color(0.95, 0.75, 0.3))
-	else:
-		points_label.add_theme_color_override("font_color", Color(0.45, 0.35, 0.25))
-	points_label.position = Vector2(0, 72)
-	points_label.size = Vector2(viewport_size.x, 26)
-	add_child(points_label)
+	# ── Scrollable content ──
+	_content_root = Node2D.new()
+	_clip_region.add_child(_content_root)
 
-	# Content container (for drawing + nodes)
-	var content: Control = Control.new()
-	var max_row: int = 8
-	var max_col: int = 8
-	var content_size: Vector2 = Vector2(
-		_margin_left + (max_col + 1) * (_node_width + _col_gap),
-		UiTextureUtils.scale_dimension(float(MARGIN_TOP), _layout_scale, 2, 52.0) + (max_row + 1) * (_node_height + _row_gap) + UiTextureUtils.scale_dimension(40.0, _layout_scale, 2, 26.0)
-	)
-	content.position = Vector2(maxf(0.0, floor((viewport_size.x - content_size.x) * 0.5)), _content_top)
-	content.size = Vector2(
-		maxf(viewport_size.x, content_size.x),
-		maxf(viewport_size.y - _content_top, content_size.y)
-	)
-	add_child(content)
-
-	# Draw node for connection lines
+	# Line drawer
 	_draw_node = Node2D.new()
-	content.add_child(_draw_node)
+	_content_root.add_child(_draw_node)
 
-	# Category labels with Sci-Fi accent bars
-	var cat_colors: Dictionary = {
-		0: Color(0.5, 0.7, 0.9),    # TEMEL - blue
-		1: Color(0.4, 0.8, 0.6),    # GELİŞMİŞ - green
-		2: Color(0.7, 0.5, 0.9),    # İLERİ - purple
-		3: Color(0.9, 0.7, 0.3),    # UZMANLIK - gold
-		4: Color(0.3, 0.85, 0.85),  # PASİF SİLAH - cyan
-		5: Color(0.3, 0.75, 0.75),  # PASİF GÜÇ - teal
-		6: Color(0.9, 0.4, 0.3),    # AKTİF SİLAH - red
-		7: Color(0.85, 0.35, 0.35), # AKTİF GÜÇ - dark red
-	}
+	var col_step := _display_size.x + CARD_GAP.x
+	var row_step := _display_size.y + CARD_GAP.y
+	var max_layout_col: int = 0
+	var max_layout_row: int = 0
+	for layout_value in PERK_LAYOUT.values():
+		var layout_dict: Dictionary = layout_value as Dictionary
+		max_layout_col = maxi(max_layout_col, int(layout_dict.get("col", 0)))
+		max_layout_row = maxi(max_layout_row, int(layout_dict.get("row", 0)))
+
+	# Category row labels
 	for row_idx in CATEGORY_LABELS:
-		var cat_color: Color = cat_colors.get(row_idx, Color(0.5, 0.6, 0.7))
-		# Accent line before label
-		var accent_line: ColorRect = ColorRect.new()
-		accent_line.color = Color(cat_color.r, cat_color.g, cat_color.b, 0.4)
-		var accent_y: float = row_idx * (_node_height + _row_gap) + _node_height * 0.5
-		accent_line.position = Vector2(4, accent_y - 1)
-		accent_line.size = Vector2(_margin_left - 12, 2)
-		content.add_child(accent_line)
-		var cat_label: Label = Label.new()
-		cat_label.text = CATEGORY_LABELS[row_idx]
-		cat_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(13.0, _layout_scale, 1, 10.0)))
-		cat_label.add_theme_color_override("font_color", Color(cat_color.r, cat_color.g, cat_color.b, 0.85))
-		cat_label.add_theme_constant_override("outline_size", 1)
-		cat_label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.8))
-		cat_label.position = Vector2(UiTextureUtils.scale_dimension(8.0, _layout_scale, 1, 6.0), row_idx * (_node_height + _row_gap) + _node_height * 0.3)
-		cat_label.size = Vector2(_margin_left - UiTextureUtils.scale_dimension(12.0, _layout_scale, 1, 8.0), UiTextureUtils.scale_dimension(24.0, _layout_scale, 1, 20.0))
-		content.add_child(cat_label)
+		var lbl := Label.new()
+		lbl.text = CATEGORY_LABELS[row_idx]
+		lbl.position = Vector2(8, MARGIN_TOP + row_idx * row_step + _display_size.y * 0.35)
+		lbl.size = Vector2(MARGIN_LEFT - 12, 20)
+		lbl.add_theme_font_size_override("font_size", 10)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_content_root.add_child(lbl)
 
-	# Build perk nodes
+	# ── Build perk cards ──
 	for perk_id in PERK_LAYOUT:
 		if not _upgrade_catalog.has(perk_id):
 			continue
 		var layout: Dictionary = PERK_LAYOUT[perk_id]
-		var row: int = int(layout["row"])
-		var col: int = int(layout["col"])
-		var pos: Vector2 = Vector2(
-			_margin_left + col * (_node_width + _col_gap),
-			row * (_node_height + _row_gap)
+		var row := int(layout["row"])
+		var col := int(layout["col"])
+		# Card position is the CENTRE of the sprite (in display coords)
+		var pos := Vector2(
+			MARGIN_LEFT + col * col_step + _display_size.x * 0.5,
+			MARGIN_TOP + row * row_step + _display_size.y * 0.5
 		)
+
 		var perk_data: Dictionary = _upgrade_catalog[perk_id]
-		var stacks: int = int(_upgrade_stacks.get(perk_id, 0))
-		var max_stacks: int = int(ConfigService.get_value("upgrades.max_stacks.%s" % perk_id, -1))
+		var stacks := int(_upgrade_stacks.get(perk_id, 0))
+		var max_stacks := int(ConfigService.get_value("upgrades.max_stacks.%s" % perk_id, -1))
 		var prereqs: Array = perk_data.get("prerequisites", []) as Array
-		var prereqs_met: bool = true
+		var prereqs_met := true
 		for prereq_id in prereqs:
 			if int(_upgrade_stacks.get(str(prereq_id), 0)) <= 0:
 				prereqs_met = false
 				break
 
-		var is_selectable: bool = _available_points > 0 and _selectable_ids.has(perk_id)
-		var node: PanelContainer = _create_perk_node(perk_id, perk_data, stacks, max_stacks, prereqs_met, is_selectable)
-		node.position = pos
-		content.add_child(node)
-		_perk_nodes[perk_id] = node
+		var selectable := _available_points > 0 and _selectable_ids.has(perk_id)
 
-		# Track connection lines for prerequisites
+		var card: PerkCard = PerkCardScene.instantiate() as PerkCard
+		card.position = pos
+		_content_root.add_child(card)
+		card.setup(perk_id, perk_data, stacks, max_stacks, prereqs_met, selectable)
+		card.pressed.connect(_on_card_pressed)
+		_cards[perk_id] = card
+
+		# Prerequisite connection lines
 		for prereq_id in prereqs:
 			if PERK_LAYOUT.has(str(prereq_id)):
-				var prereq_layout: Dictionary = PERK_LAYOUT[str(prereq_id)]
-				var prereq_pos: Vector2 = Vector2(
-					_margin_left + int(prereq_layout["col"]) * (_node_width + _col_gap) + _node_width * 0.5,
-					int(prereq_layout["row"]) * (_node_height + _row_gap) + _node_height
+				var pl: Dictionary = PERK_LAYOUT[str(prereq_id)]
+				var from_pos := Vector2(
+					MARGIN_LEFT + int(pl["col"]) * col_step + _display_size.x * 0.5,
+					MARGIN_TOP + int(pl["row"]) * row_step + _display_size.y
 				)
-				var target_pos: Vector2 = Vector2(
-					pos.x + _node_width * 0.5,
-					pos.y
-				)
-				_connection_lines.append({
-					"from": prereq_pos,
-					"to": target_pos,
-					"met": prereqs_met
-				})
+				var to_pos := Vector2(pos.x, pos.y - _display_size.y * 0.5)
+				_connection_lines.append({"from": from_pos, "to": to_pos, "met": prereqs_met})
 
-	# Draw connections
+	# Max scroll
+	var content_h := MARGIN_TOP + max_layout_row * row_step + _display_size.y + 20.0
+	var visible_h := _clip_region.size.y
+	_max_scroll = maxf(0.0, content_h - visible_h)
+
+	# Horizontal scroll
+	var content_w := MARGIN_LEFT + max_layout_col * col_step + _display_size.x + 20.0
+	_max_h_scroll = maxf(0.0, content_w - vp_size.x)
+
+	# Draw connection lines
 	_draw_node.draw.connect(_on_draw_connections)
 	_draw_node.queue_redraw()
 
 
-func _create_perk_node(perk_id: String, perk_data: Dictionary, stacks: int, max_stacks: int, prereqs_met: bool, is_selectable: bool) -> PanelContainer:
-	var panel: PanelContainer = PanelContainer.new()
-	panel.custom_minimum_size = Vector2(_node_width, _node_height)
-	panel.size = Vector2(_node_width, _node_height)
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.tooltip_text = str(perk_data.get("description", ""))
-	panel.gui_input.connect(_on_perk_node_gui_input.bind(perk_id, is_selectable))
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.04, 0.97)
-	style.border_width_left = 2
-	style.border_width_top = 2
-	style.border_width_right = 2
-	style.border_width_bottom = 2
-	style.border_color = Color(0.4, 0.25, 0.1, 0.9)
-	style.corner_radius_top_left = 6
-	style.corner_radius_top_right = 6
-	style.corner_radius_bottom_right = 6
-	style.corner_radius_bottom_left = 6
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.25)
-	style.shadow_size = 4
-	# Try to load pixel art perk node texture; fall back to StyleBoxFlat
-	var perk_node_path := "res://assets/ui/panels/perk_node_base.png"
-	var tex_style: StyleBoxTexture = UiTextureUtils.load_stylebox_texture(perk_node_path, 12) if ResourceLoader.exists(perk_node_path) else null
-	if tex_style != null:
-		panel.add_theme_stylebox_override("panel", tex_style)
-	else:
-		panel.add_theme_stylebox_override("panel", style)
+func _build_header(vp_size: Vector2) -> void:
+	var header := Control.new()
+	header.size = Vector2(vp_size.x, HEADER_HEIGHT)
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", int(UiTextureUtils.scale_dimension(2.0, _layout_scale, 1, 1.0)))
+	var title := Label.new()
+	title.text = "◆ PERK AĞACI ◆"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(0, 4)
+	title.size = Vector2(vp_size.x, 26)
+	title.add_theme_font_size_override("font_size", 18)
+	header.add_child(title)
 
-	# Perk name
-	var name_label: Label = Label.new()
-	var rarity: String = str(perk_data.get("rarity", "common"))
-	var rarity_color: Color = RARITY_COLORS.get(rarity, Color.WHITE)
-	name_label.text = str(perk_data.get("name", perk_id))
-	name_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(13.0, _layout_scale, 1, 10.0)))
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var hint := Label.new()
+	hint.text = "[P / ESC] Kapat  ·  Tekerlek: dikey · Shift+Tekerlek: yatay · Sol tık+sürükle: pan"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.position = Vector2(0, 28)
+	hint.size = Vector2(vp_size.x, 16)
+	hint.add_theme_font_size_override("font_size", 10)
+	header.add_child(hint)
 
-	# Stack count
-	var stack_label: Label = Label.new()
-	stack_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(11.0, _layout_scale, 1, 9.0)))
-	stack_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var pts := Label.new()
+	pts.text = "★ Kullanılabilir Perk Puanı: %d" % _available_points
+	pts.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pts.position = Vector2(0, 46)
+	pts.size = Vector2(vp_size.x, 20)
+	pts.add_theme_font_size_override("font_size", 14)
+	header.add_child(pts)
 
-	var is_unlocked: bool = stacks > 0
-	var is_locked: bool = not prereqs_met
-	var is_maxed: bool = max_stacks > 0 and stacks >= max_stacks
-	var base_cost: int = int(ConfigService.get_value("upgrades.perk_costs.%s" % perk_id, 1))
-	var next_cost: int = base_cost * (stacks + 1)
-
-	if is_locked:
-		name_label.add_theme_color_override("font_color", Color(0.35, 0.3, 0.22))
-		stack_label.text = "🔒 ◇ %d" % next_cost
-		stack_label.add_theme_color_override("font_color", Color(0.3, 0.22, 0.15))
-		panel.modulate = Color(0.45, 0.4, 0.35, 0.75)
-	elif is_maxed:
-		name_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
-		if max_stacks == 1:
-			stack_label.text = "◆ Aktif"
-		else:
-			stack_label.text = "◆ MAX (%d/%d)" % [stacks, max_stacks]
-		stack_label.add_theme_color_override("font_color", Color(1.0, 0.78, 0.2))
-	elif is_unlocked:
-		name_label.add_theme_color_override("font_color", rarity_color)
-		if max_stacks > 0:
-			stack_label.text = "◇ %d | %d/%d" % [next_cost, stacks, max_stacks]
-		elif max_stacks < 0:
-			stack_label.text = "◇ %d | ×%d" % [next_cost, stacks]
-		else:
-			stack_label.text = "✓"
-		stack_label.add_theme_color_override("font_color", Color(0.5, 0.85, 0.75))
-	else:
-		name_label.add_theme_color_override("font_color", Color(0.4, 0.35, 0.25))
-		if max_stacks > 0:
-			stack_label.text = "◇ %d | 0/%d" % [next_cost, max_stacks]
-		else:
-			stack_label.text = "◇ %d" % next_cost
-		stack_label.add_theme_color_override("font_color", Color(0.35, 0.3, 0.22))
-
-	# Apply state-based tint to pixel art texture, or border overrides to flat style
-	if tex_style != null:
-		if is_maxed:
-			tex_style.modulate_color = Color(1.0, 0.85, 0.25, 1.0)
-		elif is_selectable:
-			tex_style.modulate_color = Color(0.4, 1.0, 0.55, 1.0)
-		elif is_unlocked and not is_locked:
-			tex_style.modulate_color = Color(rarity_color.r * 0.7 + 0.3, rarity_color.g * 0.7 + 0.3, rarity_color.b * 0.7 + 0.3, 1.0)
-		elif is_locked:
-			tex_style.modulate_color = Color(0.3, 0.25, 0.2, 0.6)
-	else:
-		if is_maxed:
-			style.border_color = Color(1.0, 0.78, 0.2, 1.0)
-			style.border_width_left = 2
-			style.border_width_top = 2
-			style.border_width_right = 2
-			style.border_width_bottom = 2
-			style.bg_color = Color(0.1, 0.08, 0.03, 0.97)
-			style.shadow_color = Color(1.0, 0.7, 0.1, 0.15)
-			style.shadow_size = 6
-		elif is_unlocked and not is_locked:
-			style.border_color = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.85)
-			style.border_width_left = 2
-			style.border_width_top = 2
-			style.border_width_right = 2
-			style.border_width_bottom = 2
-			style.shadow_color = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.12)
-			style.shadow_size = 5
-
-		if is_selectable:
-			style.border_color = Color(0.3, 1.0, 0.55, 1.0)
-			style.border_width_left = 3
-			style.border_width_top = 3
-			style.border_width_right = 3
-			style.border_width_bottom = 3
-			style.bg_color = Color(0.04, 0.12, 0.06, 0.98)
-			style.shadow_color = Color(0.2, 1.0, 0.4, 0.2)
-			style.shadow_size = 8
-		elif is_locked:
-			style.bg_color = Color(0.05, 0.04, 0.03, 0.85)
-			style.border_color = Color(0.2, 0.18, 0.12, 0.4)
-			style.border_width_left = 1
-			style.border_width_top = 1
-			style.border_width_right = 1
-			style.border_width_bottom = 1
-
-	if is_selectable:
-		name_label.add_theme_color_override("font_color", Color(0.85, 1.0, 0.7))
-		stack_label.text = "◆ %d — SEÇ" % next_cost
-		stack_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.55))
-
-	vbox.add_child(name_label)
-	vbox.add_child(stack_label)
-
-	# Description tooltip - add as a short description label
-	var desc_label: Label = Label.new()
-	desc_label.text = str(perk_data.get("description", ""))
-	desc_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(8.0, _layout_scale, 1, 7.0)))
-	desc_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
-	desc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(desc_label)
-
-	panel.add_child(vbox)
-	return panel
+	add_child(header)
 
 
-func _on_perk_node_gui_input(event: InputEvent, perk_id: String, is_selectable: bool) -> void:
-	if not is_selectable:
-		return
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		perk_selected.emit(perk_id)
-		get_viewport().set_input_as_handled()
-
+# ---------- connection-line drawing ----------
 
 func _on_draw_connections() -> void:
 	if _draw_node == null:
 		return
 	for line in _connection_lines:
-		var from_pos: Vector2 = line["from"] as Vector2
-		var to_pos: Vector2 = line["to"] as Vector2
-		var met: bool = line["met"] as bool
-		var color: Color = Color(0.3, 0.85, 0.35, 0.9) if met else Color(0.6, 0.25, 0.25, 0.6)
-		var glow_color: Color = Color(color.r, color.g, color.b, 0.2)
-		var base_width: float = UiTextureUtils.scale_dimension(2.0, _layout_scale, 1, 1.5)
-		# Glow pass (wide soft aura)
-		_draw_node.draw_line(from_pos, to_pos, glow_color, base_width * 4.0, true)
-		# Core line
-		_draw_node.draw_line(from_pos, to_pos, color, base_width, true)
+		var from: Vector2 = line["from"]
+		var to: Vector2 = line["to"]
+		var met: bool = line["met"]
+		var col := Color(0.6, 0.6, 0.7, 0.8) if met else Color(0.3, 0.3, 0.3, 0.5)
+		_draw_node.draw_line(from, to, col, 2.0, true)
 		# Arrow head
-		var dir: Vector2 = (to_pos - from_pos).normalized()
-		var arrow_size: float = UiTextureUtils.scale_dimension(10.0, _layout_scale, 1, 6.0)
-		var left: Vector2 = to_pos - dir * arrow_size + dir.rotated(PI * 0.7) * arrow_size * 0.6
-		var right: Vector2 = to_pos - dir * arrow_size + dir.rotated(-PI * 0.7) * arrow_size * 0.6
-		var glow_left: Vector2 = to_pos - dir * arrow_size * 1.2 + dir.rotated(PI * 0.7) * arrow_size * 0.8
-		var glow_right: Vector2 = to_pos - dir * arrow_size * 1.2 + dir.rotated(-PI * 0.7) * arrow_size * 0.8
-		# Arrow glow
-		_draw_node.draw_polygon([to_pos, glow_left, glow_right], [glow_color, glow_color, glow_color])
-		# Arrow core
-		_draw_node.draw_polygon([to_pos, left, right], [color, color, color])
+		var dir := (to - from).normalized()
+		var arrow := 10.0
+		var left := to - dir * arrow + dir.rotated(PI * 0.7) * arrow * 0.6
+		var right := to - dir * arrow + dir.rotated(-PI * 0.7) * arrow * 0.6
+		_draw_node.draw_polygon([to, left, right], [col, col, col])
 
+
+# ---------- scrolling ----------
+
+func _apply_scroll() -> void:
+	if _content_root:
+		_content_root.position.y = -_scroll_offset
+		_content_root.position.x = -_h_scroll_offset
+
+
+func _gui_input(event: InputEvent) -> void:
+	if _clip_region == null:
+		return
+
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		var mouse_pos_global := get_global_mouse_position()
+		var clip_rect := Rect2(_clip_region.global_position, _clip_region.size)
+		var in_clip := clip_rect.has_point(mouse_pos_global)
+
+		if mouse_button.pressed:
+			match mouse_button.button_index:
+				MOUSE_BUTTON_WHEEL_UP:
+					if not in_clip:
+						return
+					if Input.is_key_pressed(KEY_SHIFT):
+						_h_scroll_offset = maxf(0.0, _h_scroll_offset - SCROLL_STEP)
+					else:
+						_scroll_offset = maxf(0.0, _scroll_offset - SCROLL_STEP)
+					_apply_scroll()
+					get_viewport().set_input_as_handled()
+					accept_event()
+				MOUSE_BUTTON_WHEEL_DOWN:
+					if not in_clip:
+						return
+					if Input.is_key_pressed(KEY_SHIFT):
+						_h_scroll_offset = minf(_max_h_scroll, _h_scroll_offset + SCROLL_STEP)
+					else:
+						_scroll_offset = minf(_max_scroll, _scroll_offset + SCROLL_STEP)
+					_apply_scroll()
+					get_viewport().set_input_as_handled()
+					accept_event()
+				MOUSE_BUTTON_LEFT:
+					if in_clip:
+						_is_dragging = true
+						_last_mouse_pos = mouse_button.position
+						_drag_motion = 0.0
+						get_viewport().set_input_as_handled()
+						accept_event()
+		else:
+			if mouse_button.button_index == MOUSE_BUTTON_LEFT and _is_dragging:
+				_is_dragging = false
+				var was_click := _drag_motion <= CLICK_DRAG_THRESHOLD
+				if was_click and in_clip:
+					_handle_click(mouse_pos_global)
+					get_viewport().set_input_as_handled()
+					accept_event()
+
+	elif event is InputEventMouseMotion and _is_dragging:
+		var motion := event as InputEventMouseMotion
+		var delta := motion.position - _last_mouse_pos
+		_drag_motion += delta.length()
+		_h_scroll_offset = clampf(_h_scroll_offset - delta.x, 0.0, _max_h_scroll)
+		_scroll_offset = clampf(_scroll_offset - delta.y, 0.0, _max_scroll)
+		_apply_scroll()
+		_last_mouse_pos = motion.position
+		get_viewport().set_input_as_handled()
+		accept_event()
+
+
+# ---------- input ----------
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -482,3 +385,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			queue_free()
 			get_tree().paused = false
 			get_viewport().set_input_as_handled()
+
+
+func _handle_click(click_pos: Vector2) -> void:
+	if _clip_region == null:
+		return
+	# Only process clicks inside the scroll area
+	var clip_rect := Rect2(_clip_region.global_position, _clip_region.size)
+	if not clip_rect.has_point(click_pos):
+		return
+	for perk_id in _cards:
+		var card: PerkCard = _cards[perk_id]
+		if card.get_card_rect_global().has_point(click_pos):
+			if card.is_selectable:
+				perk_selected.emit(perk_id)
+				get_viewport().set_input_as_handled()
+			return
+
+
+func _on_card_pressed(perk_id: String) -> void:
+	perk_selected.emit(perk_id)

@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://b4w1csbtlu3dr"]
+
+[ext_resource type="Script" uid="uid://brln6vdmni6gb" path="res://scripts/skill_bar.gd" id="1_skillbar"]
+
+[node name="SkillBar" type="Control" unique_id=1225128186]
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -360.0
+offset_top = -94.0
+offset_right = 360.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("1_skillbar")
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=839702507]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Panel" unique_id=1901028401]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin" unique_id=13432403]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox" unique_id=1660111268]
+layout_mode = 2
+text = "Silah Barı"
+horizontal_alignment = 1
+
+[node name="ActiveLabel" type="Label" parent="Panel/Margin/VBox" unique_id=21908947]
+layout_mode = 2
+text = "Aktif Silahlar"
+
+[node name="ActiveRow" type="HBoxContainer" parent="Panel/Margin/VBox" unique_id=292770812]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="PassiveLabel" type="Label" parent="Panel/Margin/VBox" unique_id=1526007195]
+layout_mode = 2
+text = "Pasif Silahlar"
+
+[node name="PassiveRow" type="HBoxContainer" parent="Panel/Margin/VBox" unique_id=793721229]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
