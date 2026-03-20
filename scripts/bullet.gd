@@ -122,6 +122,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if target_group == "enemies" and burn_chance > 0.0 and burn_damage > 0 and randf() <= burn_chance and body.has_method("apply_burn"):
 		body.apply_burn(burn_damage, burn_duration)
 	_hit_enemies.append(body)
+	_spawn_hit_vfx()
 
 	# AOE explosion
 	if is_aoe:
@@ -194,10 +195,10 @@ func _setup_projectile_sprite() -> void:
 	_proj_sprite.texture = tex
 	_proj_sprite.centered = true
 	_proj_sprite.rotation = -rotation  # counter-rotate so sprite stays upright relative to bullet
-	var projectile_scale: float = ConfigService.get_value("visual.sprite_scale.projectile", 1.4)
-	var orbit_scale: float = ConfigService.get_value("visual.sprite_scale.projectile_orbit", 1.2)
-	var projectile_target_px: float = ConfigService.get_value("visual.target_px.projectile", 30.0)
-	var orbit_target_px: float = ConfigService.get_value("visual.target_px.projectile_orbit", 24.0)
+	var projectile_scale: float = ConfigService.get_value("visual.sprite_scale.projectile", 0.9)
+	var orbit_scale: float = ConfigService.get_value("visual.sprite_scale.projectile_orbit", 0.75)
+	var projectile_target_px: float = minf(float(ConfigService.get_value("visual.target_px.projectile", 16.0)), 18.0)
+	var orbit_target_px: float = minf(float(ConfigService.get_value("visual.target_px.projectile_orbit", 12.0)), 14.0)
 	var proj_side: float = maxf(float(tex.get_width()), float(tex.get_height()))
 	if proj_side > 1.0:
 		projectile_scale = projectile_target_px / proj_side
@@ -240,4 +241,27 @@ func _spawn_explosion_vfx() -> void:
 	tween.set_parallel(true)
 	tween.tween_property(sprite, "scale", Vector2(target_scale, target_scale), 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	tween.tween_property(sprite, "modulate:a", 0.0, 0.35)
+	tween.chain().tween_callback(sprite.queue_free)
+
+
+func _spawn_hit_vfx() -> void:
+	var vfx_path: String = "res://assets/vfx/vfx_hit_spark.png"
+	if not ResourceLoader.exists(vfx_path):
+		return
+	var tex: Texture2D = load(vfx_path) as Texture2D
+	if tex == null:
+		return
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.texture = tex
+	sprite.global_position = global_position
+	var start_scale: float = float(ConfigService.get_value("visual.sprite_scale.vfx_hit", 0.32))
+	start_scale = clampf(start_scale, 0.18, 0.55)
+	sprite.scale = Vector2(start_scale, start_scale)
+	sprite.modulate = modulate
+	sprite.modulate.a = 0.9
+	get_tree().current_scene.add_child(sprite)
+	var tween: Tween = sprite.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(sprite, "scale", Vector2(start_scale * 1.55, start_scale * 1.55), 0.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(sprite, "modulate:a", 0.0, 0.12)
 	tween.chain().tween_callback(sprite.queue_free)

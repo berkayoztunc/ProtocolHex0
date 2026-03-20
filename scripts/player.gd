@@ -18,7 +18,7 @@ signal projectile_class_changed(projectile_class: String)
 
 var health: int
 var xp: int = 0
-var level: int = 20
+var level: int = 1
 var xp_to_next_level: int = 10
 var can_shoot: bool = true
 var bomb_charges: int = 0
@@ -342,7 +342,7 @@ func _fire_weapon(weapon_id: String, wdef: Dictionary) -> void:
 	if targeting_pref == "radial":
 		var proj_count: int = int(wdef.get("projectile_count", 5))
 		if not is_held_weapon:
-			proj_count = _get_effective_projectile_count(proj_count)
+			proj_count = _get_effective_projectile_count(proj_count, wdef)
 		for i in range(proj_count):
 			var angle: float = (TAU / float(proj_count)) * float(i)
 			_spawn_weapon_bullet(Vector2.from_angle(angle), total_damage, wdef, is_crit, not is_held_weapon)
@@ -359,7 +359,7 @@ func _fire_weapon(weapon_id: String, wdef: Dictionary) -> void:
 
 	var projectile_count: int = int(wdef.get("projectile_count", 1))
 	if not is_held_weapon:
-		projectile_count = _get_effective_projectile_count(projectile_count)
+		projectile_count = _get_effective_projectile_count(projectile_count, wdef)
 	var spread: float = deg_to_rad(float(wdef.get("spread_degrees", weapon_spread_degrees)))
 
 	for base_dir in directions:
@@ -403,7 +403,7 @@ func _spawn_weapon_bullet(direction: Vector2, damage_amount: int, wdef: Dictiona
 
 
 func _spawn_orbit_bullets(damage_amount: int, wdef: Dictionary) -> void:
-	var count: int = _get_effective_projectile_count(int(wdef.get("projectile_count", 3)))
+	var count: int = _get_effective_projectile_count(int(wdef.get("projectile_count", 3)), wdef)
 	var orbit_r: float = float(wdef.get("orbit_radius", 55.0))
 	var orbit_s: float = float(wdef.get("orbit_speed", 3.0))
 	var lt: float = float(wdef.get("lifetime", 4.0))
@@ -471,10 +471,13 @@ func _compute_fire_directions(target: Node2D, bullet_speed: float) -> Array[Vect
 		"full_spread":
 			return [base_dir, base_dir.rotated(deg_to_rad(45.0)), base_dir.rotated(deg_to_rad(-45.0))]
 		"orbital_fire":
-			_spiral_angle += 0.8
+			var orbital_bullet_count: int = int(ConfigService.get_value("weapons.targeting_modes.orbital_fire.projectile_dirs", 2))
+			orbital_bullet_count = clampi(orbital_bullet_count, 2, 3)
+			var orbital_spin_speed: float = float(ConfigService.get_value("weapons.targeting_modes.orbital_fire.spin_speed", 0.55))
+			_spiral_angle += orbital_spin_speed
 			var dirs: Array[Vector2] = []
-			for i in range(3):
-				dirs.append(Vector2.from_angle(_spiral_angle + (TAU / 3.0) * float(i)))
+			for i in range(orbital_bullet_count):
+				dirs.append(Vector2.from_angle(_spiral_angle + (TAU / float(orbital_bullet_count)) * float(i)))
 			return dirs
 		_: # forward
 			return [base_dir]
@@ -1059,10 +1062,26 @@ func _get_effective_weapon_cooldown(base_cooldown: float) -> float:
 	return maxf(min_shoot_cooldown, base_cooldown * attack_speed_ratio * cooldown_multiplier)
 
 
-func _get_effective_projectile_count(base_projectile_count: int) -> int:
+func _get_effective_projectile_count(base_projectile_count: int, wdef: Dictionary = {}) -> int:
 	var base_config: int = int(ConfigService.get_value("weapons.base_projectiles", 1))
 	var bonus_projectiles: int = maxi(0, weapon_projectile_count - base_config)
-	return maxi(1, base_projectile_count + bonus_projectiles)
+	var scaled_bonus: int = bonus_projectiles
+	var is_orbit_weapon: bool = bool(wdef.get("is_orbit", false))
+
+	if is_orbit_weapon:
+		scaled_bonus = mini(scaled_bonus, 1)
+	elif base_projectile_count >= 6:
+		scaled_bonus = int(floor(float(scaled_bonus) * 0.35))
+	elif base_projectile_count >= 3:
+		scaled_bonus = int(floor(float(scaled_bonus) * 0.5))
+
+	var default_cap: int = base_projectile_count + 3
+	if is_orbit_weapon:
+		default_cap = base_projectile_count + 1
+	var max_projectile_count: int = int(wdef.get("projectile_cap", default_cap))
+	max_projectile_count = maxi(1, max_projectile_count)
+
+	return clampi(base_projectile_count + scaled_bonus, 1, max_projectile_count)
 
 
 func _spawn_vfx_ring(vfx_path: String, pos: Vector2, radius: float) -> void:
@@ -1088,9 +1107,9 @@ func _spawn_vfx_ring(vfx_path: String, pos: Vector2, radius: float) -> void:
 
 # ---- Hero Sprite System ----
 var _hero_sprite: AnimatedSprite2D = null
-var _last_move_dir: Vector2 = Vector2.RIGHT
-var _hero_direction: String = "east"
-var _hero_base_path: String = "res://assets/characters/main_hero_copper_golem"
+var _last_move_dir: Vector2 = Vector2.DOWN
+var _hero_direction: String = "south"
+var _hero_base_path: String = "res://assets/characters/main_hero_v2"
 
 # ---- Weapon Visual System ----
 var _weapon_sprite: Sprite2D = null
@@ -1109,8 +1128,9 @@ func _setup_hero_sprite() -> void:
 		body.visible = false
 
 	# Check if PixelLab sprite sheets exist
-	var idle_east: String = "%s/rotations/east.png" % _hero_base_path
-	if not ResourceLoader.exists(idle_east):
+	var idle_south_anim: String = "%s/animations/breathing-idle/south/frame_000.png" % _hero_base_path
+	var idle_south_rot: String = "%s/rotations/south.png" % _hero_base_path
+	if not ResourceLoader.exists(idle_south_anim) and not ResourceLoader.exists(idle_south_rot):
 		return  # Assets not imported yet; keep ColorRect visible
 
 	if body:
@@ -1121,7 +1141,8 @@ func _setup_hero_sprite() -> void:
 	sprite.position = Vector2.ZERO
 	var hero_scale: float = ConfigService.get_value("visual.sprite_scale.hero", 1.8)
 	var hero_target_px: float = ConfigService.get_value("visual.target_px.hero", 96.0)
-	var idle_tex: Texture2D = load(idle_east) as Texture2D
+	var idle_source: String = idle_south_anim if ResourceLoader.exists(idle_south_anim) else idle_south_rot
+	var idle_tex: Texture2D = load(idle_source) as Texture2D
 	if idle_tex != null:
 		var hero_side: float = maxf(float(idle_tex.get_width()), float(idle_tex.get_height()))
 		if hero_side > 1.0:
@@ -1130,16 +1151,18 @@ func _setup_hero_sprite() -> void:
 
 	var frames: SpriteFrames = SpriteFrames.new()
 	frames.remove_animation("default")
-	_add_idle_rotation_frame(frames, "east")
-	_add_idle_rotation_frame(frames, "west")
-	_add_directional_animation_frames(frames, "walk", "walk_east", "east", 10.0)
-	_add_directional_animation_frames(frames, "walk", "walk_west", "west", 10.0)
+
+	for direction in ["south", "north", "east", "west"]:
+		_add_directional_animation_frames(frames, "breathing-idle", "idle_%s" % direction, direction, 8.0)
+		if frames.get_frame_count("idle_%s" % direction) == 0:
+			_add_idle_rotation_frame(frames, direction)
+		_add_directional_animation_frames(frames, "walk", "walk_%s" % direction, direction, 10.0)
 
 	sprite.sprite_frames = frames
-	sprite.play("idle_east")
+	sprite.play("idle_south")
 	add_child(sprite)
 	_hero_sprite = sprite
-	_hero_direction = "east"
+	_hero_direction = "south"
 	_setup_weapon_sprite()
 
 
@@ -1189,6 +1212,13 @@ func _add_directional_animation_frames(frames: SpriteFrames, source_anim: String
 			var tex: Texture2D = load(path) as Texture2D
 			if tex:
 				frames.add_frame(target_anim, tex)
+	if frames.get_frame_count(target_anim) == 0 and direction != "south":
+		for i in range(6):
+			var fallback_path: String = "%s/animations/%s/south/frame_%03d.png" % [_hero_base_path, source_anim, i]
+			if ResourceLoader.exists(fallback_path):
+				var fallback_tex: Texture2D = load(fallback_path) as Texture2D
+				if fallback_tex:
+					frames.add_frame(target_anim, fallback_tex)
 
 
 func _add_idle_rotation_frame(frames: SpriteFrames, direction: String) -> void:
@@ -1204,11 +1234,9 @@ func _add_idle_rotation_frame(frames: SpriteFrames, direction: String) -> void:
 
 
 func _get_cardinal_direction(move_dir: Vector2) -> String:
-	if move_dir.x > 0.01:
-		return "east"
-	if move_dir.x < -0.01:
-		return "west"
-	return _hero_direction
+	if absf(move_dir.x) > absf(move_dir.y):
+		return "east" if move_dir.x > 0.0 else "west"
+	return "south" if move_dir.y > 0.0 else "north"
 
 
 func _update_hero_animation(move_dir: Vector2) -> void:
@@ -1229,5 +1257,5 @@ func _update_hero_animation(move_dir: Vector2) -> void:
 	if _weapon_sprite != null:
 		_weapon_sprite.position = _weapon_offsets.get(_hero_direction, Vector2(14, 6))
 		_weapon_sprite.flip_h = _hero_direction == "west"
-		# Z-index: behind hero when facing south, in front otherwise
+		# Z-index: behind hero when facing north, in front otherwise
 		_weapon_sprite.z_index = -1 if _hero_direction == "north" else 1

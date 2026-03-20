@@ -28,7 +28,6 @@ signal game_over_menu_requested
 @onready var confirm_menu_panel: PanelContainer = $ConfirmMenuPanel
 @onready var controls_panel: PanelContainer = $ControlsPanel
 @onready var menu_controls_panel: VBoxContainer = $ConfirmMenuPanel/VBox/MenuControlsPanel
-@onready var active_weapons_panel: HBoxContainer = $ActiveWeaponsPanel
 @onready var projectile_switch_button: Button = get_node_or_null("TopRightContainer/ProjectileSwitchButton") as Button
 @onready var perk_tree_button: Button = $TopRightContainer/PerkTreeButton
 @onready var menu_button: Button = $TopRightContainer/MenuButton
@@ -76,6 +75,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_apply_ux_style()
 	_ensure_skill_bar()
+	_set_weapon_ui_visible(true)
 	_ensure_notification_container()
 	modal_backdrop.visible = false
 	level_up_panel.visible = false
@@ -342,7 +342,7 @@ func show_level_up(options: Array[Dictionary], title: String = "Level Up! Bir y�
 	_apply_rarity_option_icons(option_button_a, options[0])
 	_apply_rarity_option_icons(option_button_b, options[1])
 	_apply_rarity_option_icons(option_button_c, options[2])
-	active_weapons_panel.visible = false
+	_set_weapon_ui_visible(false)
 	top_right_container.visible = false
 	modal_backdrop.visible = true
 	level_up_panel.visible = true
@@ -350,7 +350,7 @@ func show_level_up(options: Array[Dictionary], title: String = "Level Up! Bir y�
 
 func hide_level_up() -> void:
 	option_ids.clear()
-	active_weapons_panel.visible = true
+	_set_weapon_ui_visible(true)
 	top_right_container.visible = true
 	modal_backdrop.visible = false
 	level_up_panel.visible = false
@@ -363,7 +363,7 @@ func show_game_over(stats: Dictionary = {}) -> void:
 		game_over_level_label.text = "★ Level: %d" % int(stats.get("level", 1))
 	if game_over_weapon_label != null:
 		game_over_weapon_label.text = "◆ Weapon: %s" % str(stats.get("weapon", "—"))
-	active_weapons_panel.visible = false
+	_set_weapon_ui_visible(false)
 	top_right_container.visible = false
 	controls_panel.visible = false
 	modal_backdrop.visible = true
@@ -374,7 +374,7 @@ func show_game_over(stats: Dictionary = {}) -> void:
 func hide_game_over() -> void:
 	game_over_panel.visible = false
 	modal_backdrop.visible = false
-	active_weapons_panel.visible = true
+	_set_weapon_ui_visible(true)
 	top_right_container.visible = true
 
 
@@ -420,7 +420,7 @@ func _on_menu_button_pressed() -> void:
 	modal_backdrop.visible = true
 	menu_controls_panel.visible = false
 	controls_panel.visible = false
-	active_weapons_panel.visible = false
+	_set_weapon_ui_visible(false)
 	top_right_container.visible = false
 	get_tree().paused = true
 
@@ -430,7 +430,7 @@ func _on_confirm_menu_yes() -> void:
 	modal_backdrop.visible = false
 	menu_controls_panel.visible = false
 	controls_panel.visible = false
-	active_weapons_panel.visible = true
+	_set_weapon_ui_visible(true)
 	top_right_container.visible = true
 	menu_requested.emit()
 
@@ -440,7 +440,7 @@ func _on_confirm_menu_no() -> void:
 	modal_backdrop.visible = false
 	menu_controls_panel.visible = false
 	controls_panel.visible = false
-	active_weapons_panel.visible = true
+	_set_weapon_ui_visible(true)
 	top_right_container.visible = true
 	get_tree().paused = false
 
@@ -482,69 +482,12 @@ func update_targeting_display(mode_name: String) -> void:
 
 func update_active_weapons(weapons_data: Array[Dictionary]) -> void:
 	update_skill_bar(weapons_data)
-	active_weapons_panel.visible = not weapons_data.is_empty()
-	var card_width: float = 108.0
-	var card_padding_x: int = 6
-	var card_padding_y: int = 4
-	var stack_spacing: int = 2
-	var icon_size: float = float(ConfigService.get_value("visual.hud.weapon_icon_size", 22))
-	var cooldown_height: float = 3.0
-	# Clear existing weapon indicators
-	for child in active_weapons_panel.get_children():
-		child.queue_free()
-	# Add new weapon indicators
-	for wdata in weapons_data:
-		var card: PanelContainer = PanelContainer.new()
-		card.custom_minimum_size = Vector2(card_width, 0)
-		card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		var is_ready: bool = wdata.get("ready", true)
-		var is_held: bool = wdata.get("is_held", false)
-		var cooldown_pct: float = float(wdata.get("cooldown_pct", 0.0))
+	_set_weapon_ui_visible(not weapons_data.is_empty())
 
-		var margin: MarginContainer = MarginContainer.new()
-		margin.add_theme_constant_override("margin_left", card_padding_x)
-		margin.add_theme_constant_override("margin_right", card_padding_x)
-		margin.add_theme_constant_override("margin_top", card_padding_y)
-		margin.add_theme_constant_override("margin_bottom", max(2, card_padding_y - 1))
-		card.add_child(margin)
 
-		var vbox: VBoxContainer = VBoxContainer.new()
-		vbox.add_theme_constant_override("separation", stack_spacing)
-		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-		margin.add_child(vbox)
-
-		# Weapon icon — scaled to fill the card, centered
-		var wid: String = str(wdata.get("id", ""))
-		var icon_path: String = _get_weapon_icon_path(wid)
-		var icon_tex: Texture2D = _load_icon(icon_path)
-		if icon_tex != null:
-			var icon_rect: TextureRect = TextureRect.new()
-			icon_rect.texture = icon_tex
-			icon_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-			var card_icon_size: float = maxf(card_width * 0.45, icon_size)
-			icon_rect.custom_minimum_size = Vector2(card_icon_size, card_icon_size)
-			icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			icon_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			vbox.add_child(icon_rect)
-
-		# Weapon name label
-		var lbl: Label = Label.new()
-		var wname: String = str(wdata.get("name", ""))
-		lbl.text = wname
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		vbox.add_child(lbl)
-
-		# Cooldown progress bar
-		if not is_held:
-			var cd_bar: ProgressBar = ProgressBar.new()
-			cd_bar.custom_minimum_size = Vector2(0, cooldown_height)
-			cd_bar.max_value = 1.0
-			cd_bar.value = 1.0 - cooldown_pct
-			cd_bar.show_percentage = false
-			vbox.add_child(cd_bar)
-
-		active_weapons_panel.add_child(card)
+func _set_weapon_ui_visible(visible_value: bool) -> void:
+	if _skill_bar != null and is_instance_valid(_skill_bar):
+		_skill_bar.visible = visible_value
 
 
 func _get_weapon_display_color(weapon_name: String) -> Color:

@@ -139,9 +139,11 @@ func _get_enemy_sprite_path() -> String:
 
 func _get_enemy_char_base_path() -> String:
 	var archetype_char_path: String = str(archetype_data.get("char_base_path", ""))
-	var archetype_walk_probe: String = "%s/animations/walking-6-frames/south/frame_000.png" % archetype_char_path
-	if not archetype_char_path.is_empty() and ResourceLoader.exists(archetype_walk_probe):
-		return archetype_char_path
+	if not archetype_char_path.is_empty():
+		var east_probe: String = "%s/animations/walking-6-frames/east/frame_000.png" % archetype_char_path
+		var south_probe: String = "%s/animations/walking-6-frames/south/frame_000.png" % archetype_char_path
+		if ResourceLoader.exists(east_probe) or ResourceLoader.exists(south_probe):
+			return archetype_char_path
 	return "res://assets/characters/enemy_elite" if is_elite else "res://assets/characters/enemy_basic"
 
 

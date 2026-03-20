@@ -16,7 +16,7 @@ var elapsed_seconds: float = 0.0
 var upgrade_stacks: Dictionary = {}
 var weapon_display_timer: float = 0.0
 var perk_tree_instance: Control = null
-var perk_points: int = 100
+var perk_points: int = 0
 
 var upgrade_catalog: Dictionary = {
 	# --- Tier 1: Temel İstatistikler (Maliyet: 1) ---
