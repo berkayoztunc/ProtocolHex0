@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://1f2xqpajt3e7"]
 
-[ext_resource type="Script" uid="uid://b12lepdpto08d" path="res://scripts/chest.gd" id="1_chest"]
+[ext_resource type="Script" uid="uid://b12lepdpto08d" path="res://scripts/world/chest.gd" id="1_chest"]
 [ext_resource type="Texture2D" uid="uid://ghjkejp52jkb" path="res://assets/ui/icons/icon_chest.png" id="2_sy5e1"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_chest"]

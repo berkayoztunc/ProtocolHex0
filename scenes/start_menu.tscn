@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://dsikh2is1iv0h"]
 
-[ext_resource type="Script" uid="uid://uhrvw7658hq7" path="res://scripts/start_menu.gd" id="1_menu"]
+[ext_resource type="Script" uid="uid://uhrvw7658hq7" path="res://scripts/ui/start_menu.gd" id="1_menu"]
 [ext_resource type="Texture2D" uid="uid://d36j6xuq8aumi" path="res://background.png" id="2_thu50"]
 [ext_resource type="Texture2D" uid="uid://dlhtrecl3qcfr" path="res://mainUi.png" id="3_m7x51"]
+[ext_resource type="Texture2D" uid="uid://dniprqpxwa31v" path="res://assets/characters/main_hero_v2/rotations/south.png" id="4_h61rw"]
 
 [node name="StartMenu" type="Control" unique_id=1790955470]
 layout_mode = 3
@@ -35,10 +36,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 6.0
-offset_top = 5.0
-offset_right = -734.0
-offset_bottom = -132.0
+offset_left = 107.0
+offset_top = 3.0
+offset_right = -633.0
+offset_bottom = -134.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -65,6 +66,8 @@ horizontal_alignment = 1
 [node name="NameInput" type="LineEdit" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=648213198]
 layout_mode = 2
 placeholder_text = "Enter your name"
+alignment = 1
+clear_button_enabled = true
 
 [node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/NameInput" unique_id=711425100]
 show_behind_parent = true
@@ -80,6 +83,7 @@ text = "Play"
 flat = true
 
 [node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/StartButton" unique_id=1170550022]
+self_modulate = Color(0.79, 0.79, 0.79, 1)
 show_behind_parent = true
 position = Vector2(218.87502, 16)
 scale = Vector2(3.2045455, 2.452381)
@@ -92,7 +96,8 @@ layout_mode = 2
 text = "Continue"
 flat = true
 
-[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ContinueButton" unique_id=761919842]
+[node name="buttonSprite2" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ContinueButton" unique_id=1026548608]
+self_modulate = Color(0.79, 0.79, 0.79, 1)
 show_behind_parent = true
 position = Vector2(218.87502, 16)
 scale = Vector2(3.2045455, 2.452381)
@@ -108,7 +113,8 @@ layout_mode = 2
 text = "Settings"
 flat = true
 
-[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SettingsButton" unique_id=1511478635]
+[node name="buttonSprite2" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SettingsButton" unique_id=292208752]
+self_modulate = Color(0.79, 0.79, 0.79, 1)
 show_behind_parent = true
 position = Vector2(218.87502, 16)
 scale = Vector2(3.2045455, 2.452381)
@@ -121,7 +127,8 @@ layout_mode = 2
 text = "Controls"
 flat = true
 
-[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsButton" unique_id=1793361476]
+[node name="buttonSprite2" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsButton" unique_id=1522873720]
+self_modulate = Color(0.79, 0.79, 0.79, 1)
 show_behind_parent = true
 position = Vector2(218.87502, 16)
 scale = Vector2(3.2045455, 2.452381)
@@ -137,10 +144,11 @@ layout_mode = 2
 text = "Quit"
 flat = true
 
-[node name="buttonSprite" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/QuitButton" unique_id=715106547]
+[node name="buttonSprite2" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/QuitButton" unique_id=831606789]
+self_modulate = Color(0.79, 0.79, 0.79, 1)
 show_behind_parent = true
-position = Vector2(218.87502, 16)
-scale = Vector2(3.2045455, 2.452381)
+position = Vector2(215.06297, 16)
+scale = Vector2(1.8741255, 2.452381)
 texture = ExtResource("3_m7x51")
 region_enabled = true
 region_rect = Rect2(139.28964, 16.820171, 143.93811, 21.798317)
@@ -208,6 +216,11 @@ texture = ExtResource("3_m7x51")
 region_enabled = true
 region_rect = Rect2(10.09346, 151.8615, 247.45705, 244.46965)
 
+[node name="Sprite2D" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/marginFrame" unique_id=925236415]
+position = Vector2(73.33532, -32.303825)
+scale = Vector2(0.5527598, 0.5484508)
+texture = ExtResource("4_h61rw")
+
 [node name="VersionLabel" type="Label" parent="." unique_id=440958747]
 layout_mode = 0
 anchor_top = 1.0
@@ -224,10 +237,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 682.0
-offset_top = -224.0
-offset_right = -58.0
-offset_bottom = 75.0
+offset_left = 989.0
+offset_top = -143.0
+offset_right = -211.0
+offset_bottom = -19.0
 grow_horizontal = 2
 grow_vertical = 2
 

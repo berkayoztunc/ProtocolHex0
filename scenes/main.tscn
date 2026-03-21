@@ -1,9 +1,17 @@
-[gd_scene load_steps=5 format=3 uid="uid://crmain000001"]
+[gd_scene load_steps=7 format=3 uid="uid://crmain000001"]
 
-[ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_gm"]
+[ext_resource type="Script" path="res://scripts/world/game_manager.gd" id="1_gm"]
 [ext_resource type="PackedScene" uid="uid://crplayer00001" path="res://scenes/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" uid="uid://crhud0000001" path="res://scenes/hud.tscn" id="3_hud"]
-[ext_resource type="Script" path="res://scripts/background_tiler.gd" id="4_bgtiler"]
+[ext_resource type="Script" path="res://scripts/world/background_tiler.gd" id="4_bgtiler"]
+[ext_resource type="Shader" path="res://assets/shaders/vignette.gdshader" id="5_vignette"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vignette"]
+shader = ExtResource("5_vignette")
+shader_parameter/vignette_intensity = 1.0
+shader_parameter/vignette_softness = 0.5
+shader_parameter/inner_radius = 0.2
+shader_parameter/darkness_color = Color(0, 0, 0, 1)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_gm")
@@ -15,6 +23,19 @@ script = ExtResource("4_bgtiler")
 [node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector2(640, 360)
 
+[node name="VignetteLayer" type="CanvasLayer" parent="."]
+layer = 1
+
+[node name="Vignette" type="ColorRect" parent="VignetteLayer"]
+material = SubResource("ShaderMaterial_vignette")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
+layer = 2
 
 [node name="SpawnTimer" type="Timer" parent="."]
