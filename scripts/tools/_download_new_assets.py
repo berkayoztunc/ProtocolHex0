@@ -20,36 +20,38 @@ ROOT = Path(__file__).resolve().parents[2]
 
 # ─── Fill these in after PixelLab generation ─────────────────────────────────
 # Format:  "object_id": ("https://...", "relative/dest/path.png")
+BASE_DL = "https://api.pixellab.ai/mcp/map-objects/{}/download"
+
 ASSETS = {
     # ── GRUP A: Projectile sprites ──────────────────────────────────────────
-    # "FILL_A1": ("https://...", "assets/weapons/proj_rocket_blaster.png"),
-    # "FILL_A2": ("https://...", "assets/weapons/proj_octo_gun.png"),
-    # "FILL_A3": ("https://...", "assets/weapons/proj_blitz_bomb.png"),
-    # "FILL_A4": ("https://...", "assets/weapons/proj_orbital_mayhem.png"),
+    "23b6dee5-dd70-4f7e-93ed-e113aee98fe0": (BASE_DL.format("23b6dee5-dd70-4f7e-93ed-e113aee98fe0"), "assets/weapons/proj_rocket_blaster.png"),
+    "a9ad7a19-ff6e-45e5-b03e-0a1b9db0a640": (BASE_DL.format("a9ad7a19-ff6e-45e5-b03e-0a1b9db0a640"), "assets/weapons/proj_octo_gun.png"),
+    "9cda3432-e3e3-44fe-bcbb-bf20714d6317": (BASE_DL.format("9cda3432-e3e3-44fe-bcbb-bf20714d6317"), "assets/weapons/proj_blitz_bomb.png"),
+    "75dab7b3-94dd-47a0-91ef-02ebc2910d4a": (BASE_DL.format("75dab7b3-94dd-47a0-91ef-02ebc2910d4a"), "assets/weapons/proj_orbital_mayhem.png"),
 
     # ── GRUP B: VFX effects ─────────────────────────────────────────────────
-    # "FILL_B1":  ("https://...", "assets/vfx/vfx_explosion_burst.png"),
-    # "FILL_B2":  ("https://...", "assets/vfx/vfx_electric_arc.png"),
-    # "FILL_B3":  ("https://...", "assets/vfx/vfx_sonic_jump_flash.png"),
-    # "FILL_B4":  ("https://...", "assets/vfx/vfx_sonic_jump_ring.png"),
-    # "FILL_B5":  ("https://...", "assets/vfx/vfx_spin_laser_beam.png"),
-    # "FILL_B6":  ("https://...", "assets/vfx/vfx_freeze_burst.png"),
-    # "FILL_B7":  ("https://...", "assets/vfx/vfx_magnetic_pulse.png"),
-    # "FILL_B8":  ("https://...", "assets/vfx/vfx_rocket_smoke_trail.png"),
-    # "FILL_B9":  ("https://...", "assets/vfx/vfx_orbital_streak.png"),
-    # "FILL_B10": ("https://...", "assets/vfx/vfx_world_bomb_indicator.png"),
+    "11cf6319-a2ab-47fc-9171-f9ec1de324cb": (BASE_DL.format("11cf6319-a2ab-47fc-9171-f9ec1de324cb"), "assets/vfx/vfx_explosion_burst.png"),
+    "91b7e75b-bf62-4ef3-9b64-e619a0f9486d": (BASE_DL.format("91b7e75b-bf62-4ef3-9b64-e619a0f9486d"), "assets/vfx/vfx_electric_arc.png"),
+    "54011643-00ee-4512-bce6-39c087c41fe1": (BASE_DL.format("54011643-00ee-4512-bce6-39c087c41fe1"), "assets/vfx/vfx_sonic_jump_flash.png"),
+    "faac9c0c-a015-413e-8b80-0a1d46346320": (BASE_DL.format("faac9c0c-a015-413e-8b80-0a1d46346320"), "assets/vfx/vfx_sonic_jump_ring.png"),
+    "a013afa5-a07a-4d8c-952a-1d3d7db732ef": (BASE_DL.format("a013afa5-a07a-4d8c-952a-1d3d7db732ef"), "assets/vfx/vfx_spin_laser_beam.png"),
+    "4506cdfc-2921-476a-9197-733925ba0d42": (BASE_DL.format("4506cdfc-2921-476a-9197-733925ba0d42"), "assets/vfx/vfx_freeze_burst.png"),
+    "ed68993c-f5c8-42df-bdfa-a5184fecc707": (BASE_DL.format("ed68993c-f5c8-42df-bdfa-a5184fecc707"), "assets/vfx/vfx_magnetic_pulse.png"),
+    "7bb39723-f1c7-4b70-b9d6-bd3911b570f6": (BASE_DL.format("7bb39723-f1c7-4b70-b9d6-bd3911b570f6"), "assets/vfx/vfx_rocket_smoke_trail.png"),
+    "37ba5c16-902b-427a-9b43-460a060ccf98": (BASE_DL.format("37ba5c16-902b-427a-9b43-460a060ccf98"), "assets/vfx/vfx_orbital_streak.png"),
+    "3376297b-31a5-4d3a-8e44-a473fd893740": (BASE_DL.format("3376297b-31a5-4d3a-8e44-a473fd893740"), "assets/vfx/vfx_world_bomb_indicator.png"),
 
     # ── GRUP C: Weapon icons ─────────────────────────────────────────────────
-    # "FILL_C1": ("https://...", "assets/ui/icons/weapon_rocket_blaster.png"),
-    # "FILL_C2": ("https://...", "assets/ui/icons/weapon_octo_gun.png"),
-    # "FILL_C3": ("https://...", "assets/ui/icons/weapon_sonic_jumper.png"),
-    # "FILL_C4": ("https://...", "assets/ui/icons/weapon_blitz_bomb.png"),
-    # "FILL_C5": ("https://...", "assets/ui/icons/weapon_spin_laser.png"),
-    # "FILL_C6": ("https://...", "assets/ui/icons/weapon_orbital_mayhem.png"),
-    # "FILL_C7": ("https://...", "assets/ui/icons/weapon_magnetic_field.png"),
+    "da762930-9965-4170-a26a-7cffaaff350c": (BASE_DL.format("da762930-9965-4170-a26a-7cffaaff350c"), "assets/ui/icons/weapon_rocket_blaster.png"),
+    "a35163e0-8cd6-4573-848a-aaa10572201b": (BASE_DL.format("a35163e0-8cd6-4573-848a-aaa10572201b"), "assets/ui/icons/weapon_octo_gun.png"),
+    "e1d76c46-552a-4138-be46-451b482d81a9": (BASE_DL.format("e1d76c46-552a-4138-be46-451b482d81a9"), "assets/ui/icons/weapon_sonic_jumper.png"),
+    "07e900b4-4763-4606-9baa-5fd65d51afb1": (BASE_DL.format("07e900b4-4763-4606-9baa-5fd65d51afb1"), "assets/ui/icons/weapon_blitz_bomb.png"),
+    "f93cd88d-9146-4149-aac9-5f7a6071ec92": (BASE_DL.format("f93cd88d-9146-4149-aac9-5f7a6071ec92"), "assets/ui/icons/weapon_spin_laser.png"),
+    "2db65f27-d925-46cb-8185-3bd4a68b06cc": (BASE_DL.format("2db65f27-d925-46cb-8185-3bd4a68b06cc"), "assets/ui/icons/weapon_orbital_mayhem.png"),
+    "ccb9d2c6-6895-4bad-a343-0ba138284586": (BASE_DL.format("ccb9d2c6-6895-4bad-a343-0ba138284586"), "assets/ui/icons/weapon_magnetic_field.png"),
 
     # ── GRUP D: World objects ────────────────────────────────────────────────
-    # "FILL_D1": ("https://...", "assets/vfx/sprite_world_bomb.png"),
+    "b9053797-d62b-417c-b419-24080d5a017c": (BASE_DL.format("b9053797-d62b-417c-b419-24080d5a017c"), "assets/vfx/sprite_world_bomb.png"),
 }
 
 

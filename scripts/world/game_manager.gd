@@ -1,8 +1,8 @@
 extends Node2D
 
 @export var spawn_interval: float = 1.5
-@export var min_spawn_distance: float = 400.0
-@export var max_spawn_distance: float = 600.0
+@export var min_spawn_distance: float = 800.0
+@export var max_spawn_distance: float = 1150.0
 
 var enemy_scene: PackedScene = preload("res://scenes/enemy.tscn")
 var xp_gem_scene: PackedScene = preload("res://scenes/xp_gem.tscn")
@@ -19,6 +19,15 @@ var weapon_display_timer: float = 0.0
 var perk_tree_instance: Control = null
 var perk_points: int = 200
 
+# --- Wave scheduler ---
+var _enemy_pool: EnemyPool = null
+var _wave_number: int = 0
+var _wave_schedule: Array = []  # Array of {gap: float, count: int}
+var _wave_head: int = 0
+var _wave_event_timer: float = 0.0
+var _in_wave: bool = false
+# ----------------------
+
 var upgrade_catalog: Dictionary = {}
 
 @onready var player: CharacterBody2D = $Player
@@ -31,11 +40,17 @@ var upgrade_catalog: Dictionary = {}
 func _ready() -> void:
 	get_tree().paused = false
 	upgrade_catalog = UpgradeCatalogs.get_all_catalogs()
-	spawn_interval = float(ConfigService.get_value("difficulty.base_spawn_interval", spawn_interval))
 	min_spawn_distance = float(ConfigService.get_value("difficulty.spawn_distance_min", min_spawn_distance))
 	max_spawn_distance = float(ConfigService.get_value("difficulty.spawn_distance_max", max_spawn_distance))
-	spawn_timer.wait_time = spawn_interval
-	spawn_timer.timeout.connect(_on_spawn_timer_timeout)
+	# Build enemy pool (pre-warms all archetype variants)
+	_enemy_pool = EnemyPool.new()
+	_enemy_pool.name = "EnemyPool"
+	add_child(_enemy_pool)
+	_enemy_pool.initialize(enemy_scene)
+	# Repurpose SpawnTimer as the inter-wave gap timer (one-shot between waves)
+	spawn_timer.one_shot = true
+	spawn_timer.timeout.connect(_start_next_wave)
+	spawn_timer.wait_time = float(ConfigService.get_value("waves.initial_delay", 1.2))
 	spawn_timer.start()
 
 	player.health_changed.connect(hud.update_health)
@@ -76,6 +91,11 @@ func _process(delta: float) -> void:
 	if autosave_elapsed >= 2.0:
 		autosave_elapsed = 0.0
 		_persist_run_state()
+	# Wave scheduler tick
+	if _in_wave:
+		_wave_event_timer -= delta
+		if _wave_event_timer <= 0.0:
+			_dispatch_wave_event()
 	# Refresh weapon display every 0.025s for responsive cooldown overlay
 	weapon_display_timer -= delta
 	if weapon_display_timer <= 0.0:
@@ -84,20 +104,106 @@ func _process(delta: float) -> void:
 			hud.update_active_weapons(player.get_active_weapons_display())
 
 
-func _on_spawn_timer_timeout() -> void:
+func _start_next_wave() -> void:
 	if game_over:
 		return
-	_spawn_enemy()
+	_wave_number += 1
+	var wave_size: int = _compute_wave_size()
+	_wave_schedule = _generate_wave_schedule(wave_size)
+	_wave_head = 0
+	_in_wave = true
+	if _wave_schedule.size() > 0:
+		_wave_event_timer = (_wave_schedule[0] as Dictionary).get("gap", 0.1)
+
+
+func _dispatch_wave_event() -> void:
+	if _wave_head >= _wave_schedule.size():
+		_in_wave = false
+		return
+	var event: Dictionary = _wave_schedule[_wave_head] as Dictionary
+	var burst: int = int(event.get("count", 1))
+	for _i in burst:
+		_spawn_enemy()
+	_wave_head += 1
+	if _wave_head < _wave_schedule.size():
+		_wave_event_timer = (_wave_schedule[_wave_head] as Dictionary).get("gap", 0.4)
+	else:
+		_in_wave = false
+		spawn_timer.wait_time = _get_inter_wave_gap()
+		spawn_timer.start()
+
+
+func _compute_wave_size() -> int:
+	var base: int = int(ConfigService.get_value("waves.wave_base_count", 3))
+	var scale: float = float(ConfigService.get_value("waves.wave_count_scaling", 1.1))
+	var time_interval: float = float(ConfigService.get_value("waves.wave_time_bonus_interval", 50.0))
+	var max_count: int = int(ConfigService.get_value("waves.wave_max_count", 22))
+	var wave_bonus: int = int(float(_wave_number) * scale)
+	var time_bonus: int = int(elapsed_seconds / maxf(time_interval, 1.0))
+	return clampi(base + wave_bonus + time_bonus, base, max_count)
+
+
+# Returns a schedule: an Array of {gap: float, count: int} dicts.
+# Each gap is the delay (in seconds) BEFORE spawning that burst, relative to the previous event.
+func _generate_wave_schedule(total: int) -> Array:
+	var schedule: Array = []
+	var remaining: int = total
+	var is_first: bool = true
+	while remaining > 0:
+		var burst: int = mini(remaining, _pick_burst_size())
+		var gap: float = _pick_burst_gap(is_first)
+		schedule.append({"gap": gap, "count": burst})
+		remaining -= burst
+		is_first = false
+	return schedule
+
+
+func _pick_burst_size() -> int:
+	var r: float = randf()
+	if r < 0.55:
+		return 1   # 55% — single
+	if r < 0.85:
+		return 2   # 30% — double
+	return 3       # 15% — triple
+
+
+func _pick_burst_gap(is_first: bool) -> float:
+	if is_first:
+		# Brief lead-in so players see the wave start
+		return randf_range(0.05, 0.20)
+	var r: float = randf()
+	if r < 0.25:
+		return randf_range(0.25, 0.40)   # 25% — quick follow-up
+	if r < 0.70:
+		return randf_range(0.40, 0.70)   # 45% — medium gap
+	return randf_range(0.70, 1.10)       # 30% — longer pause
+
+
+func _get_inter_wave_gap() -> float:
+	var base: float = float(ConfigService.get_value("waves.inter_wave_gap_base", 3.2))
+	var min_gap: float = float(ConfigService.get_value("waves.inter_wave_gap_min", 1.5))
+	var reduction: float = float(ConfigService.get_value("waves.inter_wave_gap_reduction_per_wave", 0.05))
+	return maxf(min_gap, base - float(_wave_number) * reduction)
 
 
 func _spawn_enemy() -> void:
-	var enemy: CharacterBody2D = enemy_scene.instantiate()
+	if _enemy_pool == null:
+		return
+	var archetype_id: String = _pick_enemy_archetype_id()
+	var archetype_data: Dictionary = _get_enemy_archetype_data(archetype_id)
+	var enemy: CharacterBody2D = _enemy_pool.acquire(archetype_id)
 	var angle: float = randf() * TAU
 	var dist: float = randf_range(min_spawn_distance, max_spawn_distance)
 	enemy.global_position = player.global_position + Vector2(cos(angle), sin(angle)) * dist
+	# Hazard alanında spawn etme — farklı açı dene (maks 10 deneme)
+	var _haz_bg: Node = get_tree().get_first_node_in_group("background_tiler")
+	if _haz_bg != null and _haz_bg.has_method("is_hazard_at_world"):
+		var _retry: int = 0
+		while _haz_bg.is_hazard_at_world(enemy.global_position) and _retry < 10:
+			angle = randf() * TAU
+			enemy.global_position = player.global_position + Vector2(cos(angle), sin(angle)) * dist
+			_retry += 1
 	enemy.target = player
-	var archetype_id: String = _pick_enemy_archetype_id()
-	var archetype_data: Dictionary = _get_enemy_archetype_data(archetype_id)
 	if enemy.has_method("setup_from_archetype"):
 		enemy.setup_from_archetype(archetype_id, archetype_data)
 	var progress_ratio: float = _compute_difficulty_progress()
@@ -112,8 +218,10 @@ func _spawn_enemy() -> void:
 	enemy.explosive_resistance = clampf(base_explosive_resist + (progress_ratio * float(ConfigService.get_value("difficulty.explosive_resist_growth", 0.01))), 0.0, 0.5)
 	if enemy.has_method("apply_scaling"):
 		enemy.apply_scaling(progress_ratio, is_elite, health_growth, speed_growth, damage_growth)
-	enemy.died.connect(_on_enemy_died)
-	add_child(enemy)
+	# Prevent duplicate signal connections across pool reuse cycles
+	if not enemy.died.is_connected(_on_enemy_died):
+		enemy.died.connect(_on_enemy_died)
+	_enemy_pool.activate(enemy)
 
 
 func _on_enemy_died(pos: Vector2) -> void:
@@ -124,24 +232,27 @@ func _on_enemy_died(pos: Vector2) -> void:
 	_try_spawn_world_bomb()
 	MockApiClient.queue_event("enemy_killed", {"kills": kill_count})
 	_persist_run_state()
-	# Gradually increase difficulty
-	var step_kills: int = int(ConfigService.get_value("difficulty.step_kills", 8))
-	if kill_count % max(step_kills, 1) == 0:
-		var interval_step: float = float(ConfigService.get_value("difficulty.spawn_interval_step", 0.08))
-		var min_interval: float = float(ConfigService.get_value("difficulty.min_spawn_interval", 0.28))
-		spawn_timer.wait_time = max(min_interval, spawn_timer.wait_time - interval_step)
+	# Wave count/size scaling replaces the old per-kill spawn interval reduction.
 
 
 func _try_spawn_world_bomb() -> void:
-	var bomb_every: int = int(ConfigService.get_value("difficulty.bomb_spawn_kills", 30))
+	var bomb_every: int = int(ConfigService.get_value("difficulty.bomb_spawn_kills", 100))
 	if bomb_every <= 0 or kill_count % bomb_every != 0:
 		return
 	var angle: float = randf() * TAU
 	var dist: float = randf_range(200.0, 350.0)
-	var spawn_pos: Vector2 = player.global_position + Vector2(cos(angle), sin(angle)) * dist
+	var ground_pos: Vector2 = player.global_position + Vector2(cos(angle), sin(angle)) * dist
+	call_deferred("_spawn_world_bomb_deferred", ground_pos)
+
+
+func _spawn_world_bomb_deferred(ground_pos: Vector2) -> void:
 	var bomb: Node2D = world_bomb_scene.instantiate()
-	bomb.global_position = spawn_pos
+	# Spawn 600 px above the intended landing position (slight horizontal jitter)
+	var drop_height: float = 600.0
+	bomb.global_position = ground_pos + Vector2(randf_range(-30.0, 30.0), -drop_height)
 	add_child(bomb)
+	if bomb.has_method("start_falling"):
+		bomb.start_falling(ground_pos)
 
 
 func _spawn_xp_gem(pos: Vector2) -> void:
@@ -159,6 +270,7 @@ func _spawn_xp_gem_deferred(pos: Vector2, tier: String) -> void:
 
 func _on_player_died() -> void:
 	game_over = true
+	_in_wave = false
 	spawn_timer.stop()
 	var held_def: Variant = ConfigService.get_value("weapons.definitions.%s" % player.current_held_weapon, null)
 	var weapon_name: String = "Plasma Rifle"
@@ -256,9 +368,6 @@ func _on_player_level_changed(new_level: int) -> void:
 	perk_points += 1
 	hud.update_perk_points(perk_points)
 	_persist_run_state()
-	if game_over:
-		return
-	_open_perk_tree_for_level_up()
 
 
 func _apply_start_state() -> void:
@@ -457,12 +566,11 @@ func _on_chest_opened(_pos: Vector2) -> void:
 	var heal_amount: int = maxi(1, int(float(player.max_health) * 0.30))
 	player.health = mini(player.health + heal_amount, player.max_health)
 	player.health_changed.emit(player.health, player.max_health)
-	hud.show_notification("❤ +%d Can! Perk seç!" % heal_amount)
+	hud.show_notification("❤ +%d Can! Perk puanı kazandın (P ile aç)" % heal_amount)
 	# Also award a perk point so player can pick
 	perk_points += 1
 	hud.update_perk_points(perk_points)
 	_persist_run_state()
-	call_deferred("_toggle_perk_tree")
 	MockApiClient.queue_event("chest_opened", {"reward": "heal_perk", "kills": kill_count})
 
 
@@ -530,11 +638,3 @@ func _get_selectable_upgrade_ids() -> Array[String]:
 func _refresh_perk_tree() -> void:
 	if perk_tree_instance and is_instance_valid(perk_tree_instance) and perk_tree_instance.has_method("refresh"):
 		perk_tree_instance.refresh(upgrade_stacks, upgrade_catalog, perk_points, _get_selectable_upgrade_ids())
-
-
-func _open_perk_tree_for_level_up() -> void:
-	if perk_tree_instance and is_instance_valid(perk_tree_instance):
-		_refresh_perk_tree()
-		get_tree().paused = true
-		return
-	_toggle_perk_tree()

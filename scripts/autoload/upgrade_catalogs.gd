@@ -121,6 +121,16 @@ func _build_catalog() -> Dictionary:
 			"description": "+5 zırh değeri, alınan hasar azalır.",
 			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
 		},
+		"p_weapon_range": {
+			"id": "p_weapon_range", "name": "Silah Menzili",
+			"description": "Ana silah menzili +200 uzar. Mermiler daha uzağa ulaşır.",
+			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+		},
+		"p_life_steal": {
+			"id": "p_life_steal", "name": "Nano Vampir",
+			"description": "+%3 hasar çalma. Düşmanlara verilen hasarın %3'ü can olarak geri döner.",
+			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+		},
 
 		# ─── MERMİ EFEKTLERİ ──────────────────────────────────
 		"pa_electric_bullet": {
@@ -253,6 +263,8 @@ func _build_layout() -> Dictionary:
 		"p_fire_power":      {"row": 1, "col": 2},
 		"p_vision_range":    {"row": 1, "col": 3},
 		"p_armor":           {"row": 1, "col": 4},
+		"p_weapon_range":    {"row": 1, "col": 5},
+		"p_life_steal":      {"row": 1, "col": 6},
 		# Satır 2 — Mermi Efektleri
 		"pa_electric_bullet":  {"row": 2, "col": 0},
 		"pa_burning_bullet":   {"row": 2, "col": 2},

@@ -41,6 +41,8 @@ var explosive_bullet_chance: float = 0.0
 var chest_luck: float = 0.0
 var vision_range_level: int = 0
 signal vision_changed(level: int)
+var weapon_range_bonus: float = 0.0
+var life_steal_pct: float = 0.0
 var cooldown_multiplier: float = 1.0
 var has_shield: bool = false
 var _shield_active: bool = false
@@ -73,6 +75,9 @@ var projectile_class_names: Dictionary = {
 
 # Weapon upgrade levels (per weapon id)
 var weapon_upgrade_levels: Dictionary = {}
+
+# One-shot burst guard (rocket blaster fires exactly once per activation)
+var _rocket_blaster_busy: bool = false
 
 # Camera shake
 var _shake_intensity: float = 0.0
@@ -304,6 +309,7 @@ func _fire_weapon(weapon_id: String, wdef: Dictionary) -> void:
 	var is_magnet_skill: bool = wdef.get("is_magnet_skill", false)
 	var is_spin_laser: bool = wdef.get("is_spin_laser", false)
 	var is_orbital_mayhem: bool = wdef.get("is_orbital_mayhem", false)
+	var is_rocket_blaster: bool = wdef.get("is_rocket_blaster", false)
 	var targeting_pref: String = str(wdef.get("targeting_pref", "nearest"))
 	var is_held_weapon: bool = wdef.get("is_held", false)
 
@@ -363,6 +369,11 @@ func _fire_weapon(weapon_id: String, wdef: Dictionary) -> void:
 		_do_orbital_mayhem(total_damage, wdef)
 		return
 
+	# Rocket Blaster: 5 homing rockets to 5 nearest enemies, staggered 0.2 s
+	if is_rocket_blaster:
+		_do_rocket_blaster(total_damage, wdef)
+		return
+
 	# Multi-nearest: fire one projectile per closest N enemies
 	if targeting_pref == "multi_nearest":
 		_do_multi_nearest_fire(total_damage, wdef, is_crit)
@@ -413,6 +424,8 @@ func _spawn_weapon_bullet(direction: Vector2, damage_amount: int, wdef: Dictiona
 	bullet.set_damage_type(str(wdef.get("damage_type", "physical")))
 	bullet.speed = float(wdef.get("speed", 400.0))
 	bullet.lifetime = float(wdef.get("lifetime", 3.0))
+	if weapon_range_bonus > 0.0 and bool(wdef.get("is_held", false)):
+		bullet.lifetime += weapon_range_bonus
 	bullet.pierce_count = int(wdef.get("pierce", 0)) + (pierce_count if is_default else 0)
 	bullet.chain_count = int(wdef.get("chain", 0))
 	bullet.chain_range = float(wdef.get("chain_range", 150.0))
@@ -512,58 +525,279 @@ func _do_cryo_field(damage_amount: int, wdef: Dictionary) -> void:
 
 func _do_sonic_jump(damage_amount: int, wdef: Dictionary) -> void:
 	var dist: float = float(wdef.get("dash_distance", 350.0))
-	var radius: float = float(wdef.get("shield_radius", 80.0))
+	var hit_radius: float = float(wdef.get("shield_radius", 80.0))
 	var input_dir: Vector2 = Vector2(
 		Input.get_axis("move_left", "move_right"),
 		Input.get_axis("move_up", "move_down")
 	).normalized()
 	if input_dir.length_squared() < 0.01:
 		input_dir = Vector2.RIGHT
+
+	var start_pos: Vector2 = global_position
 	var dest: Vector2 = global_position + input_dir * dist
+
+	# Hazard alanına girme — dash yolunda son güvenli noktada dur
+	var _haz_bg: Node = get_tree().get_first_node_in_group("background_tiler")
+	if _haz_bg != null and _haz_bg.has_method("is_hazard_at_world") \
+			and _haz_bg.is_hazard_at_world(dest):
+		var _safe: Vector2 = start_pos
+		for _s in range(1, 17):
+			var _candidate: Vector2 = start_pos + input_dir * (dist * float(_s) / 16.0)
+			if _haz_bg.is_hazard_at_world(_candidate):
+				break
+			_safe = _candidate
+		dest = _safe
+
+	# Ghost afterimage trail along the full dash path (blue, transparent)
+	_spawn_sonic_jump_ghosts(start_pos, dest)
+
+	# Teleport the player to destination
 	global_position = dest
-	# Damage enemies at destination
-	_spawn_vfx_ring("res://assets/vfx/vfx_void_explosion_ring.png", dest, radius)
+
+	# VFX ring at landing point
+	var ring_path: String = "res://assets/vfx/vfx_sonic_jump_ring.png"
+	if not ResourceLoader.exists(ring_path):
+		ring_path = "res://assets/vfx/vfx_void_explosion_ring.png"
+	_spawn_vfx_ring(ring_path, dest, hit_radius * 1.5)
+
+	# Damage every enemy within hit_radius of the A→B line segment
+	# (hitbox covers the full dash corridor, active the instant of the dash)
+	var ab: Vector2 = dest - start_pos
+	var ab_len_sq: float = ab.length_squared()
 	var enemies: Array = get_tree().get_nodes_in_group("enemies")
 	for enemy in enemies:
-		if dest.distance_to(enemy.global_position) <= radius and enemy.has_method("take_damage"):
+		var dist_to_path: float
+		if ab_len_sq < 1.0:
+			dist_to_path = start_pos.distance_to(enemy.global_position)
+		else:
+			var t: float = clampf((enemy.global_position - start_pos).dot(ab) / ab_len_sq, 0.0, 1.0)
+			var closest: Vector2 = start_pos + t * ab
+			dist_to_path = enemy.global_position.distance_to(closest)
+		if dist_to_path <= hit_radius and enemy.has_method("take_damage"):
 			enemy.take_damage(damage_amount, "physical", false)
+
+
+# Spawns 6 blue semi-transparent ghost copies of the hero sprite along the dash path.
+# Each ghost fades out quickly to sell the "rapid dash" feel.
+func _spawn_sonic_jump_ghosts(start: Vector2, end: Vector2) -> void:
+	var ghost_count: int = 6
+	var tex: Texture2D = null
+	var ghost_scale: Vector2 = Vector2(1.8, 1.8)
+	var flip_h: bool = false
+
+	if _hero_sprite != null and _hero_sprite.sprite_frames != null:
+		var anim: String = _hero_sprite.animation
+		var fidx: int = _hero_sprite.frame
+		if _hero_sprite.sprite_frames.has_animation(anim):
+			tex = _hero_sprite.sprite_frames.get_frame_texture(anim, fidx)
+		ghost_scale = _hero_sprite.scale
+		flip_h = _hero_sprite.flip_h
+
+	if tex == null:
+		return  # No sprite available; skip ghost effect
+
+	for i in range(ghost_count):
+		# t goes from near-start (0.05) to near-destination (0.85)
+		var t: float = 0.05 + (float(i) / float(ghost_count - 1)) * 0.80
+		var ghost_pos: Vector2 = start.lerp(end, t)
+
+		# Opacity: freshest (closest to destination) is most visible
+		var alpha: float = lerpf(0.18, 0.52, float(i) / float(ghost_count - 1))
+
+		var ghost: Sprite2D = Sprite2D.new()
+		ghost.texture = tex
+		ghost.scale = ghost_scale
+		ghost.flip_h = flip_h
+		ghost.global_position = ghost_pos
+		# Blue tint, semi-transparent
+		ghost.modulate = Color(0.3, 0.65, 1.0, alpha)
+		get_tree().current_scene.add_child(ghost)
+
+		# Fade out: earlier ghosts vanish sooner, later ghosts linger slightly longer
+		var fade_delay: float = 0.02
+		var fade_dur: float = 0.12 + float(i) * 0.025
+		var tween: Tween = ghost.create_tween()
+		tween.tween_property(ghost, "modulate:a", 0.0, fade_dur).set_delay(fade_delay) \
+			.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		tween.chain().tween_callback(ghost.queue_free)
 
 
 func _do_spin_laser(damage_amount: int, wdef: Dictionary) -> void:
 	var spin_radius: float = float(wdef.get("spin_radius", 200.0))
-	var rotations: int = int(wdef.get("spin_rotations", 2))
-	var enemies: Array = get_tree().get_nodes_in_group("enemies")
-	_spawn_vfx_ring("res://assets/vfx/vfx_void_explosion_ring.png", global_position, spin_radius)
-	for enemy in enemies:
-		if global_position.distance_to(enemy.global_position) <= spin_radius and enemy.has_method("take_damage"):
-			enemy.take_damage(damage_amount * rotations, "energy", false)
+	var rotations: int = int(wdef.get("spin_rotations", 3))
+	var spin_time: float = float(rotations) * 0.4  # 0.4 s per rotation → 1.2 s total
+	# Animated spinning laser: 2 red beams 180° apart, child of player (follows movement)
+	var sweeper: Node2D = Node2D.new()
+	sweeper.position = Vector2.ZERO
+	add_child(sweeper)
+	for i in 2:
+		var angle_offset: float = PI * float(i)
+		# Wide outer glow
+		var glow := Line2D.new()
+		glow.rotation = angle_offset
+		glow.add_point(Vector2(10, 0))
+		glow.add_point(Vector2(spin_radius, 0))
+		glow.width = 14.0
+		glow.default_color = Color(1.0, 0.05, 0.05, 0.22)
+		sweeper.add_child(glow)
+		# Core bright red beam
+		var beam := Line2D.new()
+		beam.rotation = angle_offset
+		beam.add_point(Vector2(10, 0))
+		beam.add_point(Vector2(spin_radius, 0))
+		beam.width = 4.0
+		beam.default_color = Color(1.0, 0.08, 0.08, 0.95)
+		sweeper.add_child(beam)
+		# Bright white-red center line
+		var core := Line2D.new()
+		core.rotation = angle_offset
+		core.add_point(Vector2(10, 0))
+		core.add_point(Vector2(spin_radius * 0.82, 0))
+		core.width = 1.5
+		core.default_color = Color(1.0, 0.72, 0.72, 0.9)
+		sweeper.add_child(core)
+	# Tween: n full rotations in spin_time, fade out in last 0.22 s
+	var tween := sweeper.create_tween().set_parallel(true)
+	tween.tween_property(sweeper, "rotation", TAU * float(rotations), spin_time) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(sweeper, "modulate:a", 0.0, 0.22).set_delay(spin_time - 0.22)
+	tween.chain().tween_callback(sweeper.queue_free)
+	# Per-frame beam contact damage: deal damage as beam arcs sweep through enemies
+	_spin_laser_damage_loop(sweeper, damage_amount, spin_radius, spin_time)
+
+
+# Coroutine: damage enemies exactly when a beam arc touches them while spinning.
+# Each enemy can be hit at most once per rotation (≈ every 0.4 s hit_cooldown window).
+func _spin_laser_damage_loop(sweeper: Node2D, dmg: int, radius: float, spin_time: float) -> void:
+	var hit_times: Dictionary = {}   # enemy → last hit timestamp (seconds)
+	var hit_cooldown: float   = 0.30  # minimum seconds between hits on the same enemy
+	var beam_half_angle: float = 0.32 # ±~18° contact zone per beam tip
+	var start_ms: int = Time.get_ticks_msec()
+	while float(Time.get_ticks_msec() - start_ms) * 0.001 < spin_time:
+		await get_tree().process_frame
+		if not is_instance_valid(self) or not is_instance_valid(sweeper):
+			return
+		var now: float = float(Time.get_ticks_msec()) * 0.001
+		var beam_angle: float = sweeper.rotation
+		for enemy: Node2D in get_tree().get_nodes_in_group("enemies"):
+			if not is_instance_valid(enemy):
+				continue
+			var diff: Vector2 = enemy.global_position - global_position
+			var dist: float = diff.length()
+			if dist < 10.0 or dist > radius:
+				continue
+			var enemy_angle: float = diff.angle()
+			# Check both beams (0° head and 180° head)
+			var d0: float = absf(wrapf(enemy_angle - beam_angle, -PI, PI))
+			var d1: float = absf(wrapf(enemy_angle - beam_angle - PI, -PI, PI))
+			if d0 <= beam_half_angle or d1 <= beam_half_angle:
+				var last: float = hit_times.get(enemy, -999.0)
+				if now - last >= hit_cooldown:
+					hit_times[enemy] = now
+					if enemy.has_method("take_damage"):
+						enemy.take_damage(dmg, "energy", false)
 
 
 func _do_orbital_mayhem(damage_amount: int, wdef: Dictionary) -> void:
-	var rocket_count: int = int(wdef.get("rocket_count", 12))
 	var enemies: Array = get_tree().get_nodes_in_group("enemies")
 	if enemies.is_empty():
 		return
-	# Each rocket fires from above an enemy position
-	for i in range(rocket_count):
-		var target: Node2D = enemies[i % enemies.size()]
-		var spawn_pos: Vector2 = target.global_position + Vector2(randf_range(-60, 60), -400.0)
-		var dir: Vector2 = (target.global_position - spawn_pos).normalized()
-		var bullet: Node2D = aoe_bullet_scene.instantiate()
-		bullet.global_position = spawn_pos
-		bullet.direction = dir
-		if bullet.has_method("set_damage"):
-			bullet.set_damage(damage_amount)
-		bullet.set_damage_type("explosive")
-		bullet.speed = 500.0
-		bullet.lifetime = 2.0
-		bullet.is_aoe = true
-		bullet.aoe_radius = 80.0
-		bullet.aoe_damage_ratio = 0.5
-		var c: Color = Color(0.8, 0.4, 1.0)
-		bullet.modulate = c
-		get_tree().current_scene.add_child(bullet)
 	camera_shake(6.0)
+	# Launch coroutine so we can stagger with await
+	_orbital_mayhem_async(damage_amount, wdef, enemies)
+
+
+func _orbital_mayhem_async(damage_amount: int, wdef: Dictionary, enemies: Array) -> void:
+	# 2-3-4-6 grouped drop pattern (total 15 rockets per activation)
+	var groups: Array[int]  = [2, 3, 4, 6]
+	var group_pause: float  = 0.30  # pause between groups
+	var intra_gap:   float  = 0.10  # gap between rockets within a group
+	var aoe_r: float        = float(wdef.get("aoe_radius", 120.0))
+	var rocket_index: int   = 0
+	for group_size: int in groups:
+		for j: int in range(group_size):
+			if j > 0:
+				await get_tree().create_timer(intra_gap).timeout
+			var target: Node2D = enemies[rocket_index % enemies.size()]
+			rocket_index += 1
+			if not is_instance_valid(target):
+				continue
+			# Spawn directly above target — falls perfectly vertical
+			var spawn_pos: Vector2 = target.global_position + Vector2(0.0, -520.0)
+			var bullet: Node2D = aoe_bullet_scene.instantiate()
+			bullet.global_position = spawn_pos
+			bullet.direction = Vector2(0.0, 1.0)  # straight down
+			if bullet.has_method("set_damage"):
+				bullet.set_damage(damage_amount)
+			bullet.weapon_type = "rocket_blaster"
+			bullet.set_damage_type("explosive")
+			bullet.speed = 520.0
+			bullet.lifetime = 2.2
+			bullet.is_aoe = true
+			bullet.aoe_radius = aoe_r
+			bullet.aoe_damage_ratio = 0.55
+			bullet.vfx_explosion_scale = 1.4
+			bullet.modulate = Color(0.8, 0.4, 1.0)
+			get_tree().current_scene.add_child(bullet)
+		# Pause after each group except the last
+		if group_size != groups.back():
+			await get_tree().create_timer(group_pause).timeout
+
+
+func _do_rocket_blaster(damage_amount: int, wdef: Dictionary) -> void:
+	if _rocket_blaster_busy:
+		return
+	_rocket_blaster_async(damage_amount, wdef)
+
+
+func _rocket_blaster_async(damage_amount: int, wdef: Dictionary) -> void:
+	_rocket_blaster_busy = true
+	var count: int = int(wdef.get("projectile_count", 5))
+	var enemies: Array = get_tree().get_nodes_in_group("enemies")
+	if enemies.is_empty():
+		_rocket_blaster_busy = false
+		return
+	# Nearest unique targets (up to count; if fewer enemies exist, use all of them)
+	enemies.sort_custom(func(a: Node2D, b: Node2D) -> bool:
+		return global_position.distance_squared_to(a.global_position) \
+			< global_position.distance_squared_to(b.global_position)
+	)
+	var targets: Array[Node2D] = []
+	for e in enemies:
+		if targets.size() >= count:
+			break
+		targets.append(e as Node2D)
+	var color_arr: Array = wdef.get("color", [1.0, 0.5, 0.1]) as Array
+	var bcol := Color(1.0, 0.5, 0.1)
+	if color_arr.size() >= 3:
+		bcol = Color(float(color_arr[0]), float(color_arr[1]), float(color_arr[2]))
+	for i in range(targets.size()):
+		if i > 0:
+			await get_tree().create_timer(0.20).timeout
+		var target: Node2D = targets[i]
+		if not is_instance_valid(target):
+			continue
+		var bullet: Node2D = aoe_bullet_scene.instantiate()
+		bullet.global_position = global_position
+		# Initial direction toward target; homing will steer it the rest of the way
+		var init_dir: Vector2 = (target.global_position - global_position).normalized()
+		bullet.direction = init_dir
+		bullet.rotation = init_dir.angle()
+		bullet.set_damage(damage_amount)
+		bullet.weapon_type = "rocket_blaster"
+		bullet.set_damage_type("explosive")
+		bullet.speed = float(wdef.get("speed", 300.0))
+		bullet.lifetime = float(wdef.get("lifetime", 5.0))
+		bullet.is_aoe = true
+		bullet.aoe_radius = float(wdef.get("aoe_radius", 120.0))
+		bullet.aoe_damage_ratio = float(wdef.get("aoe_damage_ratio", 0.6))
+		bullet.modulate = bcol
+		# Homing: strong tracking so rocket flies directly at the locked enemy
+		bullet.set("homing_target", target)
+		bullet.set("homing_strength", 8.0)
+		get_tree().current_scene.add_child(bullet)
+		camera_shake(2.5)
+	_rocket_blaster_busy = false
 
 
 func _do_multi_nearest_fire(damage_amount: int, wdef: Dictionary, is_crit: bool) -> void:
@@ -819,6 +1053,8 @@ func apply_run_state(saved_state: Dictionary) -> void:
 	explosive_bullet_chance = float(saved_state.get("explosive_bullet_chance", 0.0))
 	chest_luck = float(saved_state.get("chest_luck", 0.0))
 	vision_range_level = int(saved_state.get("vision_range_level", 0))
+	weapon_range_bonus = float(saved_state.get("weapon_range_bonus", 0.0))
+	life_steal_pct = float(saved_state.get("life_steal_pct", 0.0))
 	# Restore weapon slots
 	var saved_slots: Variant = saved_state.get("weapon_slots", null)
 	_weapon_slots.clear()
@@ -872,6 +1108,8 @@ func get_run_state() -> Dictionary:
 		"explosive_bullet_chance": explosive_bullet_chance,
 		"chest_luck": chest_luck,
 		"vision_range_level": vision_range_level,
+		"weapon_range_bonus": weapon_range_bonus,
+		"life_steal_pct": life_steal_pct,
 	}
 
 
@@ -936,12 +1174,17 @@ func apply_upgrade(upgrade_id: String) -> void:
 			vision_changed.emit(vision_range_level)
 		"p_armor":
 			armor += 5
+		"p_weapon_range":
+			weapon_range_bonus += 0.5  # +200px range at default 400 speed
+		"p_life_steal":
+			life_steal_pct = minf(life_steal_pct + 0.03, 0.30)
 
 		# ═══ MERMi EFEKTLERi ═══
 		"pa_electric_bullet":
 			electric_bullet_chance = minf(electric_bullet_chance + 0.08, 0.80)
 		"pa_burning_bullet":
 			burn_chance = minf(burn_chance + 0.08, 0.80)
+			burn_damage = mini(burn_damage + 3, 24)
 		"pa_explosive_bullet":
 			explosive_bullet_chance = minf(explosive_bullet_chance + 0.08, 0.80)
 

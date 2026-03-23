@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d1d2395c34cb3b"
-path="res://.godot/imported/vfx_electric_arc.png-44e1a469.ctex"
+uid="uid://tmeta0shnf22"
+path="res://.godot/imported/vfx_electric_arc.png-977e97335b9c877ea35500bfa5e49021.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/vfx/vfx_electric_arc.png"
-dest_files=["res://.godot/imported/vfx_electric_arc.png-44e1a469.ctex"]
+dest_files=["res://.godot/imported/vfx_electric_arc.png-977e97335b9c877ea35500bfa5e49021.ctex"]
 
 [params]
 

@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://2e74c732c37e04"
-path="res://.godot/imported/weapon_sonic_jumper.png-d7410fc6.ctex"
+uid="uid://dd07tobeo23n4"
+path="res://.godot/imported/weapon_sonic_jumper.png-767aa88a03de2f8d383effc9ba09f6ec.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/ui/icons/weapon_sonic_jumper.png"
-dest_files=["res://.godot/imported/weapon_sonic_jumper.png-d7410fc6.ctex"]
+dest_files=["res://.godot/imported/weapon_sonic_jumper.png-767aa88a03de2f8d383effc9ba09f6ec.ctex"]
 
 [params]
 

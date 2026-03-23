@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://873448a192019a"
-path="res://.godot/imported/proj_blitz_bomb.png-44310688.ctex"
+uid="uid://ddksgg47rq8ge"
+path="res://.godot/imported/proj_blitz_bomb.png-9458b7e230ca1870117b6f69d0b3bc17.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/weapons/proj_blitz_bomb.png"
-dest_files=["res://.godot/imported/proj_blitz_bomb.png-44310688.ctex"]
+dest_files=["res://.godot/imported/proj_blitz_bomb.png-9458b7e230ca1870117b6f69d0b3bc17.ctex"]
 
 [params]
 

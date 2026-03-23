@@ -25,7 +25,7 @@ text = "5.0"
 
 [node name="Area2D" type="Area2D" parent="." unique_id=2201800004]
 collision_layer = 0
-collision_mask = 0
+collision_mask = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=2201800005]
 shape = SubResource("CircleShape2D_bomb")

@@ -10,6 +10,12 @@ var weapon_type: String = "plasma_rifle"
 var is_crit: bool = false
 var target_group: String = "enemies"
 var _proj_sprite: Sprite2D = null
+var _smoke_timer: float = 0.0
+var _rocket_expl_cache: PackedScene = null
+var _trail_puff_cache: PackedScene = null
+# Homing: if set, the bullet steers toward this target each frame
+var homing_target: Node2D = null
+var homing_strength: float = 0.0  # lerp factor per second (3-10 for missiles)
 var burn_chance: float = 0.0
 var burn_damage: int = 0
 var burn_duration: float = 3.0
@@ -30,6 +36,7 @@ var _hit_enemies: Array[Node2D] = []
 var is_aoe: bool = false
 var aoe_radius: float = 80.0
 var aoe_damage_ratio: float = 0.6
+var vfx_explosion_scale: float = 1.0  # scale multiplier for the CPUParticles explosion VFX
 
 # Orbit: revolves around a center point instead of traveling straight
 var is_orbit: bool = false
@@ -54,6 +61,7 @@ func _ready() -> void:
 		rotation = direction.angle()
 	$ColorRect.visible = false
 	_setup_projectile_sprite()
+	_setup_trail_particles()
 
 
 func _draw() -> void:
@@ -102,7 +110,17 @@ func _physics_process(delta: float) -> void:
 		# Wave bullets expand outward as a ring
 		position += direction * speed * delta
 	else:
+		# Homing steering (before position update so rocket turns then moves)
+		if homing_target != null and is_instance_valid(homing_target) and homing_strength > 0.0:
+			var to_target: Vector2 = (homing_target.global_position - global_position).normalized()
+			direction = direction.lerp(to_target, minf(homing_strength * delta, 1.0)).normalized()
+			rotation = direction.angle()
 		position += direction * speed * delta
+		if _is_rocket_weapon():
+			_smoke_timer -= delta
+			if _smoke_timer <= 0.0:
+				_smoke_timer = 0.065
+				_spawn_smoke_puff()
 
 
 func _process_orbit(delta: float) -> void:
@@ -211,6 +229,9 @@ func _setup_projectile_sprite() -> void:
 	if proj_side > 1.0:
 		projectile_scale = projectile_target_px / proj_side
 		orbit_scale = orbit_target_px / proj_side
+	# Rockets use larger sprites for visibility
+	if _is_rocket_weapon() and not is_orbit and proj_side > 1.0:
+		projectile_scale = 32.0 / proj_side
 	if is_orbit:
 		_proj_sprite.scale = Vector2(orbit_scale, orbit_scale)
 	else:
@@ -219,10 +240,73 @@ func _setup_projectile_sprite() -> void:
 	queue_redraw()
 
 
+# ─── Trail Particles (burn / explosive) ─────────────────────────────────────
+func _setup_trail_particles() -> void:
+	if is_orbit or is_wave:
+		return
+	if burn_chance > 0.0:
+		_add_fire_trail()
+	if explosive_bullet_chance > 0.0:
+		_add_explosive_trail()
+
+
+func _add_fire_trail() -> void:
+	var p := CPUParticles2D.new()
+	p.emitting = true
+	p.amount = 8
+	p.lifetime = 0.30
+	p.one_shot = false
+	p.explosiveness = 0.0
+	p.local_coords = true
+	p.direction = Vector2(-1.0, 0.0)   # behind the bullet in local space
+	p.spread = 28.0
+	p.initial_velocity_min = 18.0
+	p.initial_velocity_max = 50.0
+	p.gravity = Vector2(0.0, 0.0)
+	p.scale_amount_min = 2.5
+	p.scale_amount_max = clampf(4.5 + burn_chance * 6.0, 5.0, 9.0)
+	var grad := Gradient.new()
+	grad.colors = PackedColorArray([
+		Color(1.0, 0.95, 0.55, 1.0),
+		Color(1.0, 0.40, 0.05, 0.75),
+		Color(0.70, 0.08, 0.00, 0.0)
+	])
+	grad.offsets = PackedFloat32Array([0.0, 0.50, 1.0])
+	p.color_ramp = grad
+	add_child(p)
+
+
+func _add_explosive_trail() -> void:
+	var p := CPUParticles2D.new()
+	p.emitting = true
+	p.amount = 6
+	p.lifetime = 0.20
+	p.one_shot = false
+	p.explosiveness = 0.0
+	p.local_coords = true
+	p.direction = Vector2(-1.0, 0.0)   # behind the bullet in local space
+	p.spread = 40.0
+	p.initial_velocity_min = 30.0
+	p.initial_velocity_max = 70.0
+	p.gravity = Vector2(0.0, 0.0)
+	p.scale_amount_min = 1.5
+	p.scale_amount_max = clampf(3.5 + explosive_bullet_chance * 5.0, 4.0, 8.0)
+	var grad := Gradient.new()
+	grad.colors = PackedColorArray([
+		Color(1.0, 1.0, 0.85, 1.0),
+		Color(1.0, 0.55, 0.08, 0.85),
+		Color(0.85, 0.12, 0.02, 0.0)
+	])
+	grad.offsets = PackedFloat32Array([0.0, 0.45, 1.0])
+	p.color_ramp = grad
+	add_child(p)
+
+
 func _get_projectile_texture_path() -> String:
 	var id: String = weapon_type.to_lower().replace(" ", "_")
 	var alt_map: Dictionary = {
 		"scatter_cannon": "scatter_pellet",
+		"roket_blaster": "rocket_blaster",
 	}
 	if alt_map.has(id):
 		id = alt_map[id]
@@ -249,14 +333,61 @@ func _vfx_start_scale() -> float:
 	return clampf(float(ConfigService.get_value("visual.sprite_scale.vfx_hit", 0.32)), 0.18, 0.55)
 
 
+func _is_rocket_weapon() -> bool:
+	return weapon_type in ["Roket Blaster", "rocket_blaster"]
+
+
+func _get_rocket_expl_scene() -> PackedScene:
+	if _rocket_expl_cache == null:
+		var p := "res://scenes/vfx_rocket_explosion.tscn"
+		if ResourceLoader.exists(p):
+			_rocket_expl_cache = load(p)
+	return _rocket_expl_cache
+
+
+func _get_trail_puff_scene() -> PackedScene:
+	if _trail_puff_cache == null:
+		var p := "res://scenes/vfx_rocket_trail_puff.tscn"
+		if ResourceLoader.exists(p):
+			_trail_puff_cache = load(p)
+	return _trail_puff_cache
+
+
+func _spawn_smoke_puff() -> void:
+	var puff_scene: PackedScene = _get_trail_puff_scene()
+	if puff_scene != null:
+		var puff: Node2D = puff_scene.instantiate()
+		puff.global_position = global_position
+		get_tree().current_scene.add_child(puff)
+		return
+	# Fallback: sprite tween when particle scene not yet imported
+	var smoke_tex: Texture2D = _load_vfx("vfx_rocket_smoke_trail.png")
+	var smoke: Sprite2D
+	if smoke_tex != null:
+		smoke = _make_vfx_sprite(smoke_tex, global_position, Color(0.60, 0.60, 0.60, 0.58))
+		smoke.scale = Vector2(0.18, 0.18)
+	else:
+		smoke = Sprite2D.new()
+		smoke.global_position = global_position
+		smoke.modulate = Color(0.55, 0.55, 0.55, 0.45)
+	get_tree().current_scene.add_child(smoke)
+	var drift: Vector2 = Vector2(randf_range(-10.0, 10.0), randf_range(-18.0, -8.0))
+	var tw := smoke.create_tween().set_parallel(true)
+	tw.tween_property(smoke, "global_position", smoke.global_position + drift, 0.38)
+	tw.tween_property(smoke, "scale", Vector2(0.38, 0.38), 0.38).set_ease(Tween.EASE_OUT)
+	tw.tween_property(smoke, "modulate:a", 0.0, 0.38)
+	tw.chain().tween_callback(smoke.queue_free)
+
+
 # ─── Explosion VFX (damage-type aware) ────────────────────────────────────────
 func _spawn_explosion_vfx() -> void:
 	match damage_type:
-		"fire":   _vfx_explosion_fire()
-		"cryo":   _vfx_explosion_cryo()
-		"energy": _vfx_explosion_energy()
-		"void":   _vfx_explosion_void()
-		_:        _vfx_explosion_default()
+		"fire":      _vfx_explosion_fire()
+		"cryo":      _vfx_explosion_cryo()
+		"energy":    _vfx_explosion_energy()
+		"void":      _vfx_explosion_void()
+		"explosive": _vfx_explosion_rocket()
+		_:           _vfx_explosion_default()
 
 
 func _vfx_explosion_default() -> void:
@@ -399,6 +530,36 @@ func _vfx_explosion_void() -> void:
 		wt.tween_property(wave, "scale", Vector2(wave_scale, wave_scale), 0.3).set_ease(Tween.EASE_OUT).set_delay(0.1)
 		wt.tween_property(wave, "modulate:a", 0.0, 0.35).set_delay(0.1)
 		wt.chain().tween_callback(wave.queue_free)
+
+
+func _vfx_explosion_rocket() -> void:
+	# --- GPUParticles-based explosion (fire + ember + smoke) ---
+	var expl_scene: PackedScene = _get_rocket_expl_scene()
+	if expl_scene != null:
+		var expl: Node2D = expl_scene.instantiate()
+		expl.global_position = global_position
+		expl.scale = Vector2(vfx_explosion_scale, vfx_explosion_scale)
+		get_tree().current_scene.add_child(expl)
+	# --- Instant shockwave ring for immediate visual feedback ---
+	var spark_tex: Texture2D = _load_vfx("vfx_hit_spark.png")
+	if spark_tex != null:
+		var flash := _make_vfx_sprite(spark_tex, global_position, Color(1.0, 0.96, 0.70, 1.0))
+		flash.scale = Vector2(1.6, 1.6)
+		get_tree().current_scene.add_child(flash)
+		var ft := flash.create_tween().set_parallel(true)
+		ft.tween_property(flash, "scale", Vector2(3.2, 3.2), 0.10).set_ease(Tween.EASE_OUT)
+		ft.tween_property(flash, "modulate:a", 0.0, 0.12)
+		ft.chain().tween_callback(flash.queue_free)
+	var ring_tex: Texture2D = _load_vfx("vfx_void_explosion_ring.png")
+	if ring_tex != null:
+		var target_scale: float = aoe_radius / maxf(ring_tex.get_width() * 0.5, 1.0)
+		var ring := _make_vfx_sprite(ring_tex, global_position, Color(1.0, 0.52, 0.06, 0.88))
+		ring.scale = Vector2(0.10, 0.10)
+		get_tree().current_scene.add_child(ring)
+		var rt := ring.create_tween().set_parallel(true)
+		rt.tween_property(ring, "scale", Vector2(target_scale, target_scale), 0.20).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_EXPO)
+		rt.tween_property(ring, "modulate:a", 0.0, 0.24)
+		rt.chain().tween_callback(ring.queue_free)
 
 
 func _do_electric_chain(hit_enemy: Node2D) -> void:
@@ -599,4 +760,3 @@ func _vfx_hit_void() -> void:
 	tw.tween_property(s, "scale", Vector2(0.05, 0.05), 0.15).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 	tw.tween_property(s, "modulate:a", 0.0, 0.15)
 	tw.chain().tween_callback(s.queue_free)
-

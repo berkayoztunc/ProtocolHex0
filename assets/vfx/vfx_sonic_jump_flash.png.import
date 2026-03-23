@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://edf9df9c7ffa4e"
-path="res://.godot/imported/vfx_sonic_jump_flash.png-f78e4e09.ctex"
+uid="uid://bk0678424rtu"
+path="res://.godot/imported/vfx_sonic_jump_flash.png-2ee458bbf66c8db0fb3ae2090ca28b00.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/vfx/vfx_sonic_jump_flash.png"
-dest_files=["res://.godot/imported/vfx_sonic_jump_flash.png-f78e4e09.ctex"]
+dest_files=["res://.godot/imported/vfx_sonic_jump_flash.png-2ee458bbf66c8db0fb3ae2090ca28b00.ctex"]
 
 [params]
 

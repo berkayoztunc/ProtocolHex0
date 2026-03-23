@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://27003a9091ea75"
-path="res://.godot/imported/proj_orbital_mayhem.png-a53eae55.ctex"
+uid="uid://d32urgtkntuks"
+path="res://.godot/imported/proj_orbital_mayhem.png-0323f01703ab3521a640ae3ec8b4f654.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/weapons/proj_orbital_mayhem.png"
-dest_files=["res://.godot/imported/proj_orbital_mayhem.png-a53eae55.ctex"]
+dest_files=["res://.godot/imported/proj_orbital_mayhem.png-0323f01703ab3521a640ae3ec8b4f654.ctex"]
 
 [params]
 

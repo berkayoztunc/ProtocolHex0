@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://680ec51333d993"
-path="res://.godot/imported/vfx_sonic_jump_ring.png-d12c6c6b.ctex"
+uid="uid://bxqse6tcekdc7"
+path="res://.godot/imported/vfx_sonic_jump_ring.png-ffa8b1e46601e3a3a4ca2ba6d5cb151b.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/vfx/vfx_sonic_jump_ring.png"
-dest_files=["res://.godot/imported/vfx_sonic_jump_ring.png-d12c6c6b.ctex"]
+dest_files=["res://.godot/imported/vfx_sonic_jump_ring.png-ffa8b1e46601e3a3a4ca2ba6d5cb151b.ctex"]
 
 [params]
 

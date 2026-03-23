@@ -273,7 +273,6 @@ func _on_player_level_changed(new_level: int) -> void:
 	_persist_run_state()
 	if game_over:
 		return
-	_open_perk_tree_for_level_up()
 
 
 func _apply_start_state() -> void:
@@ -502,8 +501,7 @@ func _get_selectable_upgrade_ids() -> Array[String]:
 
 
 func _refresh_perk_tree() -> void:
-	if perk_tree_instance and is_instance_valid(perk_tree_instance) and perk_tree_instance.has_method("refresh"):
-		perk_tree_instance.refresh(upgrade_stacks, upgrade_catalog, perk_points, _get_selectable_upgrade_ids())
+	
 
 
 func _open_perk_tree_for_level_up() -> void:

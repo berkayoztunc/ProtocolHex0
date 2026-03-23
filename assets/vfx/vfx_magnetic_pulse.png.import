@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://5c81f6694eb059"
-path="res://.godot/imported/vfx_magnetic_pulse.png-0d526395.ctex"
+uid="uid://cwcohbmmawx4e"
+path="res://.godot/imported/vfx_magnetic_pulse.png-1ceee5064355996a28b50cad473fbe0a.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/vfx/vfx_magnetic_pulse.png"
-dest_files=["res://.godot/imported/vfx_magnetic_pulse.png-0d526395.ctex"]
+dest_files=["res://.godot/imported/vfx_magnetic_pulse.png-1ceee5064355996a28b50cad473fbe0a.ctex"]
 
 [params]
 

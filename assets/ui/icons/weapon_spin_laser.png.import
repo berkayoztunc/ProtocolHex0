@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c72387da15a27c"
-path="res://.godot/imported/weapon_spin_laser.png-1ae0789b.ctex"
+uid="uid://limuveig1cig"
+path="res://.godot/imported/weapon_spin_laser.png-fcc13db296642b382b1762003528e475.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/ui/icons/weapon_spin_laser.png"
-dest_files=["res://.godot/imported/weapon_spin_laser.png-1ae0789b.ctex"]
+dest_files=["res://.godot/imported/weapon_spin_laser.png-fcc13db296642b382b1762003528e475.ctex"]
 
 [params]
 

@@ -512,7 +512,7 @@ func _on_controls_toggle_button_pressed() -> void:
 
 
 func _on_perk_tree_button_pressed() -> void:
-	perk_tree_requested.emit()
+	pass  # Perk tree only opens via P key
 
 
 func _on_projectile_switch_button_pressed() -> void:

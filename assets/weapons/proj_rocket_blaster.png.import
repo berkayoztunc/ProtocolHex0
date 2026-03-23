@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dc3baf79f7b872"
-path="res://.godot/imported/proj_rocket_blaster.png-18e89b3c.ctex"
+uid="uid://qaripgmxumrf"
+path="res://.godot/imported/proj_rocket_blaster.png-762a704dadbc9625030f6cacfa218f19.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/weapons/proj_rocket_blaster.png"
-dest_files=["res://.godot/imported/proj_rocket_blaster.png-18e89b3c.ctex"]
+dest_files=["res://.godot/imported/proj_rocket_blaster.png-762a704dadbc9625030f6cacfa218f19.ctex"]
 
 [params]
 

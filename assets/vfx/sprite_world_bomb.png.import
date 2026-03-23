@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://28a07212f5da7a"
-path="res://.godot/imported/sprite_world_bomb.png-1753b8fa.ctex"
+uid="uid://in4x5xg7lyr5"
+path="res://.godot/imported/sprite_world_bomb.png-3b39d6389b8e557416adc9912f48597c.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/vfx/sprite_world_bomb.png"
-dest_files=["res://.godot/imported/sprite_world_bomb.png-1753b8fa.ctex"]
+dest_files=["res://.godot/imported/sprite_world_bomb.png-3b39d6389b8e557416adc9912f48597c.ctex"]
 
 [params]
 

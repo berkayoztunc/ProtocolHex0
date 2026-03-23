@@ -3,9 +3,7 @@ extends Control
 const SLOT_FRAME_PATH := "res://assets/ui/panels/slot_frame_active.png"
 const SLOT_SIZE := 128
 const FRAME_TEX_SIZE := 64
-const CD_FADE_IN  := 0.08
-const CD_FADE_OUT := 0.15
-const CD_ALPHA    := 0.62
+const CD_ALPHA    := 0.72
 
 # Frame tint colors for each card state
 const COLOR_HELD_FRAME    := Color(1.00, 0.88, 0.20, 1.0)   # Gold: currently firing weapon
@@ -39,20 +37,16 @@ func update_weapons(weapons_data: Array) -> void:
 		seen.append(wid)
 		has_any = true
 
+		var cd_pct: float  = float(weapon.get("cooldown_pct", 0.0))
+		var cd_time: float = float(weapon.get("cooldown_time", 0.0))
 		if _card_map.has(wid):
-			_tween_cooldown(_card_map[wid], is_ready)
+			_update_cooldown(_card_map[wid], is_ready, cd_pct, cd_time)
 			_update_held_highlight(_card_map[wid], is_held)
-			# Keep held weapon first in the row
-			if is_held and active_container.get_child_count() > 0:
-				if active_container.get_child(0) != _card_map[wid]:
-					active_container.move_child(_card_map[wid], 0)
 		else:
 			var card := _create_weapon_card(weapon, is_active, is_held)
 			_card_map[wid] = card
 			if is_active:
 				active_container.add_child(card)
-				if is_held:
-					active_container.move_child(card, 0)
 			else:
 				passive_container.add_child(card)
 
@@ -62,10 +56,17 @@ func update_weapons(weapons_data: Array) -> void:
 			_card_map[old_id].queue_free()
 			_card_map.erase(old_id)
 
+	# Keep containers sorted by fixed slot_key (matches perk tree column order)
+	_sort_container_by_key(active_container)
+	_sort_container_by_key(passive_container)
+
 	visible = has_any
 
 
 func _update_held_highlight(card: Control, is_held: bool) -> void:
+	# Skip while flash tween is running so it isn't overwritten.
+	if card.get_meta("flashing", false):
+		return
 	var frame: Sprite2D = card.get_node_or_null("Frame") as Sprite2D
 	if frame == null:
 		return
@@ -74,22 +75,52 @@ func _update_held_highlight(card: Control, is_held: bool) -> void:
 		frame.modulate = target
 
 
-func _tween_cooldown(card: Control, is_ready: bool) -> void:
+# Updates the cooldown overlay height and countdown label.
+# cooldown_pct : 1.0 = full cooldown remaining, 0.0 = ready
+# cooldown_time: remaining seconds
+func _update_cooldown(card: Control, is_ready: bool, cooldown_pct: float, cooldown_time: float) -> void:
 	var dim: ColorRect = card.get_node_or_null("CooldownDim") as ColorRect
-	if dim == null:
-		return
-	var target: float = 0.0 if is_ready else CD_ALPHA
-	if absf(dim.color.a - target) < 0.01:
-		return
-	var duration: float = CD_FADE_OUT if is_ready else CD_FADE_IN
-	var tw: Tween = create_tween()
-	tw.tween_property(dim, "color:a", target, duration) \
-		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+	var lbl: Label     = card.get_node_or_null("CooldownLabel") as Label
+	var was_ready: bool = bool(card.get_meta("was_ready", true))
+
+	if dim != null:
+		if is_ready:
+			dim.color.a  = 0.0
+			dim.offset_top = float(SLOT_SIZE)
+		else:
+			dim.color.a  = CD_ALPHA
+			dim.offset_top = float(SLOT_SIZE) * (1.0 - cooldown_pct)
+
+	if lbl != null:
+		if is_ready or cooldown_time <= 0.0:
+			lbl.visible = false
+		else:
+			lbl.visible = true
+			lbl.text = str(ceili(cooldown_time))
+
+	# Cooldown just finished → flash frame yellow for ~0.9 s
+	if is_ready and not was_ready and not bool(card.get_meta("flashing", false)):
+		var frame: Sprite2D = card.get_node_or_null("Frame") as Sprite2D
+		if frame != null:
+			card.set_meta("flashing", true)
+			var tw: Tween = create_tween()
+			tw.tween_property(frame, "modulate", Color(1.0, 1.0, 0.3, 1.0), 0.12) \
+				.set_ease(Tween.EASE_OUT)
+			tw.tween_property(frame, "modulate", COLOR_ACTIVE_FRAME, 0.78) \
+				.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+			tw.tween_callback(func() -> void: card.set_meta("flashing", false))
+
+	card.set_meta("was_ready", is_ready)
 
 
 func _create_weapon_card(weapon: Dictionary, is_active: bool, is_held: bool) -> Control:
 	var root := Control.new()
 	root.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
+	root.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+	root.set_meta("was_ready", bool(weapon.get("ready", true)))
+	root.set_meta("flashing", false)
+	var _kt: String = str(weapon.get("key", "")).strip_edges().trim_prefix("[").trim_suffix("]")
+	root.set_meta("slot_key", int(_kt) if not _kt.is_empty() else 0)
 
 	# Sprite2D: slot frame scaled to SLOT_SIZE
 	var frame := Sprite2D.new()
@@ -145,20 +176,53 @@ func _create_weapon_card(weapon: Dictionary, is_active: bool, is_held: bool) -> 
 		key_label.offset_right  = 34.0
 		root.add_child(key_label)
 
-	# Cooldown overlay — always present on active cards, starts transparent
+	# Cooldown overlay — anchored full-rect; top edge animated for progress
 	if is_active:
+		var cd_pct: float = float(weapon.get("cooldown_pct", 0.0))
+		var is_rdy: bool = bool(weapon.get("ready", true))
 		var dim := ColorRect.new()
 		dim.name = "CooldownDim"
-		dim.color = Color(0.0, 0.0, 0.0, 0.0)
-		dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		dim.anchor_left   = 0.0
+		dim.anchor_top    = 0.0
+		dim.anchor_right  = 1.0
+		dim.anchor_bottom = 1.0
+		dim.offset_left   = 0.0
+		dim.offset_right  = 0.0
+		dim.offset_bottom = 0.0
+		if is_rdy:
+			dim.color = Color(0.0, 0.0, 0.0, 0.0)
+			dim.offset_top = float(SLOT_SIZE)
+		else:
+			dim.color = Color(0.0, 0.0, 0.0, CD_ALPHA)
+			dim.offset_top = float(SLOT_SIZE) * (1.0 - cd_pct)
 		root.add_child(dim)
-		# If already on cooldown at creation, fade in immediately
-		if not bool(weapon.get("ready", true)):
-			var tw: Tween = create_tween()
-			tw.tween_property(dim, "color:a", CD_ALPHA, CD_FADE_IN) \
-				.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+
+		# Countdown label — rendered above the dim overlay
+		var cd_lbl := Label.new()
+		cd_lbl.name = "CooldownLabel"
+		cd_lbl.add_theme_font_size_override("font_size", 36)
+		cd_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+		cd_lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+		cd_lbl.add_theme_constant_override("shadow_offset_x", 2)
+		cd_lbl.add_theme_constant_override("shadow_offset_y", 2)
+		cd_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cd_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+		cd_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var init_cd: float = float(weapon.get("cooldown_time", 0.0))
+		cd_lbl.visible = not is_rdy and init_cd > 0.0
+		cd_lbl.text    = str(ceili(init_cd)) if cd_lbl.visible else ""
+		root.add_child(cd_lbl)
 
 	return root
+
+
+func _sort_container_by_key(container: HBoxContainer) -> void:
+	var children := container.get_children()
+	children.sort_custom(func(a: Node, b: Node) -> bool:
+		return int(a.get_meta("slot_key", 0)) < int(b.get_meta("slot_key", 0))
+	)
+	for i in range(children.size()):
+		container.move_child(children[i], i)
 
 
 func _load_tex(path: String) -> Texture2D:

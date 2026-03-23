@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://62a87721e1b763"
-path="res://.godot/imported/proj_octo_gun.png-a2fe3f22.ctex"
+uid="uid://cygfnck4gv1rq"
+path="res://.godot/imported/proj_octo_gun.png-7a12b7189f7dcad273e3b3164dc969d8.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/weapons/proj_octo_gun.png"
-dest_files=["res://.godot/imported/proj_octo_gun.png-a2fe3f22.ctex"]
+dest_files=["res://.godot/imported/proj_octo_gun.png-7a12b7189f7dcad273e3b3164dc969d8.ctex"]
 
 [params]
 

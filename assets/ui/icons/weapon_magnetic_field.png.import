@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://73ba0ec077f306"
-path="res://.godot/imported/weapon_magnetic_field.png-e7d24b73.ctex"
+uid="uid://c6sdh3boj61rx"
+path="res://.godot/imported/weapon_magnetic_field.png-e6b6914541f069002b5f9ccc9e916b68.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/ui/icons/weapon_magnetic_field.png"
-dest_files=["res://.godot/imported/weapon_magnetic_field.png-e7d24b73.ctex"]
+dest_files=["res://.godot/imported/weapon_magnetic_field.png-e6b6914541f069002b5f9ccc9e916b68.ctex"]
 
 [params]
 

@@ -3,13 +3,30 @@ extends Node
 const CONFIG_PATH := "user://game_config.json"
 
 var config: Dictionary = {
+	"waves": {
+		# Delay before the very first wave after scene load.
+		"initial_delay": 1.2,
+		# Base enemy count for the first wave.
+		"wave_base_count": 3,
+		# Additional enemies per wave number (float, truncated to int).
+		"wave_count_scaling": 1.1,
+		# Additional +1 enemy per this many elapsed seconds.
+		"wave_time_bonus_interval": 50.0,
+		# Hard cap on enemies per wave.
+		"wave_max_count": 22,
+		# Seconds to wait between waves (counts down from base, floored by min).
+		"inter_wave_gap_base": 3.2,
+		"inter_wave_gap_min": 1.5,
+		# Reduction in inter-wave gap per wave number.
+		"inter_wave_gap_reduction_per_wave": 0.05
+	},
 	"difficulty": {
 		"base_spawn_interval": 1.7,
 		"min_spawn_interval": 0.42,
 		"spawn_interval_step": 0.07,
 		"step_kills": 10,
-		"spawn_distance_min": 460.0,
-		"spawn_distance_max": 700.0,
+		"spawn_distance_min": 800.0,
+		"spawn_distance_max": 1150.0,
 		"enemy_health_growth": 0.09,
 		"enemy_speed_growth": 0.03,
 		"enemy_damage_growth": 0.05,
@@ -17,7 +34,8 @@ var config: Dictionary = {
 		"elite_chance_per_minute": 0.015,
 		"max_elite_chance": 0.2,
 		"physical_resist_growth": 0.02,
-		"explosive_resist_growth": 0.01
+		"explosive_resist_growth": 0.01,
+		"bomb_spawn_kills": 100
 	},
 	"xp": {
 		"base_xp": 10,
@@ -281,7 +299,7 @@ var config: Dictionary = {
 				"name": "Rail Gun",
 				"description": "100 kirmizi delici isin mermisi burst atar, ~5 sn. [Aktif Skill]",
 				"is_passive": false,
-				"slot_key": 0,
+				"slot_key": 1,
 				"active_duration_sec": 5.0,
 				"active_cooldown_sec": 25.0,
 				"base_damage": 25,
@@ -301,11 +319,12 @@ var config: Dictionary = {
 			},
 			"rocket_blaster": {
 				"name": "Roket Blaster",
-				"description": "En yakin 5 hedefe homing roket, patlar. [Aktif Skill]",
+				"description": "En yakin 5 hedefe kilitli 5 roket, 0.2sn araliklarla ates eder. [Aktif Skill]",
 				"is_passive": false,
 				"is_burst_then_done": true,
-				"slot_key": 0,
-				"active_duration_sec": 3.0,
+				"is_rocket_blaster": true,
+				"slot_key": 2,
+				"active_duration_sec": 0.1,
 				"active_cooldown_sec": 35.0,
 				"base_damage": 80,
 				"speed": 300.0,
@@ -320,7 +339,7 @@ var config: Dictionary = {
 				"aoe_radius": 120.0,
 				"aoe_damage_ratio": 0.6,
 				"is_orbit": false,
-				"targeting_pref": "multi_nearest",
+				"targeting_pref": "none",
 				"upgrade_damage_step": 20,
 				"upgrade_speed_step": 0.0
 			},
@@ -328,7 +347,7 @@ var config: Dictionary = {
 				"name": "Octo Gun",
 				"description": "En yakin 6 hedefe ayni anda 20 sn boyunca ates eder. [Aktif Skill]",
 				"is_passive": false,
-				"slot_key": 0,
+				"slot_key": 3,
 				"active_duration_sec": 20.0,
 				"active_cooldown_sec": 45.0,
 				"base_damage": 18,
@@ -350,7 +369,7 @@ var config: Dictionary = {
 				"name": "Arc Blaster",
 				"description": "En yakin hedefe 8 mermi x 3 tur geri iter. [Aktif Skill]",
 				"is_passive": false,
-				"slot_key": 0,
+				"slot_key": 4,
 				"active_duration_sec": 6.0,
 				"active_cooldown_sec": 30.0,
 				"base_damage": 20,
@@ -376,7 +395,7 @@ var config: Dictionary = {
 				"description": "Hareket yonune sicrama, mavi kalkan ile hasara girer. [Aktif Skill]",
 				"is_passive": false,
 				"is_dash_skill": true,
-				"slot_key": 0,
+				"slot_key": 5,
 				"active_duration_sec": 0.4,
 				"active_cooldown_sec": 12.0,
 				"base_damage": 60,
@@ -390,7 +409,7 @@ var config: Dictionary = {
 				"name": "Blitz Bom",
 				"description": "En yakin dusmana buz bombasi, varinca AoE dondurur. [Aktif Skill]",
 				"is_passive": false,
-				"slot_key": 0,
+				"slot_key": 6,
 				"active_duration_sec": 0.2,
 				"active_cooldown_sec": 25.0,
 				"base_damage": 50,
@@ -414,16 +433,16 @@ var config: Dictionary = {
 			},
 			"spin_laser": {
 				"name": "Helix Lazer",
-				"description": "360 donen yesil lazer, 2 tur yuksek hasar verir. [Aktif Skill]",
+				"description": "360 donen kirmizi lazer, 3 tur hasar verir. [Aktif Skill]",
 				"is_passive": false,
 				"is_spin_laser": true,
-				"slot_key": 0,
+				"slot_key": 7,
 				"active_duration_sec": 0.2,
 				"active_cooldown_sec": 28.0,
 				"base_damage": 80,
 				"spin_radius": 200.0,
-				"spin_rotations": 2,
-				"color": [0.2, 1.0, 0.3],
+				"spin_rotations": 3,
+				"color": [1.0, 0.08, 0.08],
 				"upgrade_damage_step": 25,
 				"upgrade_speed_step": 0.0
 			},
@@ -432,11 +451,12 @@ var config: Dictionary = {
 				"description": "Kisa duraklama, ekrana roket yagmuru, sandik spawn. [Aktif Skill]",
 				"is_passive": false,
 				"is_orbital_mayhem": true,
-				"slot_key": 0,
+				"slot_key": 8,
 				"active_duration_sec": 0.2,
 				"active_cooldown_sec": 60.0,
 				"base_damage": 60,
-				"rocket_count": 12,
+				"rocket_count": 15,
+				"aoe_radius": 120.0,
 				"color": [0.8, 0.4, 1.0],
 				"upgrade_damage_step": 15,
 				"upgrade_speed_step": 0.0
@@ -446,7 +466,7 @@ var config: Dictionary = {
 				"description": "Haritadaki tum exp gemleri aninda toplar. [Aktif Skill]",
 				"is_passive": false,
 				"is_magnet_skill": true,
-				"slot_key": 0,
+				"slot_key": 9,
 				"active_duration_sec": 0.2,
 				"active_cooldown_sec": 45.0,
 				"base_damage": 0,
@@ -531,6 +551,8 @@ var config: Dictionary = {
 			"p_fire_power": 2,
 			"p_vision_range": 2,
 			"p_armor": 3,
+			"p_weapon_range": 3,
+			"p_life_steal": 4,
 			"pa_electric_bullet": 4,
 			"pa_burning_bullet": 4,
 			"pa_explosive_bullet": 4,
@@ -564,6 +586,8 @@ var config: Dictionary = {
 			"p_fire_power": 10,
 			"p_vision_range": 10,
 			"p_armor": 10,
+			"p_weapon_range": 10,
+			"p_life_steal": 10,
 			"pa_electric_bullet": 10,
 			"pa_burning_bullet": 10,
 			"pa_explosive_bullet": 10,

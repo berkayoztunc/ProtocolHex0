@@ -25,6 +25,8 @@ var _enemy_direction: String = "south"
 var archetype_id: String = "runner"
 var archetype_data: Dictionary = {}
 var _east_west_only: bool = false
+var _pool_owner: Node = null
+var _base_sprite_scale: Vector2 = Vector2.ONE
 var can_shoot: bool = false
 var fire_cooldown: float = 1.6
 var fire_range: float = 260.0
@@ -196,6 +198,7 @@ func _setup_animated_sprite() -> void:
 	add_child(sprite)
 	_animated_sprite = sprite
 	_use_generated_sprite = true
+	_base_sprite_scale = sprite.scale
 
 
 func _add_enemy_animation_frames(frames: SpriteFrames, base_path: String, anim_name: String, direction: String, speed: float) -> void:
@@ -377,19 +380,58 @@ func take_damage(amount: int, damage_type: String = "physical", is_crit: bool = 
 	health -= final_damage
 	_spawn_damage_number(final_damage, is_crit)
 	_spawn_hit_vfx()
+	# Life steal — heal player if perk is active
+	var player_node: Node = get_tree().get_first_node_in_group("player")
+	if is_instance_valid(player_node) and player_node.get("life_steal_pct") != null:
+		var steal_pct: float = float(player_node.get("life_steal_pct"))
+		if steal_pct > 0.0:
+			player_node.call("heal", maxi(1, int(round(float(final_damage) * steal_pct))))
 	_update_health_bar()
-	# Flash red briefly
+	# Flash red briefly, then settle back to orange tint if burning or white if not
 	modulate = Color.RED
 	var tween: Tween = create_tween()
-	tween.tween_property(self, "modulate", Color.WHITE, 0.15)
+	var _flash_target := Color(1.35, 0.50, 0.18, 1.0) if _burn_time_left > 0.0 else Color.WHITE
+	tween.tween_property(self, "modulate", _flash_target, 0.15)
 	if health <= 0:
 		died.emit(global_position)
-		queue_free()
+		if _pool_owner != null and is_instance_valid(_pool_owner):
+			_pool_owner.release(self)
+		else:
+			queue_free()
+
+
+# Called by EnemyPool.release() to reset this enemy to a clean dormant state.
+# Sprite setup is preserved — the archetype sprite never changes between uses.
+func reset_for_pool() -> void:
+	# Effects
+	_burn_damage = 0
+	_burn_time_left = 0.0
+	_burn_tick_accumulator = 0.0
+	_chill_slow_pct = 0.0
+	_chill_time_left = 0.0
+	# State
+	can_damage = true
+	is_elite = false
+	velocity = Vector2.ZERO
+	if damage_timer:
+		damage_timer.stop()
+	# Visuals
+	modulate = Color.WHITE
+	if _animated_sprite != null:
+		_animated_sprite.scale = _base_sprite_scale
+		_animated_sprite.flip_h = false
+	if health_bar:
+		health_bar.visible = false
+	if health_label:
+		health_label.visible = false
+	($Body as ColorRect).color = Color(0.9, 0.2, 0.2, 1)
 
 
 func apply_burn(amount: int, duration: float) -> void:
 	_burn_damage = maxi(_burn_damage, amount)
 	_burn_time_left = maxf(_burn_time_left, duration)
+	# Orange tint to signal burning state
+	modulate = modulate.lerp(Color(1.4, 0.55, 0.15, 1.0), 0.55)
 
 func apply_chill(slow_pct: float, duration: float) -> void:
 	_chill_slow_pct = clampf(maxf(_chill_slow_pct, slow_pct), 0.0, 0.85)
@@ -416,12 +458,15 @@ func _process_chill(delta: float) -> void:
 
 func _process_burn(delta: float) -> void:
 	if _burn_time_left <= 0.0 or health <= 0:
+		# Burn ended — gradually fade orange tint back to white
+		if modulate.r > 1.02 or modulate.g < 0.98 or modulate.b < 0.98:
+			modulate = modulate.lerp(Color.WHITE, minf(delta * 3.0, 1.0))
 		return
 	_burn_time_left -= delta
 	_burn_tick_accumulator += delta
 	while _burn_tick_accumulator >= 1.0 and _burn_time_left > -1.0 and health > 0:
 		_burn_tick_accumulator -= 1.0
-		take_damage(_burn_damage, "explosive", false)
+		take_damage(_burn_damage, "fire", false)
 
 
 func _update_health_bar() -> void:
