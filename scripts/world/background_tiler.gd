@@ -4,6 +4,16 @@ extends Node2D
 ## Tüm tile'lar flat_tile_*.png → seamless, beyaz kenarsız.
 ## 12 yeni tile gelince flat_new_*.png de yüklenir, toplam 24 varyant.
 
+## ── Hex tile arka plan modu ────────────────────────────────────────────────
+## true iken yalnızca bigtile1.png / bigtile2.png kullanılır.
+@export var use_hex_tiles: bool = false
+## Hash seed — değiştirince farklı düzlem düzeni
+@export var hex_random_seed: int = 12345
+## Parlaklık çarpanı (1.0 = orijinal, düşürünce kararır)
+@export var hex_brightness: float = 0.68
+## bigtile2 görünme olasılığı (0.0–1.0) — nadir
+@export var bigtile2_chance: float = 0.07
+
 ## Ekranda her tile'ın piksel boyutu — kaynak PNG 32px, integer kat kullan (32, 64, 128…)
 @export var tile_size: int = 128
 ## Büyük biome yamalarının ölçeği (küçük = büyük yamalar)
@@ -86,6 +96,12 @@ var _decor_lava: Texture2D = null
 var _decor_water: Texture2D = null
 var _decor_radio: Texture2D = null
 
+## 17 adet hex tile havuzu (tile_backgrounds/tile_1..17.png)
+var _hex_tiles: Array[Texture2D] = []
+## Büyük overlay tile'lar
+var _bigtile1: Texture2D = null
+var _bigtile2: Texture2D = null
+
 
 func _ready() -> void:
 	# Pixel-perfect çizim — kenar bleeding'i tamamen engeller
@@ -147,6 +163,18 @@ func _ready() -> void:
 	if _tiles_a.is_empty() and _tiles_b.is_empty():
 		push_warning("BackgroundTiler: hiç tile yüklenemedi!")
 
+	# Hex tile yükle
+	for i in range(1, 18):
+		var t: Texture2D = _try_load("res://assets/tile_backgrounds/tile_%d.png" % i)
+		if t:
+			_hex_tiles.append(t)
+	if use_hex_tiles and _hex_tiles.is_empty():
+		push_warning("BackgroundTiler: hex tile yüklenemedi — tile_backgrounds/ klasörünü kontrol et")
+
+	# Bigtile yükle
+	_bigtile1 = _try_load("res://assets/tile_backgrounds/bigtile1.png")
+	_bigtile2 = _try_load("res://assets/tile_backgrounds/bigtile2.png")
+
 	# ── Hazard tile'larını yükle ──────────────────────────────────────────────
 	for i in range(4):
 		var t: Texture2D = _try_load("res://assets/backgrounds/hazards/lava_%d.png" % i)
@@ -183,6 +211,11 @@ func _draw() -> void:
 		return
 
 	var vp_size: Vector2 = get_viewport_rect().size
+
+	# ── Hex tile modu: basit rastgele ızgara, biome/hazard yok ──────────────────
+	if use_hex_tiles:
+		_draw_hex_tiles(cam, vp_size)
+		return
 	var ts: float = float(tile_size)
 	# Grid hesabı için kamera pozisyonunu tam piksel'e snap'le
 	var cam_pos: Vector2 = cam.global_position.round()
@@ -390,3 +423,42 @@ func is_hazard_at_world(world_pos: Vector2) -> bool:
 	var ccy: float = (float(hcy) + 0.5) * cws
 	var half_p: float = pws * 0.5
 	return abs(world_pos.x - ccx) <= half_p and abs(world_pos.y - ccy) <= half_p
+
+
+## ── Hex tile ızgara çizimi ───────────────────────────────────────────────────
+## Zemin tamamı bigtile1 ile kapatılır.
+## Deterministik hash roll: %7 ihtimalde bigtile2 kullanılır.
+func _draw_hex_tiles(cam: Camera2D, vp_size: Vector2) -> void:
+	if _bigtile1 == null:
+		return
+
+	var tw: float = float(_bigtile1.get_width())  * 0.70
+	var th: float = float(_bigtile1.get_height()) * 0.70
+	var cam_pos: Vector2 = cam.global_position.round()
+	var cam_frac: Vector2 = cam.global_position - cam_pos
+	draw_set_transform(cam_frac, 0.0, Vector2.ONE)
+
+	var min_tx: int = int(floor((cam_pos.x - vp_size.x * 0.5) / tw)) - viewport_margin_tiles
+	var max_tx: int = int(ceil( (cam_pos.x + vp_size.x * 0.5) / tw)) + viewport_margin_tiles
+	var min_ty: int = int(floor((cam_pos.y - vp_size.y * 0.5) / th)) - viewport_margin_tiles
+	var max_ty: int = int(ceil( (cam_pos.y + vp_size.y * 0.5) / th)) + viewport_margin_tiles
+
+	var t2: int = int(bigtile2_chance * 10000.0)
+	var col: Color = Color(hex_brightness, hex_brightness, hex_brightness, 1.0)
+
+	for ty in range(min_ty, max_ty + 1):
+		for tx in range(min_tx, max_tx + 1):
+			var h: int = ((tx * 73856093) ^ (ty * 19349663) ^ hex_random_seed) & 0x7FFFFFFF
+			h = ((h >> 16) ^ h) & 0x7FFFFFFF
+
+			var tex: Texture2D
+			if (h % 10000) < t2 and _bigtile2 != null:
+				tex = _bigtile2
+			else:
+				tex = _bigtile1
+
+			const PAD: float = 1.0
+			var pos: Vector2 = Vector2(tx * tw - PAD, ty * th - PAD)
+			draw_texture_rect(tex, Rect2(pos, Vector2(tw + PAD * 2.0, th + PAD * 2.0)), false, col)
+
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

@@ -227,7 +227,9 @@ func _process_held_weapon(delta: float) -> void:
 		if target == null:
 			return
 	var is_held_weapon: bool = wdef.get("is_held", false)
-	_held_weapon_cooldown = _get_effective_weapon_cooldown(float(wdef.get("cooldown", 0.5))) if not is_held_weapon else float(wdef.get("cooldown", 0.5))
+	# Plasma rifle (basic attack) benefits from fire rate perks; active skill weapons do not
+	var is_basic_attack: bool = current_held_weapon == "plasma_rifle"
+	_held_weapon_cooldown = _get_effective_weapon_cooldown(float(wdef.get("cooldown", 0.5))) if (not is_held_weapon or is_basic_attack) else float(wdef.get("cooldown", 0.5))
 	_fire_weapon(current_held_weapon, wdef)
 
 
@@ -312,19 +314,21 @@ func _fire_weapon(weapon_id: String, wdef: Dictionary) -> void:
 	var is_rocket_blaster: bool = wdef.get("is_rocket_blaster", false)
 	var targeting_pref: String = str(wdef.get("targeting_pref", "nearest"))
 	var is_held_weapon: bool = wdef.get("is_held", false)
+	# Plasma rifle (basic attack) receives all passive perk bonuses; active skill weapons do not
+	var applies_passive_bonuses: bool = not is_held_weapon or weapon_id == "plasma_rifle"
 
 	# Compute damage, including upgrade levels
 	var base_dmg: int = int(wdef.get("base_damage", 10))
 	var upgrade_lvl: int = int(weapon_upgrade_levels.get(weapon_id, 0))
 	var dmg_step: int = int(wdef.get("upgrade_damage_step", 3))
 	var total_damage: int = base_dmg + (upgrade_lvl * dmg_step)
-	# General weapon_damage bonus only for non-held weapons (plasma + passives)
-	if not is_held_weapon:
+	# Apply weapon_damage bonus from perks (plasma_rifle + passive weapons)
+	if applies_passive_bonuses:
 		total_damage += weapon_damage
 
-	# Crit check (only for non-held weapons)
+	# Crit check (plasma_rifle + non-held passive weapons)
 	var is_crit: bool = false
-	if not is_held_weapon and crit_chance > 0.0:
+	if applies_passive_bonuses and crit_chance > 0.0:
 		is_crit = randf() < crit_chance
 		if is_crit:
 			total_damage = int(round(float(total_damage) * crit_multiplier))
@@ -364,7 +368,7 @@ func _fire_weapon(weapon_id: String, wdef: Dictionary) -> void:
 		_do_spin_laser(total_damage, wdef)
 		return
 
-	# Orbital Mayhem: rain rockets on all visible enemies
+	# Orbital Mayhem: rain rockets around the player
 	if is_orbital_mayhem:
 		_do_orbital_mayhem(total_damage, wdef)
 		return
@@ -382,11 +386,11 @@ func _fire_weapon(weapon_id: String, wdef: Dictionary) -> void:
 	# Radial weapons (arc_blaster): fire evenly in all directions, no target needed
 	if targeting_pref == "radial":
 		var proj_count: int = int(wdef.get("projectile_count", 5))
-		if not is_held_weapon:
+		if applies_passive_bonuses:
 			proj_count = _get_effective_projectile_count(proj_count, wdef)
 		for i in range(proj_count):
 			var angle: float = (TAU / float(proj_count)) * float(i)
-			_spawn_weapon_bullet(Vector2.from_angle(angle), total_damage, wdef, is_crit, not is_held_weapon)
+			_spawn_weapon_bullet(Vector2.from_angle(angle), total_damage, wdef, is_crit, applies_passive_bonuses)
 		return
 
 	# All other projectile weapons need a target
@@ -399,19 +403,19 @@ func _fire_weapon(weapon_id: String, wdef: Dictionary) -> void:
 	var directions: Array[Vector2] = _compute_fire_directions(target, bullet_speed)
 
 	var projectile_count: int = int(wdef.get("projectile_count", 1))
-	if not is_held_weapon:
+	if applies_passive_bonuses:
 		projectile_count = _get_effective_projectile_count(projectile_count, wdef)
 	var spread: float = deg_to_rad(float(wdef.get("spread_degrees", weapon_spread_degrees)))
 
 	for base_dir in directions:
 		if projectile_count <= 1:
-			_spawn_weapon_bullet(base_dir, total_damage, wdef, is_crit, not is_held_weapon)
+			_spawn_weapon_bullet(base_dir, total_damage, wdef, is_crit, applies_passive_bonuses)
 		else:
 			var start_angle: float = -spread * 0.5
 			for idx in range(projectile_count):
 				var t: float = float(idx) / float(projectile_count - 1) if projectile_count > 1 else 0.0
 				var offset_angle: float = lerpf(start_angle, -start_angle, t)
-				_spawn_weapon_bullet(base_dir.rotated(offset_angle), total_damage, wdef, is_crit, not is_held_weapon)
+				_spawn_weapon_bullet(base_dir.rotated(offset_angle), total_damage, wdef, is_crit, applies_passive_bonuses)
 
 
 func _spawn_weapon_bullet(direction: Vector2, damage_amount: int, wdef: Dictionary, bullet_is_crit: bool = false, is_default: bool = false) -> void:
@@ -699,31 +703,38 @@ func _spin_laser_damage_loop(sweeper: Node2D, dmg: int, radius: float, spin_time
 
 
 func _do_orbital_mayhem(damage_amount: int, wdef: Dictionary) -> void:
-	var enemies: Array = get_tree().get_nodes_in_group("enemies")
-	if enemies.is_empty():
-		return
 	camera_shake(6.0)
 	# Launch coroutine so we can stagger with await
-	_orbital_mayhem_async(damage_amount, wdef, enemies)
+	_orbital_mayhem_async(damage_amount, wdef)
 
 
-func _orbital_mayhem_async(damage_amount: int, wdef: Dictionary, enemies: Array) -> void:
+func _orbital_mayhem_async(damage_amount: int, wdef: Dictionary) -> void:
 	# 2-3-4-6 grouped drop pattern (total 15 rockets per activation)
 	var groups: Array[int]  = [2, 3, 4, 6]
 	var group_pause: float  = 0.30  # pause between groups
 	var intra_gap:   float  = 0.10  # gap between rockets within a group
 	var aoe_r: float        = float(wdef.get("aoe_radius", 120.0))
-	var rocket_index: int   = 0
+	var drop_radius: float  = 260.0  # max distance from player where rockets land
+	# Pre-generate evenly-spread landing offsets around the player
+	var total_rockets: int = 0
+	for g: int in groups:
+		total_rockets += g
+	var positions: Array[Vector2] = []
+	for i: int in range(total_rockets):
+		var angle: float = (float(i) / float(total_rockets)) * TAU + randf_range(-0.2, 0.2)
+		var r: float = randf_range(60.0, drop_radius)
+		positions.append(Vector2(cos(angle) * r, sin(angle) * r))
+	positions.shuffle()
+	var rocket_index: int = 0
 	for group_size: int in groups:
 		for j: int in range(group_size):
 			if j > 0:
 				await get_tree().create_timer(intra_gap).timeout
-			var target: Node2D = enemies[rocket_index % enemies.size()]
+			var offset: Vector2 = positions[rocket_index % positions.size()]
 			rocket_index += 1
-			if not is_instance_valid(target):
-				continue
-			# Spawn directly above target — falls perfectly vertical
-			var spawn_pos: Vector2 = target.global_position + Vector2(0.0, -520.0)
+			# Spawn 520 px above landing spot so rocket falls straight down
+			var land_pos: Vector2 = global_position + offset
+			var spawn_pos: Vector2 = land_pos + Vector2(0.0, -520.0)
 			var bullet: Node2D = aoe_bullet_scene.instantiate()
 			bullet.global_position = spawn_pos
 			bullet.direction = Vector2(0.0, 1.0)  # straight down

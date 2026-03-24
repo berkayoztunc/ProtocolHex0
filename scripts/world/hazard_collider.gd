@@ -11,19 +11,16 @@ var _background: Node2D = null
 
 
 func _ready() -> void:
-	call_deferred("_find_background")
+	# Hazard collision geçici olarak devre dışı — yeniden yapılacak
+	pass
 
 
 func _find_background() -> void:
-	_background = get_tree().get_first_node_in_group("background_tiler")
-	if _background == null:
-		push_error("HazardCollider: 'background_tiler' grubunda BackgroundTiler bulunamadı!")
+	pass
 
 
 func _process(_delta: float) -> void:
-	if _background == null:
-		return
-	_sync_colliders()
+	pass
 
 
 func _sync_colliders() -> void:

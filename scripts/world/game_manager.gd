@@ -276,7 +276,7 @@ func _on_player_died() -> void:
 	var weapon_name: String = "Plasma Rifle"
 	if held_def != null and typeof(held_def) == TYPE_DICTIONARY:
 		weapon_name = str((held_def as Dictionary).get("name", weapon_name))
-	hud.show_game_over({"kills": kill_count, "level": player.level, "weapon": weapon_name})
+	hud.show_game_over({"kills": kill_count, "level": player.level, "weapon": weapon_name, "time": int(elapsed_seconds)})
 	_persist_run_state()
 	Session.finalize_run()
 	MockApiClient.queue_event("run_finished", {"kills": kill_count, "level": player.level})

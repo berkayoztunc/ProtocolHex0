@@ -120,7 +120,7 @@ position = Vector2(-25.034485, 0.45333335)
 scale = Vector2(0.54508555, 0.33916122)
 texture = ExtResource("2_oo0fn")
 region_enabled = true
-region_rect = Rect2(444.63422, 335.20132, 37.9993, 33.58078)
+region_rect = Rect2(603.87305, 452.53967, 43.18213, 42.378784)
 
 [node name="MenuButton" type="Button" parent="TopRightContainer" unique_id=1171046177]
 custom_minimum_size = Vector2(102, 38)
@@ -220,65 +220,58 @@ text = "Option C"
 
 [node name="ConfirmMenuPanel" type="PanelContainer" parent="." unique_id=1296139913]
 visible = false
-anchors_preset = -1
-anchor_left = 0.44500002
-anchor_top = 0.48200002
-anchor_right = 0.59300005
-anchor_bottom = 0.64500004
-offset_left = -0.4000244
-offset_top = 0.44000244
-offset_right = 0.4399414
-offset_bottom = 0.39996338
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -175.0
+offset_right = 240.0
+offset_bottom = 175.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="ConfirmMenuPanel" unique_id=203747642]
+[node name="MarginContainer" type="MarginContainer" parent="ConfirmMenuPanel" unique_id=1296139920]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="ConfirmMenuPanel/MarginContainer" unique_id=203747642]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="MenuControlsPanel" type="VBoxContainer" parent="ConfirmMenuPanel/VBox" unique_id=1774867705]
+[node name="PauseTitle" type="Label" parent="ConfirmMenuPanel/MarginContainer/VBox" unique_id=1296139990]
+layout_mode = 2
+text = "⏸  PAUSED"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
+
+[node name="TitleSep" type="HSeparator" parent="ConfirmMenuPanel/MarginContainer/VBox" unique_id=1296139991]
+layout_mode = 2
+
+[node name="MenuControlsPanel" type="VBoxContainer" parent="ConfirmMenuPanel/MarginContainer/VBox" unique_id=1774867705]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="ButtonRow" type="HBoxContainer" parent="ConfirmMenuPanel/VBox" unique_id=1249741632]
+[node name="ButtonRow" type="HBoxContainer" parent="ConfirmMenuPanel/MarginContainer/VBox" unique_id=1249741632]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 16
 alignment = 1
 
-[node name="ConfirmYes" type="Button" parent="ConfirmMenuPanel/VBox/ButtonRow" unique_id=161026036]
-custom_minimum_size = Vector2(110, 46)
+[node name="ConfirmNo" type="Button" parent="ConfirmMenuPanel/MarginContainer/VBox/ButtonRow" unique_id=1220685223]
+custom_minimum_size = Vector2(165, 54)
 layout_mode = 2
-text = "Exit"
+text = "▶  Resume"
 
-[node name="Sprite2D" type="Sprite2D" parent="ConfirmMenuPanel/VBox/ButtonRow/ConfirmYes" unique_id=1222671362]
-z_index = -1
-position = Vector2(55.187485, 23)
-scale = Vector2(0.79137343, 2.4276319)
-texture = ExtResource("2_oo0fn")
-region_enabled = true
-region_rect = Rect2(140.20007, 17.327782, 142.07074, 19.388481)
-
-[node name="ConfirmNo" type="Button" parent="ConfirmMenuPanel/VBox/ButtonRow" unique_id=1220685223]
-custom_minimum_size = Vector2(110, 46)
+[node name="ConfirmYes" type="Button" parent="ConfirmMenuPanel/MarginContainer/VBox/ButtonRow" unique_id=161026036]
+custom_minimum_size = Vector2(165, 54)
 layout_mode = 2
-text = "Continue"
-
-[node name="Sprite2D" type="Sprite2D" parent="ConfirmMenuPanel/VBox/ButtonRow/ConfirmNo" unique_id=518334936]
-z_index = -1
-position = Vector2(54.312492, 23)
-scale = Vector2(0.79841536, 2.4276319)
-texture = ExtResource("2_oo0fn")
-region_enabled = true
-region_rect = Rect2(140.20007, 17.327782, 142.07074, 19.388481)
-
-[node name="Sprite2D" type="Sprite2D" parent="ConfirmMenuPanel/VBox" unique_id=794212935]
-position = Vector2(145.62502, 90.99997)
-scale = Vector2(1.4328514, 0.9702127)
-texture = ExtResource("2_oo0fn")
-region_enabled = true
-region_rect = Rect2(12.19965, 157.17114, 242.69025, 235.00168)
+text = "⌂  Exit to Menu"
 
 [node name="GameOverPanel" type="PanelContainer" parent="." unique_id=184428718]
 visible = false
@@ -287,35 +280,66 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = -220.0
-offset_right = 320.0
-offset_bottom = 220.0
+offset_left = -300.0
+offset_top = -275.0
+offset_right = 300.0
+offset_bottom = 275.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="VBox" type="VBoxContainer" parent="GameOverPanel" unique_id=1437823740]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 16
 alignment = 1
+
+[node name="GameOverTitle" type="Label" parent="GameOverPanel/VBox" unique_id=910000001]
+layout_mode = 2
+text = "GAME OVER"
+horizontal_alignment = 1
+
+[node name="TitleSep" type="HSeparator" parent="GameOverPanel/VBox" unique_id=910000002]
+layout_mode = 2
 
 [node name="StatsContainer" type="VBoxContainer" parent="GameOverPanel/VBox" unique_id=1040520699]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 8
+
+[node name="KillsStatLabel" type="Label" parent="GameOverPanel/VBox/StatsContainer" unique_id=910000003]
+layout_mode = 2
+text = "⚔  Kills: 0"
+horizontal_alignment = 1
+
+[node name="LevelStatLabel" type="Label" parent="GameOverPanel/VBox/StatsContainer" unique_id=910000004]
+layout_mode = 2
+text = "★  Level: 1"
+horizontal_alignment = 1
+
+[node name="WeaponStatLabel" type="Label" parent="GameOverPanel/VBox/StatsContainer" unique_id=910000005]
+layout_mode = 2
+text = "◆  Weapon: —"
+horizontal_alignment = 1
+
+[node name="TimeStatLabel" type="Label" parent="GameOverPanel/VBox/StatsContainer" unique_id=910000006]
+layout_mode = 2
+text = "⏱  Time: 0:00"
+horizontal_alignment = 1
+
+[node name="StatsSep" type="HSeparator" parent="GameOverPanel/VBox" unique_id=910000007]
+layout_mode = 2
 
 [node name="Spacer" type="Control" parent="GameOverPanel/VBox" unique_id=2025591360]
-custom_minimum_size = Vector2(0, 10)
+custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
 [node name="RestartButton" type="Button" parent="GameOverPanel/VBox" unique_id=1276910696]
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-text = "Play Again"
+text = "▶  Play Again"
 
 [node name="MenuButton" type="Button" parent="GameOverPanel/VBox" unique_id=655305394]
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-text = "Main Menu"
+text = "⌂  Main Menu"
 
 [node name="StatPanel" type="HBoxContainer" parent="." unique_id=156109427]
 anchors_preset = -1
@@ -358,7 +382,7 @@ region_enabled = true
 region_rect = Rect2(135.16739, 115.62031, 31.18924, 32.23324)
 
 [node name="Sprite2D2" type="Sprite2D" parent="StatPanel/Perk" unique_id=213896413]
-position = Vector2(-1.2397766e-05, -14.8148155)
+position = Vector2(4.714273, -20.74074)
 scale = Vector2(0.9544173, 0.90563804)
 texture = ExtResource("4_hd3ao")
 
@@ -377,6 +401,7 @@ horizontal_alignment = 1
 metadata/_edit_use_anchors_ = true
 
 [node name="Bomb" type="Sprite2D" parent="StatPanel" unique_id=1799537577]
+visible = false
 position = Vector2(61.999985, 119.00001)
 scale = Vector2(1.1813953, 1.1177176)
 texture = ExtResource("2_oo0fn")
@@ -450,5 +475,5 @@ horizontal_alignment = 1
 
 [connection signal="pressed" from="TopRightContainer/PerkTreeButton" to="." method="_on_perk_tree_button_pressed"]
 [connection signal="pressed" from="TopRightContainer/MenuButton" to="." method="_on_menu_button_pressed"]
-[connection signal="pressed" from="ConfirmMenuPanel/VBox/ButtonRow/ConfirmYes" to="." method="_on_confirm_menu_yes"]
-[connection signal="pressed" from="ConfirmMenuPanel/VBox/ButtonRow/ConfirmNo" to="." method="_on_confirm_menu_no"]
+[connection signal="pressed" from="ConfirmMenuPanel/MarginContainer/VBox/ButtonRow/ConfirmYes" to="." method="_on_confirm_menu_yes"]
+[connection signal="pressed" from="ConfirmMenuPanel/MarginContainer/VBox/ButtonRow/ConfirmNo" to="." method="_on_confirm_menu_no"]

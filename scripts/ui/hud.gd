@@ -26,7 +26,7 @@ signal game_over_menu_requested
 @onready var option_button_c: Button = $LevelUpPanel/MarginContainer/VBoxContainer/OptionButtonC
 @onready var confirm_menu_panel: PanelContainer = $ConfirmMenuPanel
 @onready var controls_panel: PanelContainer = $ControlsPanel
-@onready var menu_controls_panel: VBoxContainer = $ConfirmMenuPanel/VBox/MenuControlsPanel
+@onready var menu_controls_panel: VBoxContainer = $ConfirmMenuPanel/MarginContainer/VBox/MenuControlsPanel
 @onready var projectile_switch_button: Button = get_node_or_null("TopRightContainer/ProjectileSwitchButton") as Button
 @onready var perk_tree_button: Button = $TopRightContainer/PerkTreeButton
 @onready var menu_button: Button = $TopRightContainer/MenuButton
@@ -42,6 +42,7 @@ signal game_over_menu_requested
 @onready var game_over_kills_label: Label = get_node_or_null("GameOverPanel/VBox/StatsContainer/KillsStatLabel") as Label
 @onready var game_over_level_label: Label = get_node_or_null("GameOverPanel/VBox/StatsContainer/LevelStatLabel") as Label
 @onready var game_over_weapon_label: Label = get_node_or_null("GameOverPanel/VBox/StatsContainer/WeaponStatLabel") as Label
+@onready var game_over_time_label: Label = get_node_or_null("GameOverPanel/VBox/StatsContainer/TimeStatLabel") as Label
 @onready var game_over_restart_btn: Button = $GameOverPanel/VBox/RestartButton
 @onready var game_over_menu_btn: Button = $GameOverPanel/VBox/MenuButton
 @onready var stat_panel: HBoxContainer = get_node_or_null("StatPanel") as HBoxContainer
@@ -261,12 +262,7 @@ func _hide_builtin_bar_visuals() -> void:
 
 
 func _prepare_game_over_sprite_ui() -> void:
-	if game_over_panel != null:
-		game_over_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	if game_over_restart_btn != null:
-		game_over_restart_btn.flat = true
-	if game_over_menu_btn != null:
-		game_over_menu_btn.flat = true
+	pass
 
 
 func update_level(level: int) -> void:
@@ -420,14 +416,18 @@ func hide_level_up() -> void:
 
 func show_game_over(stats: Dictionary = {}) -> void:
 	if game_over_kills_label != null:
-		game_over_kills_label.text = "⚔ Kills: %d" % int(stats.get("kills", 0))
+		game_over_kills_label.text = "⚔  Kills: %d" % int(stats.get("kills", 0))
 	if game_over_level_label != null:
-		game_over_level_label.text = "★ Level: %d" % int(stats.get("level", 1))
+		game_over_level_label.text = "★  Level: %d" % int(stats.get("level", 1))
 	if game_over_weapon_label != null:
-		game_over_weapon_label.text = "◆ Weapon: %s" % str(stats.get("weapon", "—"))
+		game_over_weapon_label.text = "◆  Weapon: %s" % str(stats.get("weapon", "—"))
+	if game_over_time_label != null:
+		var total_secs: int = int(stats.get("time", 0))
+		game_over_time_label.text = "⏱  Time: %d:%02d" % [total_secs / 60, total_secs % 60]
 	_set_weapon_ui_visible(false)
 	top_right_container.visible = false
 	controls_panel.visible = false
+	modal_backdrop.color = Color(0.0, 0.0, 0.05, 0.78)
 	modal_backdrop.visible = true
 	game_over_panel.visible = true
 	_style_game_over_panel()
@@ -435,6 +435,7 @@ func show_game_over(stats: Dictionary = {}) -> void:
 
 func hide_game_over() -> void:
 	game_over_panel.visible = false
+	modal_backdrop.color = Color(1, 1, 1, 0.0627451)
 	modal_backdrop.visible = false
 	_set_weapon_ui_visible(true)
 	top_right_container.visible = true
@@ -451,7 +452,69 @@ func _on_game_over_menu() -> void:
 
 
 func _style_game_over_panel() -> void:
-	pass
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.05, 0.04, 0.10, 0.97)
+	panel_style.border_color = Color(0.72, 0.12, 0.18, 0.90)
+	panel_style.set_border_width_all(2)
+	panel_style.corner_radius_top_left = 6
+	panel_style.corner_radius_top_right = 6
+	panel_style.corner_radius_bottom_left = 6
+	panel_style.corner_radius_bottom_right = 6
+	panel_style.content_margin_left = 40.0
+	panel_style.content_margin_right = 40.0
+	panel_style.content_margin_top = 30.0
+	panel_style.content_margin_bottom = 30.0
+	game_over_panel.add_theme_stylebox_override("panel", panel_style)
+	if game_over_title != null:
+		game_over_title.add_theme_font_size_override("font_size", 44)
+		game_over_title.add_theme_color_override("font_color", Color(1.0, 0.22, 0.28, 1.0))
+		game_over_title.add_theme_constant_override("outline_size", 3)
+		game_over_title.add_theme_color_override("font_outline_color", Color(0.12, 0.02, 0.04, 0.95))
+	for stat_lbl: Label in [game_over_kills_label, game_over_level_label, game_over_weapon_label, game_over_time_label]:
+		if stat_lbl != null:
+			stat_lbl.add_theme_font_size_override("font_size", 20)
+			stat_lbl.add_theme_color_override("font_color", Color(0.78, 0.84, 0.94))
+			stat_lbl.add_theme_constant_override("outline_size", 1)
+			stat_lbl.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.06, 0.85))
+	if game_over_restart_btn != null:
+		game_over_restart_btn.flat = false
+		var rs := StyleBoxFlat.new()
+		rs.bg_color = Color(0.18, 0.08, 0.30, 1.0)
+		rs.border_color = Color(0.55, 0.30, 0.85, 0.9)
+		rs.set_border_width_all(2)
+		rs.corner_radius_top_left = 5
+		rs.corner_radius_top_right = 5
+		rs.corner_radius_bottom_left = 5
+		rs.corner_radius_bottom_right = 5
+		rs.content_margin_left = 16.0
+		rs.content_margin_right = 16.0
+		var rs_h := rs.duplicate() as StyleBoxFlat
+		rs_h.bg_color = Color(0.26, 0.12, 0.44, 1.0)
+		var rs_p := rs.duplicate() as StyleBoxFlat
+		rs_p.bg_color = Color(0.12, 0.05, 0.20, 1.0)
+		game_over_restart_btn.add_theme_stylebox_override("normal", rs)
+		game_over_restart_btn.add_theme_stylebox_override("hover", rs_h)
+		game_over_restart_btn.add_theme_stylebox_override("pressed", rs_p)
+		game_over_restart_btn.add_theme_font_size_override("font_size", 22)
+		game_over_restart_btn.add_theme_color_override("font_color", Color(0.92, 0.85, 1.0))
+	if game_over_menu_btn != null:
+		game_over_menu_btn.flat = false
+		var ms := StyleBoxFlat.new()
+		ms.bg_color = Color(0.08, 0.08, 0.16, 1.0)
+		ms.border_color = Color(0.35, 0.38, 0.56, 0.80)
+		ms.set_border_width_all(2)
+		ms.corner_radius_top_left = 5
+		ms.corner_radius_top_right = 5
+		ms.corner_radius_bottom_left = 5
+		ms.corner_radius_bottom_right = 5
+		ms.content_margin_left = 16.0
+		ms.content_margin_right = 16.0
+		var ms_h := ms.duplicate() as StyleBoxFlat
+		ms_h.bg_color = Color(0.14, 0.14, 0.26, 1.0)
+		game_over_menu_btn.add_theme_stylebox_override("normal", ms)
+		game_over_menu_btn.add_theme_stylebox_override("hover", ms_h)
+		game_over_menu_btn.add_theme_font_size_override("font_size", 18)
+		game_over_menu_btn.add_theme_color_override("font_color", Color(0.72, 0.78, 0.92))
 
 
 func _emit_option(index: int) -> void:
