@@ -15,10 +15,12 @@ const COLOR_PASSIVE_FRAME := Color(0.45, 0.50, 0.62, 0.82)  # Dim: passive weapo
 
 # weapon_id -> card Control (kept alive between updates for smooth tweens)
 var _card_map: Dictionary = {}
+var _recall_card: Control = null
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_build_recall_card()
 
 
 func update_weapons(weapons_data: Array) -> void:
@@ -229,3 +231,126 @@ func _load_tex(path: String) -> Texture2D:
 	if not ResourceLoader.exists(path):
 		return null
 	return load(path) as Texture2D
+
+
+func _build_recall_card() -> void:
+	if _recall_card != null:
+		return
+	var root := Control.new()
+	root.name = "RecallCard"
+	root.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
+	root.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+
+	# Frame
+	var frame := Sprite2D.new()
+	frame.name = "Frame"
+	var frame_tex: Texture2D = _load_tex(SLOT_FRAME_PATH)
+	if frame_tex != null:
+		frame.texture = frame_tex
+	frame.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	frame.centered = true
+	frame.scale = Vector2.ONE * (float(SLOT_SIZE) / float(FRAME_TEX_SIZE))
+	frame.position = Vector2(SLOT_SIZE * 0.5, SLOT_SIZE * 0.5)
+	frame.modulate = Color(0.35, 0.85, 0.45, 1.0)  # green tint = recall ready
+	root.add_child(frame)
+
+	# Key label "R"
+	var key_lbl := Label.new()
+	key_lbl.name = "KeyLabel"
+	key_lbl.text = "R"
+	key_lbl.add_theme_font_size_override("font_size", 24)
+	key_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 0.35, 1.0))
+	key_lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 1.0))
+	key_lbl.add_theme_constant_override("shadow_offset_x", 1)
+	key_lbl.add_theme_constant_override("shadow_offset_y", 1)
+	key_lbl.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	key_lbl.offset_left   = 5.0
+	key_lbl.offset_bottom = -5.0
+	key_lbl.offset_top    = -34.0
+	key_lbl.offset_right  = 34.0
+	root.add_child(key_lbl)
+
+	# Recall icon: large arrow symbol centered in card
+	var name_lbl := Label.new()
+	name_lbl.name = "NameLabel"
+	name_lbl.text = "↩"
+	name_lbl.add_theme_font_size_override("font_size", 42)
+	name_lbl.add_theme_color_override("font_color", Color(0.55, 1.0, 0.65, 0.95))
+	name_lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	name_lbl.add_theme_constant_override("shadow_offset_x", 1)
+	name_lbl.add_theme_constant_override("shadow_offset_y", 1)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	name_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(name_lbl)
+
+	# Cooldown dim overlay
+	var dim := ColorRect.new()
+	dim.name = "CooldownDim"
+	dim.anchor_left   = 0.0
+	dim.anchor_top    = 0.0
+	dim.anchor_right  = 1.0
+	dim.anchor_bottom = 1.0
+	dim.offset_left   = 0.0
+	dim.offset_right  = 0.0
+	dim.offset_bottom = 0.0
+	dim.color = Color(0.0, 0.0, 0.0, 0.0)
+	dim.offset_top = float(SLOT_SIZE)  # fully hidden when ready
+	root.add_child(dim)
+
+	# Cooldown countdown label
+	var cd_lbl := Label.new()
+	cd_lbl.name = "CooldownLabel"
+	cd_lbl.add_theme_font_size_override("font_size", 36)
+	cd_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+	cd_lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	cd_lbl.add_theme_constant_override("shadow_offset_x", 2)
+	cd_lbl.add_theme_constant_override("shadow_offset_y", 2)
+	cd_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cd_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	cd_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cd_lbl.visible = false
+	root.add_child(cd_lbl)
+
+	_recall_card = root
+	active_container.add_child(root)
+
+
+## Called by HUD whenever recall state changes.
+## state: "ready" | "cooldown" | "unavailable"
+## cooldown: remaining seconds (only used when state == "cooldown")
+func update_recall_state(state: String, cooldown: float = 0.0) -> void:
+	if _recall_card == null:
+		return
+	var frame: Sprite2D = _recall_card.get_node_or_null("Frame") as Sprite2D
+	var dim: ColorRect   = _recall_card.get_node_or_null("CooldownDim") as ColorRect
+	var cd_lbl: Label    = _recall_card.get_node_or_null("CooldownLabel") as Label
+	var max_recall_cd: float = 45.0  # matches config recall.cooldown
+
+	match state:
+		"ready":
+			if frame != null:
+				frame.modulate = Color(0.35, 0.85, 0.45, 1.0)  # green
+			if dim != null:
+				dim.color.a  = 0.0
+				dim.offset_top = float(SLOT_SIZE)
+			if cd_lbl != null:
+				cd_lbl.visible = false
+		"cooldown":
+			if frame != null:
+				frame.modulate = Color(1.0, 0.55, 0.1, 1.0)  # orange
+			if dim != null:
+				var pct: float = clampf(cooldown / max_recall_cd, 0.0, 1.0)
+				dim.color = Color(0.0, 0.0, 0.0, CD_ALPHA)
+				dim.offset_top = float(SLOT_SIZE) * (1.0 - pct)
+			if cd_lbl != null:
+				cd_lbl.visible = cooldown > 0.0
+				cd_lbl.text = str(ceili(cooldown))
+		"unavailable":
+			if frame != null:
+				frame.modulate = Color(0.4, 0.4, 0.45, 0.8)  # grey
+			if dim != null:
+				dim.color = Color(0.0, 0.0, 0.0, 0.5)
+				dim.offset_top = 0.0
+			if cd_lbl != null:
+				cd_lbl.visible = false

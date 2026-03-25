@@ -7,6 +7,14 @@ var pending_continue: bool = false
 var current_run: Dictionary = {}
 var last_run: Dictionary = {}
 
+# ── Kalıcı profil verisi (run'dan bağımsız) ──────────────────
+var current_zone_id: String = "zone_1"
+var inventory: Dictionary = {"scrap": 0, "battery": 0, "nanochips": 0}
+var vault: Dictionary = {}  # Permanent zone-item storage (nano_cores, energy_cells, etc.)
+var bag_capacity: int = 20
+var base_perk_levels: Dictionary = {}
+var completed_zones: Array[String] = []
+
 
 func _ready() -> void:
 	load_profile()
@@ -64,17 +72,138 @@ func load_profile() -> void:
 	var parsed_last_run: Variant = parsed_dict.get("last_run", {})
 	if typeof(parsed_last_run) == TYPE_DICTIONARY:
 		last_run = parsed_last_run as Dictionary
+	current_zone_id = str(parsed_dict.get("current_zone_id", "zone_1"))
+	var parsed_inv: Variant = parsed_dict.get("inventory", {})
+	if typeof(parsed_inv) == TYPE_DICTIONARY:
+		inventory = (parsed_inv as Dictionary).duplicate(true)
+		for key in ["scrap", "battery", "nanochips"]:
+			if not inventory.has(key):
+				inventory[key] = 0
+	var parsed_bpl: Variant = parsed_dict.get("base_perk_levels", {})
+	if typeof(parsed_bpl) == TYPE_DICTIONARY:
+		base_perk_levels = (parsed_bpl as Dictionary).duplicate(true)
+	bag_capacity = int(parsed_dict.get("bag_capacity", 20))
+	var parsed_cz: Variant = parsed_dict.get("completed_zones", [])
+	if typeof(parsed_cz) == TYPE_ARRAY:
+		completed_zones.clear()
+		for zone_id in (parsed_cz as Array):
+			completed_zones.append(str(zone_id))
+	var parsed_vault: Variant = parsed_dict.get("vault", {})
+	if typeof(parsed_vault) == TYPE_DICTIONARY:
+		vault = (parsed_vault as Dictionary).duplicate(true)
 
 
 func save_profile() -> void:
 	var payload: Dictionary = {
 		"player_name": player_name,
-		"last_run": last_run
+		"last_run": last_run,
+		"current_zone_id": current_zone_id,
+		"inventory": inventory,
+		"vault": vault,
+		"base_perk_levels": base_perk_levels,
+		"bag_capacity": bag_capacity,
+		"completed_zones": completed_zones
 	}
 	var file: FileAccess = FileAccess.open(PROFILE_PATH, FileAccess.WRITE)
 	if file == null:
 		return
 	file.store_string(JSON.stringify(payload))
+
+
+# ── Zone / Meta-resource / Base Perk API ────────────────────
+
+func set_current_zone(zone_id: String) -> void:
+	current_zone_id = zone_id
+	save_profile()
+
+
+func complete_zone(zone_id: String) -> void:
+	if zone_id not in completed_zones:
+		completed_zones.append(zone_id)
+		save_profile()
+
+
+func is_zone_completed(zone_id: String) -> bool:
+	return zone_id in completed_zones
+
+
+func can_pick_up(amount: int = 1) -> bool:
+	## Returns true if adding `amount` meta-resources would not exceed bag_capacity.
+	var total: int = 0
+	for key in inventory.keys():
+		total += int(inventory[key])
+	return total + amount <= bag_capacity
+
+
+func add_to_inventory(resource_type: String, amount: int = 1) -> bool:
+	## Returns false and does nothing if bag is full.
+	if not can_pick_up(amount):
+		return false
+	if not inventory.has(resource_type):
+		inventory[resource_type] = 0
+	inventory[resource_type] = int(inventory[resource_type]) + amount
+	save_profile()
+	return true
+
+
+func get_inventory_count(resource_type: String) -> int:
+	return int(inventory.get(resource_type, 0))
+
+
+# ── Vault API (zone-item permanent storage) ─────────────────
+
+func add_to_vault(item_id: String, amount: int) -> void:
+	## Permanently adds zone items to the vault. No capacity limit.
+	if not vault.has(item_id):
+		vault[item_id] = 0
+	vault[item_id] = int(vault[item_id]) + amount
+	save_profile()
+
+
+func get_vault_count(item_id: String) -> int:
+	return int(vault.get(item_id, 0))
+
+
+func upgrade_base_perk(perk_id: String) -> bool:
+	var current_level: int = int(base_perk_levels.get(perk_id, 0))
+	var costs: Variant = ConfigService.get_value("base_perk_upgrade_costs.%s" % perk_id, null)
+	if costs == null or typeof(costs) != TYPE_ARRAY:
+		return false
+	var costs_array: Array = costs as Array
+	if current_level >= costs_array.size():
+		return false
+	var cost: Dictionary = costs_array[current_level] as Dictionary
+	for resource in cost:
+		if get_inventory_count(resource) < int(cost[resource]):
+			return false
+	for resource in cost:
+		inventory[resource] = int(inventory.get(resource, 0)) - int(cost[resource])
+	base_perk_levels[perk_id] = current_level + 1
+	save_profile()
+	return true
+
+
+func get_base_perk_level(perk_id: String) -> int:
+	return int(base_perk_levels.get(perk_id, 0))
+
+
+func get_base_perk_upgrade_cost(perk_id: String) -> Dictionary:
+	var current_level: int = int(base_perk_levels.get(perk_id, 0))
+	var costs: Variant = ConfigService.get_value("base_perk_upgrade_costs.%s" % perk_id, null)
+	if costs == null or typeof(costs) != TYPE_ARRAY:
+		return {}
+	var costs_array: Array = costs as Array
+	if current_level >= costs_array.size():
+		return {}
+	return (costs_array[current_level] as Dictionary).duplicate()
+
+
+func is_base_perk_max_level(perk_id: String) -> bool:
+	var current_level: int = int(base_perk_levels.get(perk_id, 0))
+	var costs: Variant = ConfigService.get_value("base_perk_upgrade_costs.%s" % perk_id, null)
+	if costs == null or typeof(costs) != TYPE_ARRAY:
+		return true
+	return current_level >= (costs as Array).size()
 
 
 func _new_run_template() -> Dictionary:

@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://ch65yhu4cnrhg"]
+
+[ext_resource type="Script" path="res://scripts/world/zone_item_pickup.gd" id="1_zip"]
+
+[node name="ZoneItemPickup" type="Area2D"]
+script = ExtResource("1_zip")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]

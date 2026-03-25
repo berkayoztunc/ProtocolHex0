@@ -75,6 +75,17 @@ var _xp_ratio: float = 0.0
 var _health_ghost_tween: Tween = null
 var _xp_fill_tween: Tween = null
 
+var _task_btn: Button = null
+var _bag_btn: Button = null
+
+# --- Zone/Inventory/Recall/LevelComplete UI ---
+var _inventory_panel: PanelContainer = null
+var _inv_labels: Dictionary = {}          # {"scrap": Label, "battery": Label, "nanochips": Label}
+var _task_panel: PanelContainer = null
+var _task_item_labels: Dictionary = {}    # {task_id: Label}
+var _level_complete_panel: PanelContainer = null
+var _recall_status_label: Label = null
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -95,6 +106,9 @@ func _ready() -> void:
 		projectile_switch_button.pressed.connect(_on_projectile_switch_button_pressed)
 	game_over_restart_btn.pressed.connect(_on_game_over_restart)
 	game_over_menu_btn.pressed.connect(_on_game_over_menu)
+	game_over_restart_btn.process_mode = Node.PROCESS_MODE_ALWAYS
+	game_over_menu_btn.process_mode = Node.PROCESS_MODE_ALWAYS
+	modal_backdrop.process_mode = Node.PROCESS_MODE_ALWAYS
 	_hide_builtin_bar_visuals()
 	_prepare_game_over_sprite_ui()
 	if health_fill != null:
@@ -128,6 +142,8 @@ func _ready() -> void:
 		stats_row_2.move_child(heal_label, 0)
 	if alert_stripe != null:
 		alert_stripe.visible = false
+	_ensure_inventory_panel()
+	_setup_modal_buttons()
 
 
 func update_skill_bar(weapons_data: Array) -> void:
@@ -429,7 +445,11 @@ func show_game_over(stats: Dictionary = {}) -> void:
 	controls_panel.visible = false
 	modal_backdrop.color = Color(0.0, 0.0, 0.05, 0.78)
 	modal_backdrop.visible = true
+	game_over_panel.process_mode = Node.PROCESS_MODE_ALWAYS  # clickable while paused
 	game_over_panel.visible = true
+	# Ensure the backdrop and panel sit above any dynamically added notification nodes
+	move_child(modal_backdrop, get_child_count() - 1)
+	move_child(game_over_panel, get_child_count() - 1)
 	_style_game_over_panel()
 
 
@@ -576,6 +596,33 @@ func _on_controls_toggle_button_pressed() -> void:
 
 func _on_perk_tree_button_pressed() -> void:
 	pass  # Perk tree only opens via P key
+
+
+func _setup_modal_buttons() -> void:
+	# Task list toggle button
+	_task_btn = Button.new()
+	_task_btn.text = "Görevler"
+	_style_utility_button(_task_btn)
+	_task_btn.pressed.connect(_on_task_button_pressed)
+	top_right_container.add_child(_task_btn)
+	top_right_container.move_child(_task_btn, 0)
+	# Bag / inventory toggle button
+	_bag_btn = Button.new()
+	_bag_btn.text = "Çanta"
+	_style_utility_button(_bag_btn)
+	_bag_btn.pressed.connect(_on_bag_button_pressed)
+	top_right_container.add_child(_bag_btn)
+	top_right_container.move_child(_bag_btn, 1)
+
+
+func _on_task_button_pressed() -> void:
+	if _task_panel != null and is_instance_valid(_task_panel):
+		_task_panel.visible = not _task_panel.visible
+
+
+func _on_bag_button_pressed() -> void:
+	if _inventory_panel != null and is_instance_valid(_inventory_panel):
+		_inventory_panel.visible = not _inventory_panel.visible
 
 
 func _on_projectile_switch_button_pressed() -> void:
@@ -808,3 +855,340 @@ func _apply_label_icons() -> void:
 		_wrap_control_with_icon(weapon_label, "res://assets/ui/icons/weapon_plasma_rifle.png", label_icon_size, 4)
 	if targeting_label != null:
 		_wrap_control_with_icon(targeting_label, "res://assets/ui/icons/icon_targeting.png", label_icon_size, 4)
+
+
+# =====================================================================
+#  INVENTORY PANEL (Scrap / Battery / Nanochips)
+# =====================================================================
+
+func _ensure_inventory_panel() -> void:
+	if _inventory_panel != null:
+		return
+	_inventory_panel = PanelContainer.new()
+	_inventory_panel.name = "InventoryPanel"
+	# Anchor bottom-left
+	_inventory_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_inventory_panel.offset_bottom = -8.0
+	_inventory_panel.offset_left = 8.0
+	_inventory_panel.offset_top = _inventory_panel.offset_bottom - 80.0
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.05, 0.08, 0.75)
+	style.border_width_left = 1
+	style.border_width_right = 1
+	style.border_width_top = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.3, 0.3, 0.5, 0.6)
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	_inventory_panel.add_theme_stylebox_override("panel", style)
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	_inventory_panel.add_child(margin)
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 2)
+	margin.add_child(vbox)
+	# Title
+	var title: Label = Label.new()
+	title.text = "[ ENVANTER ]"
+	title.add_theme_font_size_override("font_size", 9)
+	title.add_theme_color_override("font_color", Color(0.6, 0.7, 1.0, 0.8))
+	vbox.add_child(title)
+	# Resource rows
+	const RESOURCE_COLORS: Dictionary = {
+		"scrap":     Color(0.75, 0.75, 0.80),
+		"battery":   Color(1.0,  0.85, 0.1),
+		"nanochips": Color(0.6,  0.4,  1.0)
+	}
+	const RESOURCE_LABELS: Dictionary = {
+		"scrap":     "Hurda",
+		"battery":   "Batarya",
+		"nanochips": "Nanochip"
+	}
+	for res_key in ["scrap", "battery", "nanochips"]:
+		var row: HBoxContainer = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 4)
+		vbox.add_child(row)
+		var dot: Label = Label.new()
+		dot.text = "■"
+		dot.add_theme_font_size_override("font_size", 8)
+		dot.add_theme_color_override("font_color", RESOURCE_COLORS[res_key] as Color)
+		row.add_child(dot)
+		var name_lbl: Label = Label.new()
+		name_lbl.text = RESOURCE_LABELS[res_key] as String
+		name_lbl.add_theme_font_size_override("font_size", 10)
+		name_lbl.add_theme_color_override("font_color", Color(0.85, 0.85, 0.90))
+		row.add_child(name_lbl)
+		var count_lbl: Label = Label.new()
+		count_lbl.text = "0"
+		count_lbl.add_theme_font_size_override("font_size", 10)
+		count_lbl.add_theme_color_override("font_color", RESOURCE_COLORS[res_key] as Color)
+		count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		count_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(count_lbl)
+		_inv_labels[res_key] = count_lbl
+	add_child(_inventory_panel)
+	_inventory_panel.process_mode = Node.PROCESS_MODE_ALWAYS
+	_inventory_panel.visible = false  # Hidden by default — toggle via Çanta button
+
+
+func update_inventory(scrap: int, battery: int, nanochips: int) -> void:
+	if _inv_labels.has("scrap"):
+		(_inv_labels["scrap"] as Label).text = str(scrap)
+	if _inv_labels.has("battery"):
+		(_inv_labels["battery"] as Label).text = str(battery)
+	if _inv_labels.has("nanochips"):
+		(_inv_labels["nanochips"] as Label).text = str(nanochips)
+
+
+# =====================================================================
+#  TASK LIST PANEL (Zone Objectives)
+# =====================================================================
+
+func show_task_list(tasks: Array[Dictionary]) -> void:
+	if _task_panel != null:
+		_task_panel.queue_free()
+		_task_panel = null
+	if tasks.is_empty():
+		return
+	_task_panel = PanelContainer.new()
+	_task_panel.name = "TaskPanel"
+	_task_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_task_panel.offset_right = -8.0
+	_task_panel.offset_top = 8.0
+	_task_panel.offset_left = _task_panel.offset_right - 200.0
+	_task_panel.offset_bottom = _task_panel.offset_top + 120.0
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.04, 0.06, 0.04, 0.75)
+	style.border_width_left = 1
+	style.border_width_right = 1
+	style.border_width_top = 1
+	style.border_width_bottom = 1
+	style.border_color = Color(0.2, 0.6, 0.2, 0.6)
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	_task_panel.add_theme_stylebox_override("panel", style)
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	_task_panel.add_child(margin)
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 3)
+	margin.add_child(vbox)
+	var title: Label = Label.new()
+	title.text = "[ GÖREVLER ]"
+	title.add_theme_font_size_override("font_size", 9)
+	title.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4, 0.8))
+	vbox.add_child(title)
+	_task_item_labels.clear()
+	for task in tasks:
+		var t: Dictionary = task as Dictionary
+		var task_id: String = str(t.get("id", ""))
+		var name_str: String = str(t.get("display_name", task_id))
+		var current: int = int(t.get("current", 0))
+		var required: int = int(t.get("required", 1))
+		var row: HBoxContainer = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 4)
+		vbox.add_child(row)
+		var check: Label = Label.new()
+		check.text = "○"
+		check.add_theme_font_size_override("font_size", 10)
+		check.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
+		row.add_child(check)
+		var lbl: Label = Label.new()
+		lbl.text = "%s: %d/%d" % [name_str, current, required]
+		lbl.add_theme_font_size_override("font_size", 10)
+		lbl.add_theme_color_override("font_color", Color(0.85, 0.95, 0.85))
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(lbl)
+		_task_item_labels[task_id] = {"label": lbl, "check": check}
+	add_child(_task_panel)
+	_task_panel.process_mode = Node.PROCESS_MODE_ALWAYS
+	_task_panel.visible = false  # Hidden by default — toggle via Görevler button
+
+
+func update_task(task: Dictionary) -> void:
+	var task_id: String = str(task.get("id", ""))
+	if not _task_item_labels.has(task_id):
+		return
+	var entry: Dictionary = _task_item_labels[task_id] as Dictionary
+	var lbl: Label = entry.get("label", null) as Label
+	var check: Label = entry.get("check", null) as Label
+	if lbl == null:
+		return
+	var name_str: String = str(task.get("display_name", task_id))
+	var current: int = int(task.get("current", 0))
+	var required: int = int(task.get("required", 1))
+	var done: bool = bool(task.get("done", false))
+	lbl.text = "%s: %d/%d" % [name_str, current, required]
+	if done:
+		lbl.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+		if check != null:
+			check.text = "●"
+			check.add_theme_color_override("font_color", Color(0.3, 0.9, 0.3))
+	else:
+		lbl.add_theme_color_override("font_color", Color(0.85, 0.95, 0.85))
+		if check != null:
+			check.text = "○"
+			check.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
+
+
+# =====================================================================
+#  LEVEL COMPLETE PANEL
+# =====================================================================
+
+func show_level_complete(stats: Dictionary) -> void:
+	if _level_complete_panel != null:
+		_level_complete_panel.queue_free()
+	_level_complete_panel = PanelContainer.new()
+	_level_complete_panel.name = "LevelCompletePanel"
+	_level_complete_panel.process_mode = Node.PROCESS_MODE_ALWAYS  # works while paused
+	_level_complete_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_level_complete_panel.offset_left = -200.0
+	_level_complete_panel.offset_right = 200.0
+	_level_complete_panel.offset_top = -150.0
+	_level_complete_panel.offset_bottom = 150.0
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.04, 0.08, 0.04, 0.95)
+	style.border_width_left = 2
+	style.border_width_right = 2
+	style.border_width_top = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.3, 0.9, 0.3, 0.9)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	_level_complete_panel.add_theme_stylebox_override("panel", style)
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	_level_complete_panel.add_child(margin)
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	margin.add_child(vbox)
+	# Title
+	var title: Label = Label.new()
+	title.text = "BÖLÜM TAMAMLANDI!"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
+	vbox.add_child(title)
+	var sep: HSeparator = HSeparator.new()
+	vbox.add_child(sep)
+	# Stats
+	var minutes: int = int(stats.get("time", 0)) / 60
+	var seconds: int = int(stats.get("time", 0)) % 60
+	var stats_text: String = "Öldürme: %d\nSeviye: %d\nSüre: %02d:%02d" % [
+		int(stats.get("kills", 0)),
+		int(stats.get("level", 1)),
+		minutes, seconds
+	]
+	var stats_lbl: Label = Label.new()
+	stats_lbl.text = stats_text
+	stats_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats_lbl.add_theme_font_size_override("font_size", 13)
+	stats_lbl.add_theme_color_override("font_color", Color(0.85, 0.95, 0.85))
+	vbox.add_child(stats_lbl)
+	# Zone items collected
+	var items: Dictionary = stats.get("items", {}) as Dictionary
+	if not items.is_empty():
+		var items_lbl: Label = Label.new()
+		var items_parts: Array[String] = []
+		for k in items.keys():
+			items_parts.append("%s: %d" % [str(k), int(items[k])])
+		items_lbl.text = "Toplanan: " + ", ".join(items_parts)
+		items_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		items_lbl.add_theme_font_size_override("font_size", 11)
+		items_lbl.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
+		vbox.add_child(items_lbl)
+	# Vault transfer confirmation
+	var vault_added: Dictionary = stats.get("vault_added", {}) as Dictionary
+	if not vault_added.is_empty():
+		var vault_parts: Array[String] = []
+		for k in vault_added.keys():
+			if int(vault_added[k]) > 0:
+				vault_parts.append("%s: +%d" % [str(k), int(vault_added[k])])
+		if not vault_parts.is_empty():
+			var vault_lbl: Label = Label.new()
+			vault_lbl.text = "✓ Kasaya eklendi: " + ", ".join(vault_parts)
+			vault_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			vault_lbl.add_theme_font_size_override("font_size", 11)
+			vault_lbl.add_theme_color_override("font_color", Color(0.4, 1.0, 0.6))
+			vbox.add_child(vault_lbl)
+	var sep2: HSeparator = HSeparator.new()
+	vbox.add_child(sep2)
+	# Inventory summary (meta-resource progress)
+	var inv_lbl: Label = Label.new()
+	inv_lbl.text = "Envanter: %d Hurda, %d Pil, %d Nanochip" % [
+		Session.get_inventory_count("scrap"),
+		Session.get_inventory_count("battery"),
+		Session.get_inventory_count("nanochips")
+	]
+	inv_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	inv_lbl.add_theme_font_size_override("font_size", 11)
+	inv_lbl.add_theme_color_override("font_color", Color(0.7, 0.85, 1.0))
+	vbox.add_child(inv_lbl)
+	var sep3: HSeparator = HSeparator.new()
+	vbox.add_child(sep3)
+	# Menu button
+	var menu_btn: Button = Button.new()
+	menu_btn.text = "Ana Menü"
+	menu_btn.add_theme_font_size_override("font_size", 14)
+	menu_btn.pressed.connect(func() -> void:
+		get_tree().paused = false
+		get_tree().change_scene_to_file("res://scenes/start_menu.tscn")
+	)
+	vbox.add_child(menu_btn)
+	add_child(_level_complete_panel)
+
+
+# =====================================================================
+#  RECALL STATUS INDICATOR
+# =====================================================================
+
+func show_recall_cooldown(seconds: float) -> void:
+	_ensure_recall_label()
+	_recall_status_label.text = "R: %.0fs" % maxf(seconds, 0.0)
+	_recall_status_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.1))
+	_recall_status_label.visible = true
+	if _skill_bar != null and is_instance_valid(_skill_bar) and _skill_bar.has_method("update_recall_state"):
+		_skill_bar.call("update_recall_state", "cooldown", seconds)
+
+
+func show_recall_ready() -> void:
+	_ensure_recall_label()
+	_recall_status_label.text = "R: Hazır"
+	_recall_status_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	_recall_status_label.visible = true
+	if _skill_bar != null and is_instance_valid(_skill_bar) and _skill_bar.has_method("update_recall_state"):
+		_skill_bar.call("update_recall_state", "ready")
+
+
+func _ensure_recall_label() -> void:
+	if _recall_status_label != null and is_instance_valid(_recall_status_label):
+		return
+	_recall_status_label = Label.new()
+	_recall_status_label.name = "RecallStatusLabel"
+	_recall_status_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	_recall_status_label.anchor_top = 1.0
+	_recall_status_label.anchor_bottom = 1.0
+	_recall_status_label.offset_top = -36.0
+	_recall_status_label.offset_bottom = -10.0
+	_recall_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_recall_status_label.add_theme_font_size_override("font_size", 16)
+	_recall_status_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	_recall_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_recall_status_label.visible = false
+	add_child(_recall_status_label)

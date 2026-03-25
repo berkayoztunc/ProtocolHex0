@@ -348,7 +348,7 @@ var config: Dictionary = {
 				"description": "En yakin 6 hedefe ayni anda 20 sn boyunca ates eder. [Aktif Skill]",
 				"is_passive": false,
 				"slot_key": 3,
-				"active_duration_sec": 20.0,
+				"active_duration_sec": 10.0,
 				"active_cooldown_sec": 45.0,
 				"base_damage": 18,
 				"speed": 500.0,
@@ -423,7 +423,7 @@ var config: Dictionary = {
 				"chain": 0,
 				"is_aoe": true,
 				"aoe_radius": 150.0,
-				"aoe_damage_ratio": 0.5,
+				"aoe_damage_ratio": 2.5,
 				"is_homing": true,
 				"freeze_duration": 3.0,
 				"is_orbit": false,
@@ -610,11 +610,105 @@ var config: Dictionary = {
 			"unlock_magnetic_field": 1,
 			"upgrade_magnetic_field": 3
 		}
+	},
+	# ══════════════════════════════════════════════════════════════
+	# ZONE / LVL SISTEMI
+	# ══════════════════════════════════════════════════════════════
+	"zones": {
+		"zone_1": {
+			"display_name": "Sector Alpha",
+			"level": 1,
+			"unlock_requires_zone": "",
+			"required_items": {
+				"nano_cores":   {"count": 5, "source": "enemy"},
+				"energy_cells": {"count": 3, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 1.0,
+			"description": "İlk sektör. Temel kaynaklar toplanabilir."
+		},
+		"zone_2": {
+			"display_name": "Sector Beta",
+			"level": 2,
+			"unlock_requires_zone": "zone_1",
+			"required_items": {
+				"nano_cores":   {"count": 8,  "source": "enemy"},
+				"energy_cells": {"count": 6,  "source": "enemy"},
+				"power_shards": {"count": 4,  "source": "map"}
+			},
+			"meta_resource_spawn_weight": 1.3,
+			"description": "Tehlike artıyor. Gelişmiş düşmanlar aktif."
+		},
+		"zone_3": {
+			"display_name": "Sector Gamma",
+			"level": 3,
+			"unlock_requires_zone": "zone_2",
+			"required_items": {
+				"nano_cores":   {"count": 12, "source": "enemy"},
+				"energy_cells": {"count": 10, "source": "enemy"},
+				"power_shards": {"count": 8,  "source": "map"}
+			},
+			"meta_resource_spawn_weight": 1.6,
+			"description": "Yüksek taktik gerektirir. Elite spawner aktif."
+		},
+		"zone_4": {
+			"display_name": "Sector Delta",
+			"level": 4,
+			"unlock_requires_zone": "zone_3",
+			"required_items": {
+				"nano_cores":   {"count": 18, "source": "enemy"},
+				"energy_cells": {"count": 15, "source": "enemy"},
+				"power_shards": {"count": 14, "source": "map"},
+				"data_cores":   {"count": 6,  "source": "map"}
+			},
+			"meta_resource_spawn_weight": 2.0,
+			"description": "Son bilinen sektör. Tüm düşman tipleri aktif."
+		}
+	},
+	# ══════════════════════════════════════════════════════════════
+	# RECALL SİSTEMİ
+	# ══════════════════════════════════════════════════════════════
+	"recall": {
+		"countdown": 10.0,
+		"cooldown": 45.0,
+		"zone_radius": 120.0
+	},
+	# ══════════════════════════════════════════════════════════════
+	# META-RESOURCE DROP (Scrap / Battery / Nanochips)
+	# ══════════════════════════════════════════════════════════════
+	"meta_resources": {
+		"spawn_chance": 0.001,
+		"types": {
+			"scrap":     {"color": [0.62, 0.62, 0.66], "display_name": "Scrap"},
+			"battery":   {"color": [1.0,  0.85, 0.1],  "display_name": "Battery"},
+			"nanochips": {"color": [0.5,  0.3,  1.0],  "display_name": "Nanochips"}
+		}
+	},
+	# ══════════════════════════════════════════════════════════════
+	# BASE PERK UPGRADE MALİYETLERİ
+	# Her giriş: [ {level1_cost}, {level2_cost}, {level3_cost} ]
+	# ══════════════════════════════════════════════════════════════
+	"base_perk_upgrade_costs": {
+		"p_max_health":       [{"scrap": 10, "battery": 0,  "nanochips": 0},  {"scrap": 20, "battery": 5,  "nanochips": 0},  {"scrap": 35, "battery": 15, "nanochips": 5}],
+		"p_fire_rate":        [{"scrap": 10, "battery": 5,  "nanochips": 0},  {"scrap": 25, "battery": 10, "nanochips": 5},  {"scrap": 40, "battery": 20, "nanochips": 10}],
+		"p_crit_chance":      [{"scrap": 15, "battery": 5,  "nanochips": 0},  {"scrap": 30, "battery": 10, "nanochips": 5},  {"scrap": 50, "battery": 20, "nanochips": 10}],
+		"p_crit_multiplier":  [{"scrap": 15, "battery": 5,  "nanochips": 5},  {"scrap": 35, "battery": 15, "nanochips": 10}, {"scrap": 60, "battery": 30, "nanochips": 15}],
+		"p_move_speed":       [{"scrap": 8,  "battery": 5,  "nanochips": 0},  {"scrap": 18, "battery": 10, "nanochips": 0},  {"scrap": 30, "battery": 15, "nanochips": 5}],
+		"p_pickup_radius":    [{"scrap": 8,  "battery": 0,  "nanochips": 0},  {"scrap": 16, "battery": 5,  "nanochips": 0},  {"scrap": 26, "battery": 10, "nanochips": 5}],
+		"p_chest_luck":       [{"scrap": 10, "battery": 5,  "nanochips": 5},  {"scrap": 22, "battery": 10, "nanochips": 10}, {"scrap": 38, "battery": 20, "nanochips": 15}],
+		"p_fire_power":       [{"scrap": 10, "battery": 5,  "nanochips": 0},  {"scrap": 22, "battery": 10, "nanochips": 5},  {"scrap": 38, "battery": 20, "nanochips": 10}],
+		"p_vision_range":     [{"scrap": 8,  "battery": 5,  "nanochips": 0},  {"scrap": 16, "battery": 10, "nanochips": 5},  {"scrap": 28, "battery": 15, "nanochips": 10}],
+		"p_armor":            [{"scrap": 12, "battery": 5,  "nanochips": 0},  {"scrap": 24, "battery": 10, "nanochips": 5},  {"scrap": 40, "battery": 20, "nanochips": 10}],
+		"p_weapon_range":     [{"scrap": 10, "battery": 5,  "nanochips": 5},  {"scrap": 22, "battery": 15, "nanochips": 10}, {"scrap": 38, "battery": 25, "nanochips": 15}],
+		"p_life_steal":       [{"scrap": 15, "battery": 10, "nanochips": 5},  {"scrap": 32, "battery": 20, "nanochips": 10}, {"scrap": 55, "battery": 35, "nanochips": 20}],
+		"pa_electric_bullet": [{"scrap": 20, "battery": 10, "nanochips": 10}, {"scrap": 42, "battery": 22, "nanochips": 22}, {"scrap": 65, "battery": 38, "nanochips": 35}],
+		"pa_burning_bullet":  [{"scrap": 20, "battery": 10, "nanochips": 10}, {"scrap": 42, "battery": 22, "nanochips": 22}, {"scrap": 65, "battery": 38, "nanochips": 35}],
+		"pa_explosive_bullet":[{"scrap": 20, "battery": 10, "nanochips": 10}, {"scrap": 42, "battery": 22, "nanochips": 22}, {"scrap": 65, "battery": 38, "nanochips": 35}]
 	}
 }
 
 
 func _ready() -> void:
+	_load_zones_json()
 	_load_external_config()
 
 
@@ -626,6 +720,19 @@ func get_value(path: String, fallback: Variant = null) -> Variant:
 			return fallback
 		current = current[key]
 	return current
+
+
+func _load_zones_json() -> void:
+	const ZONES_PATH := "res://assets/data/zones.json"
+	if not FileAccess.file_exists(ZONES_PATH):
+		return
+	var file: FileAccess = FileAccess.open(ZONES_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+	_deep_merge(config["zones"] as Dictionary, parsed as Dictionary)
 
 
 func _load_external_config() -> void:

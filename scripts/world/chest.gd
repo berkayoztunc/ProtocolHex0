@@ -2,15 +2,39 @@ extends Node2D
 
 signal opened(pos: Vector2)
 
+const CONTACT_TO_OPEN: float = 3.0
+
 var collected: bool = false
 var _pulse_time: float = 0.0
 var _generated_sprite: Sprite2D = null
 var _use_generated_sprite: bool = false
+var _player_in_contact: bool = false
+var _contact_elapsed: float = 0.0
+var _label: Label = null
 
 
 func _ready() -> void:
 	$Area2D.add_to_group("chests")
+	$Area2D.collision_mask = 1  # player is on layer 1
+	$Area2D.body_entered.connect(_on_body_entered)
+	$Area2D.body_exited.connect(_on_body_exited)
+	_setup_contact_label()
 	_setup_generated_sprite()
+
+
+func _setup_contact_label() -> void:
+	_label = Label.new()
+	_label.name = "ContactLabel"
+	_label.add_theme_font_size_override("font_size", 14)
+	_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.3, 1.0))
+	_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	_label.add_theme_constant_override("shadow_offset_x", 1)
+	_label.add_theme_constant_override("shadow_offset_y", 1)
+	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_label.position = Vector2(-40.0, -56.0)
+	_label.size = Vector2(80.0, 20.0)
+	_label.text = "SANDIK"
+	add_child(_label)
 
 
 func _setup_generated_sprite() -> void:
@@ -29,7 +53,7 @@ func _setup_generated_sprite() -> void:
 	sprite.texture = tex
 	sprite.centered = true
 	var chest_scale: float = ConfigService.get_value("visual.sprite_scale.chest", 1.8)
-	var chest_target_px: float = ConfigService.get_value("visual.target_px.chest", 58.0)
+	var chest_target_px: float = ConfigService.get_value("visual.target_px.chest", 90.0)
 	var chest_side: float = maxf(float(tex.get_width()), float(tex.get_height()))
 	if chest_side > 1.0:
 		chest_scale = chest_target_px / chest_side
@@ -39,9 +63,32 @@ func _setup_generated_sprite() -> void:
 	_use_generated_sprite = true
 
 
+func _on_body_entered(body: Node2D) -> void:
+	if body.is_in_group("player"):
+		_player_in_contact = true
+
+
+func _on_body_exited(body: Node2D) -> void:
+	if body.is_in_group("player"):
+		_player_in_contact = false
+		_contact_elapsed = 0.0
+
+
 func _process(delta: float) -> void:
 	_pulse_time += delta
 	queue_redraw()
+
+	if _player_in_contact and not collected:
+		_contact_elapsed += delta
+		var remaining: float = CONTACT_TO_OPEN - _contact_elapsed
+		if remaining <= 0.0:
+			collect()
+		else:
+			if _label != null:
+				_label.text = "%.1fs" % remaining
+	else:
+		if _label != null:
+			_label.text = "SANDIK"
 
 
 func collect() -> void:
@@ -78,3 +125,7 @@ func _draw() -> void:
 		draw_circle(Vector2(sx, 3), 1.5, gold)
 	# Highlight strip on lid
 	draw_line(Vector2(-7, -7), Vector2(7, -7), Color(1.0, 1.0, 0.8, 0.45), 1.0)
+	# Progress arc when player is opening
+	if _player_in_contact and _contact_elapsed > 0.0:
+		var pct: float = clampf(_contact_elapsed / CONTACT_TO_OPEN, 0.0, 1.0)
+		draw_arc(Vector2.ZERO, 16.0, -PI * 0.5, -PI * 0.5 + TAU * pct, 24, Color(1.0, 0.88, 0.2, 0.9), 2.5)

@@ -74,173 +74,206 @@ func _build_catalog() -> Dictionary:
 		"p_max_health": {
 			"id": "p_max_health", "name": "Maksimum Can",
 			"description": "+20 maksimum can.",
-			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_fire_rate": {
 			"id": "p_fire_rate", "name": "Ateş Hızı",
 			"description": "Normal silah atış hızı %8 artar.",
-			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_crit_chance": {
 			"id": "p_crit_chance", "name": "Kritik Şansı",
 			"description": "+%5 kritik vuruş şansı.",
-			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_crit_multiplier": {
 			"id": "p_crit_multiplier", "name": "Kritik Hasar",
 			"description": "Kritik hasar çarpanı +0.20.",
-			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_move_speed": {
 			"id": "p_move_speed", "name": "Hareket Hızı",
 			"description": "+15 hareket hızı.",
-			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_pickup_radius": {
 			"id": "p_pickup_radius", "name": "Toplama Alanı",
 			"description": "XP ve sandık toplama alanı +25 genişler.",
-			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_chest_luck": {
 			"id": "p_chest_luck", "name": "Sandık Şansı",
 			"description": "+%5 sandık düşme şansı.",
-			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_fire_power": {
 			"id": "p_fire_power", "name": "Ateş Gücü",
 			"description": "+5 normal silah hasarı.",
-			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_vision_range": {
 			"id": "p_vision_range", "name": "Görüş Alanı",
 			"description": "Ekran gölgeleme azalır, görüş alanı %2 artar.",
-			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_armor": {
 			"id": "p_armor", "name": "Savunma",
 			"description": "+5 zırh değeri, alınan hasar azalır.",
-			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "common", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_weapon_range": {
 			"id": "p_weapon_range", "name": "Silah Menzili",
 			"description": "Ana silah menzili +200 uzar. Mermiler daha uzağa ulaşır.",
-			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"p_life_steal": {
 			"id": "p_life_steal", "name": "Nano Vampir",
 			"description": "+%3 hasar çalma. Düşmanlara verilen hasarın %3'ü can olarak geri döner.",
-			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "uncommon", "category": "passive", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 
 		# ─── MERMİ EFEKTLERİ ──────────────────────────────────
 		"pa_electric_bullet": {
 			"id": "pa_electric_bullet", "name": "Elektrikli Mermi",
 			"description": "+%8 şans: isabet'te alan içinde elektrik sektirir.",
-			"rarity": "rare", "category": "passive_active", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "passive_active", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"pa_burning_bullet": {
 			"id": "pa_burning_bullet", "name": "Yakıcı Mermi",
 			"description": "+%8 şans: düşmana yanma uygular (sürekli hasar).",
-			"rarity": "rare", "category": "passive_active", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "passive_active", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 		"pa_explosive_bullet": {
 			"id": "pa_explosive_bullet", "name": "Patlayan Mermi",
 			"description": "+%8 şans: isabette küçük alan patlaması.",
-			"rarity": "rare", "category": "passive_active", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "passive_active", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": true
 		},
 
 		# ─── AKTİF SKİLLER — Unlock ───────────────────────────
 		"unlock_railgun": {
 			"id": "unlock_railgun", "name": "Rail Gun",
 			"description": "100 kırmızı delici ışın mermisi, ~5 sn burst. Tuş ile aktive et.",
-			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"unlock_rocket_blaster": {
 			"id": "unlock_rocket_blaster", "name": "Roket Blaster",
 			"description": "En yakın 5 hedefe %100 isabet homing roket, patlayıp biter. Tuş ile aktive et.",
-			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"unlock_octo_gun": {
 			"id": "unlock_octo_gun", "name": "Octo Gun",
 			"description": "6 hedefe aynı anda 20 sn boyunca ateş eder. Tuş ile aktive et.",
-			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"unlock_arc_blaster": {
 			"id": "unlock_arc_blaster", "name": "Arc Blaster",
 			"description": "En yakın hedefe 8 mermi × 3 tur, geri iterek. Tuş ile aktive et.",
-			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"unlock_sonic_jumper": {
 			"id": "unlock_sonic_jumper", "name": "Sonic Jumper",
 			"description": "Koşu yönüne sıçrama, mavi kalkan ile yoldakilere hasar verir. Tuş ile aktive et.",
-			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"unlock_blitz_bomb": {
 			"id": "unlock_blitz_bomb", "name": "Blitz Bom",
 			"description": "En yakın düşmana yavaş buz bombası, varınca AoE dondurur. Tuş ile aktive et.",
-			"rarity": "rare", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"unlock_spin_laser": {
 			"id": "unlock_spin_laser", "name": "Helix Lazer",
 			"description": "360° dönen yeşil lazer, 2 tur yüksek hasar. Tuş ile aktive et.",
-			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "epic", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"unlock_orbital_mayhem": {
 			"id": "unlock_orbital_mayhem", "name": "Orbital Mayhem",
 			"description": "Kısa duraklama → ekrana roket yağmuru → sandık spawn. Tuş ile aktive et.",
-			"rarity": "legendary", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "legendary", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"unlock_magnetic_field": {
 			"id": "unlock_magnetic_field", "name": "Manyetik Alan",
 			"description": "Haritadaki tüm exp gemlerini anında toplar. Tuş ile aktive et.",
-			"rarity": "rare", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_unlock", "prerequisites": [], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 
 		# ─── AKTİF SKİLLER — Upgrade ──────────────────────────
 		"upgrade_railgun": {
 			"id": "upgrade_railgun", "name": "Rail Gun+",
 			"description": "Rail Gun hasarı ve delme gücü artar.",
-			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_railgun"], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_railgun"], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"upgrade_rocket_blaster": {
 			"id": "upgrade_rocket_blaster", "name": "Roket Blaster+",
 			"description": "Roket hasarı ve patlama alanı artar.",
-			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_rocket_blaster"], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_rocket_blaster"], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"upgrade_octo_gun": {
 			"id": "upgrade_octo_gun", "name": "Octo Gun+",
 			"description": "Octo Gun hasarı ve süresi artar.",
-			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_octo_gun"], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_octo_gun"], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"upgrade_arc_blaster": {
 			"id": "upgrade_arc_blaster", "name": "Arc Blaster+",
 			"description": "Arc Blaster burst hasarı ve geri itme gücü artar.",
-			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_arc_blaster"], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_arc_blaster"], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"upgrade_sonic_jumper": {
 			"id": "upgrade_sonic_jumper", "name": "Sonic Jumper+",
 			"description": "Sonic Jumper hasarı ve menzili artar.",
-			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_sonic_jumper"], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_sonic_jumper"], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"upgrade_blitz_bomb": {
 			"id": "upgrade_blitz_bomb", "name": "Blitz Bom+",
 			"description": "Blitz Bom AoE alanı ve donma süresi artar.",
-			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_blitz_bomb"], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_blitz_bomb"], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"upgrade_spin_laser": {
 			"id": "upgrade_spin_laser", "name": "Helix Lazer+",
 			"description": "Helix Lazer tur sayısı ve hasarı artar.",
-			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_spin_laser"], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_spin_laser"], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"upgrade_orbital_mayhem": {
 			"id": "upgrade_orbital_mayhem", "name": "Orbital Mayhem+",
 			"description": "Orbital Mayhem roket sayısı ve sandık şansı artar.",
-			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_orbital_mayhem"], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_orbital_mayhem"], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 		"upgrade_magnetic_field": {
 			"id": "upgrade_magnetic_field", "name": "Manyetik Alan+",
 			"description": "Manyetik Alan cooldownu azalır.",
-			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_magnetic_field"], "tab": Tab.TEMEL
+			"rarity": "rare", "category": "active_upgrade", "prerequisites": ["unlock_magnetic_field"], "tab": Tab.TEMEL,
+			"is_base": false
 		},
 	}
 

@@ -61,6 +61,8 @@ func _process(delta: float) -> void:
 			_label.text = "!"
 		return
 	_contact_elapsed += delta
+	var remaining_arm: float = maxf(0.0, contact_to_arm - _contact_elapsed)
+	_label.text = "→ %.1f" % remaining_arm
 	if _contact_elapsed >= contact_to_arm:
 		_arm()
 
@@ -115,6 +117,8 @@ func _process_falling(delta: float) -> void:
 
 
 func _on_landed() -> void:
+	# Shift collision circle up so the player cannot slide in from under the south edge
+	_static_collision.position = Vector2(0.0, -12.0)
 	# Unblock player movement
 	_static_collision.disabled = false
 	# Re-enable area detection

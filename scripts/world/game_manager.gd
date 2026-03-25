@@ -7,8 +7,13 @@ extends Node2D
 var enemy_scene: PackedScene = preload("res://scenes/enemy.tscn")
 var xp_gem_scene: PackedScene = preload("res://scenes/xp_gem.tscn")
 var chest_scene: PackedScene = preload("res://scenes/chest.tscn")
+var loot_box_scene: PackedScene = preload("res://scenes/loot_box.tscn")
 var perk_tree_scene: PackedScene = preload("res://scenes/perk_tree.tscn")
 var world_bomb_scene: PackedScene = preload("res://scenes/world_bomb.tscn")
+var meta_resource_scene: PackedScene = preload("res://scenes/meta_resource.tscn")
+var recall_zone_scene: PackedScene = preload("res://scenes/recall_zone.tscn")
+var zone_item_pickup_scene: PackedScene = preload("res://scenes/zone_item_pickup.tscn")
+var hero_capsule_scene: PackedScene = preload("res://scenes/hero_capsule.tscn")
 var kill_count: int = 0
 var game_over: bool = false
 var autosave_elapsed: float = 0.0
@@ -18,6 +23,14 @@ var upgrade_stacks: Dictionary = {}
 var weapon_display_timer: float = 0.0
 var perk_tree_instance: Control = null
 var perk_points: int = 200
+
+# --- Meta-resource & recall ---
+var _task_list: Array[Dictionary] = []
+var _zone_items: Dictionary = {}
+var _tasks_all_done: bool = false
+var _map_item_ids: Array[String] = []
+var _wave_loot_dropped: bool = false  # max 1 enemy loot drop per wave
+# --------------------------------
 
 # --- Wave scheduler ---
 var _enemy_pool: EnemyPool = null
@@ -75,6 +88,13 @@ func _ready() -> void:
 	hud.update_perk_points(perk_points)
 	_apply_start_state()
 	_persist_run_state()
+	# Init zone task list & inventory display
+	_init_task_list()
+	hud.show_task_list(_task_list)
+	_update_inventory_hud()
+	# Spawn map-source pickups + initial meta resources + hero capsule
+	_spawn_map_pickups()
+	_spawn_hero_capsule()
 	# Init weapon and targeting display
 	hud.update_active_weapons(player.get_active_weapons_display())
 	hud.update_weapon_display("Plasma Rifle")
@@ -102,12 +122,16 @@ func _process(delta: float) -> void:
 		weapon_display_timer = 0.025
 		if player:
 			hud.update_active_weapons(player.get_active_weapons_display())
+	# Recall zone spawn (R key) — only one zone at a time
+	if Input.is_action_just_pressed("recall"):
+		_try_spawn_recall_zone()
 
 
 func _start_next_wave() -> void:
 	if game_over:
 		return
 	_wave_number += 1
+	_wave_loot_dropped = false  # reset drop quota each wave
 	var wave_size: int = _compute_wave_size()
 	_wave_schedule = _generate_wave_schedule(wave_size)
 	_wave_head = 0
@@ -222,14 +246,108 @@ func _spawn_enemy() -> void:
 	if not enemy.died.is_connected(_on_enemy_died):
 		enemy.died.connect(_on_enemy_died)
 	_enemy_pool.activate(enemy)
+	# E1: Fade-in flash effect on spawn
+	enemy.modulate.a = 0.0
+	var _spawn_tween: Tween = create_tween()
+	_spawn_tween.tween_property(enemy, "modulate:a", 1.0, 0.3)
+	_spawn_enemy_flash(enemy.global_position)
+
+
+func _spawn_enemy_flash(pos: Vector2) -> void:
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		return
+	# Outer slow ring
+	var ring: Line2D = Line2D.new()
+	ring.z_index = 6
+	for p in 28:
+		var ang: float = (TAU / 28.0) * float(p)
+		ring.add_point(Vector2(cos(ang), sin(ang)) * 1.0)
+	ring.closed = true
+	ring.width = 2.5
+	ring.default_color = Color(0.70, 1.0, 1.0, 0.90)
+	scene_root.add_child(ring)
+	ring.global_position = pos
+	var tw: Tween = ring.create_tween().set_parallel(true)
+	tw.tween_property(ring, "scale", Vector2(20.0, 20.0), 0.30).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(ring, "modulate:a", 0.0, 0.30).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(ring.queue_free)
+	# Inner faster ring
+	var ring2: Line2D = Line2D.new()
+	ring2.z_index = 6
+	for p in 20:
+		var ang2: float = (TAU / 20.0) * float(p)
+		ring2.add_point(Vector2(cos(ang2), sin(ang2)) * 1.0)
+	ring2.closed = true
+	ring2.width = 1.5
+	ring2.default_color = Color(1.0, 0.88, 0.45, 0.75)
+	scene_root.add_child(ring2)
+	ring2.global_position = pos
+	var tw2: Tween = ring2.create_tween().set_parallel(true)
+	tw2.tween_property(ring2, "scale", Vector2(9.0, 9.0), 0.18).set_ease(Tween.EASE_OUT)
+	tw2.tween_property(ring2, "modulate:a", 0.0, 0.18)
+	tw2.chain().tween_callback(ring2.queue_free)
+	# Spark particles outward
+	for i in 7:
+		var dot: ColorRect = ColorRect.new()
+		dot.z_index = 7
+		dot.color = Color(0.55, 0.95, 1.0, 0.95)
+		var r: float = randf_range(1.5, 3.5)
+		dot.size = Vector2(r * 2.0, r * 2.0)
+		var spark_angle: float = (TAU / 7.0) * float(i) + randf_range(-0.25, 0.25)
+		var spd: float = randf_range(60.0, 130.0)
+		var vel: Vector2 = Vector2(cos(spark_angle), sin(spark_angle)) * spd
+		dot.position = pos + Vector2(-r, -r)
+		scene_root.add_child(dot)
+		var dur: float = randf_range(0.15, 0.28)
+		var tw3: Tween = dot.create_tween().set_parallel(true)
+		tw3.tween_property(dot, "position", dot.position + vel * dur, dur).set_ease(Tween.EASE_OUT)
+		tw3.tween_property(dot, "modulate:a", 0.0, dur).set_ease(Tween.EASE_IN)
+		tw3.chain().tween_callback(dot.queue_free)
+
+
+func _spawn_enemy_death_burst(pos: Vector2) -> void:
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		return
+	# Center flash
+	var flash: ColorRect = ColorRect.new()
+	flash.z_index = 8
+	flash.color = Color(1.0, 0.55, 0.1, 0.80)
+	flash.size = Vector2(18.0, 18.0)
+	flash.position = pos - Vector2(9.0, 9.0)
+	scene_root.add_child(flash)
+	var tfw: Tween = flash.create_tween()
+	tfw.tween_property(flash, "modulate:a", 0.0, 0.22)
+	tfw.tween_callback(flash.queue_free)
+	# Radial blood/gib particles
+	for i in 14:
+		var dot: ColorRect = ColorRect.new()
+		dot.z_index = 5
+		dot.color = Color(randf_range(0.55, 0.85), randf_range(0.05, 0.18), 0.05, 0.9)
+		var r: float = randf_range(2.5, 6.0)
+		dot.size = Vector2(r * 2.0, r * 2.0)
+		var db_angle: float = randf_range(0.0, TAU)
+		var spd: float = randf_range(80.0, 200.0)
+		var vel: Vector2 = Vector2(cos(db_angle), sin(db_angle)) * spd
+		dot.position = pos + Vector2(-r, -r)
+		scene_root.add_child(dot)
+		var dur: float = randf_range(0.25, 0.55)
+		var tw: Tween = dot.create_tween().set_parallel(true)
+		tw.tween_property(dot, "position", dot.position + vel * dur, dur) \
+			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		tw.tween_property(dot, "modulate:a", 0.0, dur).set_ease(Tween.EASE_IN)
+		tw.chain().tween_callback(dot.queue_free)
 
 
 func _on_enemy_died(pos: Vector2) -> void:
 	kill_count += 1
 	hud.update_kills(kill_count)
-	_try_spawn_chest(pos)
+	_spawn_enemy_death_burst(pos)
+	_try_spawn_drop(pos)
 	_spawn_xp_gem(pos)
 	_try_spawn_world_bomb()
+	_try_spawn_meta_resource(pos)
 	MockApiClient.queue_event("enemy_killed", {"kills": kill_count})
 	_persist_run_state()
 	# Wave count/size scaling replaces the old per-kill spawn interval reduction.
@@ -238,6 +356,8 @@ func _on_enemy_died(pos: Vector2) -> void:
 func _try_spawn_world_bomb() -> void:
 	var bomb_every: int = int(ConfigService.get_value("difficulty.bomb_spawn_kills", 100))
 	if bomb_every <= 0 or kill_count % bomb_every != 0:
+		return
+	if get_tree().get_nodes_in_group("world_bombs").size() >= 4:
 		return
 	var angle: float = randf() * TAU
 	var dist: float = randf_range(200.0, 350.0)
@@ -536,6 +656,84 @@ func _roll_xp_tier() -> String:
 	return "large"
 
 
+## Single exclusive drop roll per enemy death.
+## Chest (1%), LootBox with zone-item chance (3%), otherwise nothing.
+## Uses kill_count milestones for guaranteed chest drops.
+func _try_spawn_drop(pos: Vector2) -> void:
+	var drop_every: int = int(ConfigService.get_value("chest.drop_every_kills", 50))
+	var max_chests_alive: int = int(ConfigService.get_value("chest.max_chests_alive", 2))
+
+	# Milestone chest drop (every N kills)
+	var milestone_chest: bool = (kill_count % maxi(drop_every, 1) == 0)
+	if milestone_chest and get_tree().get_nodes_in_group("chests").size() < max_chests_alive:
+		call_deferred("_spawn_chest_deferred", pos)
+		return
+
+	# Random exclusive roll: 1% chest, 3% loot_box, else nothing
+	var luck_bonus: float = player.luck * 0.005 if player else 0.0
+	var r: float = randf()
+	if r < 0.01 + luck_bonus:
+		if get_tree().get_nodes_in_group("chests").size() < max_chests_alive:
+			call_deferred("_spawn_chest_deferred", pos)
+	elif r < 0.04 + luck_bonus:
+		if not _task_list.is_empty():
+			if get_tree().get_nodes_in_group("loot_boxes").size() < 8:
+				call_deferred("_spawn_loot_box_deferred", pos)
+
+
+func _spawn_loot_box_deferred(pos: Vector2) -> void:
+	var lb: Node2D = loot_box_scene.instantiate()
+	var jitter: Vector2 = Vector2(randf_range(-14.0, 14.0), randf_range(-14.0, 14.0))
+	lb.global_position = pos + jitter
+	lb.opened.connect(_on_loot_box_opened)
+	add_child(lb)
+	_spawn_dot_burst(lb.global_position, Color(0.2, 1.0, 0.9, 0.9), 6, 40.0, 90.0, 0.25)
+
+
+func _on_loot_box_opened(open_pos: Vector2) -> void:
+	if game_over:
+		return
+	_spawn_dot_burst(open_pos, Color(1.0, 0.85, 0.2, 0.9), 8, 55.0, 130.0, 0.30)
+	# 45% chance to spawn a zone task item; otherwise a meta resource
+	if randf() < 0.45 and not _task_list.is_empty():
+		var incomplete: Array[String] = []
+		for task_entry in _task_list:
+			var t: Dictionary = task_entry as Dictionary
+			if not bool(t.get("done", false)) and str(t.get("source", "enemy")) == "enemy":
+				incomplete.append(str(t.get("id", "")))
+		if not incomplete.is_empty():
+			var chosen: String = incomplete[randi() % incomplete.size()]
+			call_deferred("_spawn_enemy_loot_deferred", chosen, open_pos)
+			return
+	# Fallback: spawn a random meta resource
+	var types: Variant = ConfigService.get_value("meta_resources.types", null)
+	if types != null and typeof(types) == TYPE_DICTIONARY and not (types as Dictionary).is_empty():
+		var keys: Array = (types as Dictionary).keys()
+		var chosen_type: String = str(keys[randi() % keys.size()])
+		call_deferred("_spawn_meta_resource_deferred", open_pos, chosen_type)
+
+
+## Spawns `count` colored dot particles radiating outward from `pos`.
+func _spawn_dot_burst(pos: Vector2, color: Color, count: int,
+		min_spd: float, max_spd: float, dur: float) -> void:
+	for _i in count:
+		var dot := ColorRect.new()
+		dot.z_index = 8
+		var r: float = randf_range(2.5, 5.0)
+		dot.size = Vector2(r * 2.0, r * 2.0)
+		dot.color = color
+		var angle: float = randf_range(0.0, TAU)
+		var spd: float = randf_range(min_spd, max_spd)
+		var vel: Vector2 = Vector2(cos(angle), sin(angle)) * spd
+		dot.position = pos + Vector2(-r, -r)
+		add_child(dot)
+		var tw: Tween = dot.create_tween().set_parallel(true)
+		tw.tween_property(dot, "position", dot.position + vel * dur, dur) \
+			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		tw.tween_property(dot, "modulate:a", 0.0, dur).set_ease(Tween.EASE_IN)
+		tw.chain().tween_callback(dot.queue_free)
+
+
 func _try_spawn_chest(pos: Vector2) -> void:
 	var drop_every: int = int(ConfigService.get_value("chest.drop_every_kills", 15))
 	var random_drop_chance: float = float(ConfigService.get_value("chest.random_drop_chance", 0.08))
@@ -638,3 +836,280 @@ func _get_selectable_upgrade_ids() -> Array[String]:
 func _refresh_perk_tree() -> void:
 	if perk_tree_instance and is_instance_valid(perk_tree_instance) and perk_tree_instance.has_method("refresh"):
 		perk_tree_instance.refresh(upgrade_stacks, upgrade_catalog, perk_points, _get_selectable_upgrade_ids())
+
+
+# =====================================================================
+#  META-RESOURCE & ZONE TASK SYSTEM
+# =====================================================================
+
+func _init_task_list() -> void:
+	_task_list.clear()
+	_zone_items.clear()
+	_map_item_ids.clear()
+	_tasks_all_done = false
+	var zone_data: Variant = ConfigService.get_value("zones.%s" % Session.current_zone_id, null)
+	if zone_data == null or typeof(zone_data) != TYPE_DICTIONARY:
+		return
+	var required: Variant = (zone_data as Dictionary).get("required_items", null)
+	if required == null or typeof(required) != TYPE_DICTIONARY:
+		return
+	for raw_key in (required as Dictionary).keys():
+		var item_id: String = str(raw_key)
+		var item_def: Variant = (required as Dictionary)[item_id]
+		var req_count: int = 1
+		var item_source: String = "enemy"
+		if typeof(item_def) == TYPE_DICTIONARY:
+			req_count = int((item_def as Dictionary).get("count", 1))
+			item_source = str((item_def as Dictionary).get("source", "enemy"))
+		else:
+			req_count = int(item_def)
+		_zone_items[item_id] = 0
+		_task_list.append({
+			"id": item_id,
+			"display_name": _zone_item_display_name(item_id),
+			"current": 0,
+			"required": req_count,
+			"source": item_source,
+			"done": false
+		})
+		if item_source == "map":
+			_map_item_ids.append(item_id)
+
+
+func _zone_item_display_name(item_id: String) -> String:
+	match item_id:
+		"nano_cores":    return "Nano Çekirdek"
+		"energy_cells":  return "Enerji Hücresi"
+		"scrap_metal":   return "Hurda Metal"
+		"data_shards":   return "Veri Kırıkları"
+		"power_shards":  return "Güç Kırıkları"
+		"data_cores":    return "Veri Çekirdekleri"
+		_: return item_id.replace("_", " ").capitalize()
+
+
+func _try_collect_zone_item(pos: Vector2) -> void:
+	if _task_list.is_empty():
+		return
+	# Max 1 loot drop per enemy wave
+	if _wave_loot_dropped:
+		return
+	# Check bag capacity
+	var total_collected: int = 0
+	for key in _zone_items.keys():
+		total_collected += int(_zone_items[key])
+	if total_collected >= Session.bag_capacity:
+		return
+	# 30% drop chance for the one allowed drop this wave
+	if randf() > 0.30:
+		return
+	# Pick a random incomplete enemy-source task item to drop
+	var incomplete: Array[String] = []
+	for task_entry in _task_list:
+		var t: Dictionary = task_entry as Dictionary
+		if not bool(t.get("done", false)) and str(t.get("source", "enemy")) == "enemy":
+			incomplete.append(str(t.get("id", "")))
+	if incomplete.is_empty():
+		return
+	var chosen: String = incomplete[randi() % incomplete.size()]
+	_wave_loot_dropped = true  # only one drop per wave
+	# Spawn a physical loot pickup node at the enemy's death position
+	call_deferred("_spawn_enemy_loot_deferred", chosen, pos)
+
+
+func _spawn_enemy_loot_deferred(item_id: String, spawn_pos: Vector2) -> void:
+	var pickup: Node2D = zone_item_pickup_scene.instantiate() as Node2D
+	var jitter: Vector2 = Vector2(randf_range(-18.0, 18.0), randf_range(-18.0, 18.0))
+	pickup.global_position = spawn_pos + jitter
+	pickup.set("item_type", item_id)
+	pickup.set("required_count", 1)
+	add_child(pickup)
+	if pickup.has_signal("picked_up"):
+		(pickup as Area2D).picked_up.connect(func(t: String) -> void:
+			_zone_items[t] = int(_zone_items.get(t, 0)) + 1
+			_check_zone_tasks()
+			for task_entry in _task_list:
+				hud.update_task(task_entry as Dictionary)
+			hud.show_notification("Görev eşyası toplandı!", 1.5)
+			_spawn_dot_burst(pickup.global_position, Color(0.25, 1.0, 0.4, 0.9), 5, 35.0, 80.0, 0.22)
+		)
+
+
+func _check_zone_tasks() -> void:
+	var all_done: bool = true
+	for i in _task_list.size():
+		var t: Dictionary = _task_list[i] as Dictionary
+		var item_id: String = str(t.get("id", ""))
+		var current: int = int(_zone_items.get(item_id, 0))
+		var required: int = int(t.get("required", 1))
+		(_task_list[i] as Dictionary)["current"] = current
+		(_task_list[i] as Dictionary)["done"] = current >= required
+		if current < required:
+			all_done = false
+	if all_done and not _task_list.is_empty() and not _tasks_all_done:
+		_tasks_all_done = true
+		hud.show_notification("Tüm görevler tamamlandı! Geri dönmek için R bas.", 5.0)
+
+
+# ===  MAP PICKUPS & INITIAL SPAWNS  ===
+
+func _spawn_map_pickups() -> void:
+	if _map_item_ids.is_empty():
+		return
+	var count: int = _map_item_ids.size()
+	for i in count:
+		var item_id: String = _map_item_ids[i]
+		var req: int = 1
+		for task_entry in _task_list:
+			var t: Dictionary = task_entry as Dictionary
+			if str(t.get("id", "")) == item_id:
+				req = int(t.get("required", 1))
+				break
+		var angle: float = (TAU / float(count)) * float(i) + randf_range(-0.25, 0.25)
+		var dist: float = randf_range(700.0, 1100.0)
+		var pos: Vector2 = player.global_position + Vector2(cos(angle), sin(angle)) * dist
+		call_deferred("_spawn_zone_item_pickup_deferred", item_id, req, pos)
+	_spawn_initial_meta_resources()
+
+
+func _spawn_zone_item_pickup_deferred(item_id: String, req_count: int, pos: Vector2) -> void:
+	var pickup: Node2D = zone_item_pickup_scene.instantiate() as Node2D
+	pickup.global_position = pos
+	pickup.set("item_type", item_id)
+	pickup.set("required_count", req_count)
+	add_child(pickup)
+	if pickup.has_signal("picked_up"):
+		(pickup as Area2D).picked_up.connect(_on_zone_item_picked_up)
+
+
+func _spawn_initial_meta_resources() -> void:
+	var types: Variant = ConfigService.get_value("meta_resources.types", null)
+	if types == null or typeof(types) != TYPE_DICTIONARY:
+		return
+	var keys: Array = (types as Dictionary).keys()
+	if keys.is_empty():
+		return
+	var spawn_count: int = randi_range(4, 6)
+	for i in spawn_count:
+		var angle: float = (TAU / float(spawn_count)) * float(i) + randf_range(-0.3, 0.3)
+		var dist: float = randf_range(600.0, 1000.0)
+		var pos: Vector2 = player.global_position + Vector2(cos(angle), sin(angle)) * dist
+		var chosen_type: String = str(keys[randi() % keys.size()])
+		call_deferred("_spawn_meta_resource_deferred", pos, chosen_type)
+
+
+func _on_zone_item_picked_up(item_type: String) -> void:
+	var req: int = 1
+	for task_entry in _task_list:
+		var t: Dictionary = task_entry as Dictionary
+		if str(t.get("id", "")) == item_type:
+			req = int(t.get("required", 1))
+			break
+	_zone_items[item_type] = req
+	_check_zone_tasks()
+	for task_entry in _task_list:
+		hud.update_task(task_entry as Dictionary)
+	hud.show_notification("Harita eşyası toplandı!", 2.5)
+	if player:
+		_spawn_dot_burst(player.global_position, Color(0.25, 1.0, 0.4, 0.9), 5, 35.0, 80.0, 0.22)
+
+
+func _spawn_hero_capsule() -> void:
+	var land_pos: Vector2 = player.global_position
+	var capsule: Node2D = hero_capsule_scene.instantiate() as Node2D
+	player.modulate.a = 0.0
+	player.capsule_landing = true
+	add_child(capsule)
+	capsule.global_position = land_pos + Vector2(0.0, -400.0)
+	if capsule.has_signal("capsule_landed"):
+		capsule.capsule_landed.connect(func() -> void:
+			player.modulate.a = 1.0
+			player.capsule_landing = false
+		)
+	if capsule.has_method("start_falling"):
+		capsule.start_falling(land_pos)
+
+
+func _try_spawn_meta_resource(pos: Vector2) -> void:
+	var chance: float = float(ConfigService.get_value("meta_resources.spawn_chance", 0.001))
+	if randf() > chance:
+		return
+	var types: Variant = ConfigService.get_value("meta_resources.types", null)
+	if types == null or typeof(types) != TYPE_DICTIONARY:
+		return
+	var keys: Array = (types as Dictionary).keys()
+	if keys.is_empty():
+		return
+	var chosen_type: String = str(keys[randi() % keys.size()])
+	call_deferred("_spawn_meta_resource_deferred", pos, chosen_type)
+
+
+func _spawn_meta_resource_deferred(pos: Vector2, resource_type: String) -> void:
+	var res: Node2D = meta_resource_scene.instantiate() as Node2D
+	res.global_position = pos
+	res.set("resource_type", resource_type)
+	add_child(res)
+	res.resource_collected.connect(_update_inventory_hud)
+
+
+func _update_inventory_hud() -> void:
+	hud.update_inventory(
+		Session.get_inventory_count("scrap"),
+		Session.get_inventory_count("battery"),
+		Session.get_inventory_count("nanochips")
+	)
+
+
+# =====================================================================
+#  RECALL ZONE
+# =====================================================================
+
+func _try_spawn_recall_zone() -> void:
+	if game_over:
+		return
+	# Görevler tamamlanmadan recall açılamaz
+	if not _tasks_all_done and not _task_list.is_empty():
+		hud.show_notification("Görevler tamamlanmadan geri dönemezsin!", 3.0)
+		return
+	# Only one recall zone at a time
+	if not get_tree().get_nodes_in_group("recall_zone").is_empty():
+		return
+	var zone: Node2D = recall_zone_scene.instantiate() as Node2D
+	zone.global_position = player.global_position
+	zone.recall_completed.connect(_on_recall_completed)
+	zone.recall_interrupted.connect(_on_recall_interrupted)
+	zone.recall_cooldown_expired.connect(_on_recall_cooldown_expired)
+	add_child(zone)
+
+
+func _on_recall_completed() -> void:
+	game_over = true
+	_in_wave = false
+	spawn_timer.stop()
+	_persist_run_state()
+	Session.complete_zone(Session.current_zone_id)
+	# Transfer zone items collected this run to the permanent vault
+	var vault_added: Dictionary = {}
+	for item_id in _zone_items.keys():
+		var count: int = int(_zone_items.get(item_id, 0))
+		if count > 0:
+			Session.add_to_vault(str(item_id), count)
+			vault_added[item_id] = count
+	Session.finalize_run()
+	hud.show_level_complete({
+		"kills": kill_count,
+		"level": player.level,
+		"time": int(elapsed_seconds),
+		"zone": Session.current_zone_id,
+		"items": _zone_items.duplicate(),
+		"vault_added": vault_added
+	})
+	get_tree().paused = true
+
+
+func _on_recall_interrupted(cooldown: float) -> void:
+	hud.show_notification("Recall kesildi! Bekleme: %.0fs" % cooldown, 3.0)
+	hud.show_recall_cooldown(cooldown)
+
+
+func _on_recall_cooldown_expired() -> void:
+	hud.show_recall_ready()

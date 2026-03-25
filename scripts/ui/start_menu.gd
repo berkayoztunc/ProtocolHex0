@@ -45,9 +45,10 @@ func _ready() -> void:
 
 
 func _on_start_button_pressed() -> void:
-	Session.start_new_run(name_input.text)
-	MockApiClient.queue_event("run_started", {"player_name": Session.player_name})
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	Session.player_name = name_input.text.strip_edges()
+	if Session.player_name.is_empty():
+		Session.player_name = "Hero"
+	get_tree().change_scene_to_file("res://scenes/level_select.tscn")
 
 
 func _on_continue_button_pressed() -> void:
@@ -79,6 +80,10 @@ func _on_quit_button_pressed() -> void:
 func _on_master_volume_slider_value_changed(value: float) -> void:
 	var clamped: float = maxf(value, 0.001)
 	AudioServer.set_bus_volume_db(0, linear_to_db(clamped))
+
+
+func _on_upgrade_button_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/base_perk_upgrade.tscn")
 
 
 func _apply_ux_style() -> void:

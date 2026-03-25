@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://blrp0apnnk1hk"]
+
+[ext_resource type="Script" path="res://scripts/ui/base_perk_upgrade.gd" id="1"]
+
+[node name="BasePerkUpgrade" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")

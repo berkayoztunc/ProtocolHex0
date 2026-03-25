@@ -35,6 +35,7 @@ var life_regen: float = 0.0
 var _regen_accumulator: float = 0.0
 var xp_multiplier: float = 1.0
 var luck: float = 0.0
+var capsule_landing: bool = false  # set true while hero capsule is falling; blocks movement + damage
 # --- New perk stats ---
 var electric_bullet_chance: float = 0.0
 var explosive_bullet_chance: float = 0.0
@@ -42,6 +43,7 @@ var chest_luck: float = 0.0
 var vision_range_level: int = 0
 signal vision_changed(level: int)
 var weapon_range_bonus: float = 0.0
+var autoaim_radius: float = 380.0  # Max autoaim distance; grows with p_weapon_range upgrade
 var life_steal_pct: float = 0.0
 var cooldown_multiplier: float = 1.0
 var has_shield: bool = false
@@ -90,6 +92,7 @@ var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
 var aoe_bullet_scene: PackedScene = preload("res://scenes/aoe_bullet.tscn")
 var bouncing_bullet_scene: PackedScene = preload("res://scenes/bouncing_bullet.tscn")
 var beam_bullet_scene: PackedScene = preload("res://scenes/beam_bullet.tscn")
+var mayhem_bomb_scene: PackedScene = preload("res://scenes/mayhem_bomb.tscn")
 
 
 func _ready() -> void:
@@ -114,6 +117,8 @@ func _ready() -> void:
 	# Init held weapon fire cooldown
 	_held_weapon_cooldown = 0.0
 	_setup_hero_sprite()
+	# Apply persistent base perk levels from meta-progression
+	_apply_base_perks()
 
 
 func _physics_process(delta: float) -> void:
@@ -133,6 +138,10 @@ func _physics_process(delta: float) -> void:
 		Input.get_axis("move_left", "move_right"),
 		Input.get_axis("move_up", "move_down")
 	)
+	if capsule_landing:
+		velocity = Vector2.ZERO
+		move_and_slide()
+		return
 	velocity = input_dir.normalized() * speed
 	move_and_slide()
 	_update_hero_animation(velocity)
@@ -176,7 +185,7 @@ func _auto_fire_passives(delta: float) -> void:
 			var targeting_pref: String = str(wdef.get("targeting_pref", "nearest"))
 			# Weapons that need a target: only fire if one exists in range
 			if targeting_pref != "none" and targeting_pref != "radial":
-				var eff_range: float = float(wdef.get("speed", 400.0)) * float(wdef.get("lifetime", 3.0))
+				var eff_range: float = minf(float(wdef.get("speed", 400.0)) * float(wdef.get("lifetime", 3.0)), autoaim_radius + weapon_range_bonus * 400.0)
 				var target: Node2D = _find_best_target_for_weapon(wdef, eff_range)
 				if target == null:
 					_passive_weapon_timers[wid] = 0.0  # retry next frame
@@ -222,7 +231,7 @@ func _process_held_weapon(delta: float) -> void:
 		return
 	var targeting_pref: String = str(wdef.get("targeting_pref", "nearest"))
 	if targeting_pref != "none" and targeting_pref != "radial":
-		var eff_range: float = float(wdef.get("speed", 400.0)) * float(wdef.get("lifetime", 3.0))
+		var eff_range: float = minf(float(wdef.get("speed", 400.0)) * float(wdef.get("lifetime", 3.0)), autoaim_radius + weapon_range_bonus * 400.0)
 		var target: Node2D = _find_best_target_for_weapon(wdef, eff_range)
 		if target == null:
 			return
@@ -394,7 +403,7 @@ func _fire_weapon(weapon_id: String, wdef: Dictionary) -> void:
 		return
 
 	# All other projectile weapons need a target
-	var eff_range: float = float(wdef.get("speed", 400.0)) * float(wdef.get("lifetime", 3.0))
+	var eff_range: float = minf(float(wdef.get("speed", 400.0)) * float(wdef.get("lifetime", 3.0)), autoaim_radius + weapon_range_bonus * 400.0)
 	var target: Node2D = _find_best_target_for_weapon(wdef, eff_range)
 	if target == null:
 		return
@@ -709,21 +718,37 @@ func _do_orbital_mayhem(damage_amount: int, wdef: Dictionary) -> void:
 
 
 func _orbital_mayhem_async(damage_amount: int, wdef: Dictionary) -> void:
-	# 2-3-4-6 grouped drop pattern (total 15 rockets per activation)
-	var groups: Array[int]  = [2, 3, 4, 6]
-	var group_pause: float  = 0.30  # pause between groups
-	var intra_gap:   float  = 0.10  # gap between rockets within a group
-	var aoe_r: float        = float(wdef.get("aoe_radius", 120.0))
-	var drop_radius: float  = 260.0  # max distance from player where rockets land
-	# Pre-generate evenly-spread landing offsets around the player
+	# 2-3-4-6 grouped drop pattern (total 15 bombs per activation)
+	var groups: Array[int] = [2, 3, 4, 6]
+	var group_pause: float = 0.30
+	var intra_gap: float   = 0.10
+	var drop_radius: float = 260.0
+	var aoe_r: float       = float(wdef.get("aoe_radius", 120.0))
 	var total_rockets: int = 0
 	for g: int in groups:
 		total_rockets += g
+	# Compute enemy cluster center (70% of bombs land near cluster if enemies within 400 px)
+	var enemies: Array = get_tree().get_nodes_in_group("enemies")
+	var near_enemies: Array[Node2D] = []
+	for e: Node in enemies:
+		if e is Node2D and global_position.distance_to((e as Node2D).global_position) <= 400.0:
+			near_enemies.append(e as Node2D)
+	var cluster_offset: Vector2 = Vector2.ZERO
+	if not near_enemies.is_empty():
+		var sum: Vector2 = Vector2.ZERO
+		for e: Node2D in near_enemies:
+			sum += e.global_position
+		cluster_offset = sum / float(near_enemies.size()) - global_position
+	# Generate landing positions
 	var positions: Array[Vector2] = []
 	for i: int in range(total_rockets):
-		var angle: float = (float(i) / float(total_rockets)) * TAU + randf_range(-0.2, 0.2)
-		var r: float = randf_range(60.0, drop_radius)
-		positions.append(Vector2(cos(angle) * r, sin(angle) * r))
+		if not near_enemies.is_empty() and randf() < 0.70:
+			var ang: float = randf_range(0.0, TAU)
+			var r: float = randf_range(20.0, 120.0)
+			positions.append(cluster_offset + Vector2(cos(ang), sin(ang)) * r)
+		else:
+			var ang: float = (float(i) / float(total_rockets)) * TAU + randf_range(-0.2, 0.2)
+			positions.append(Vector2(cos(ang), sin(ang)) * randf_range(60.0, drop_radius))
 	positions.shuffle()
 	var rocket_index: int = 0
 	for group_size: int in groups:
@@ -732,25 +757,15 @@ func _orbital_mayhem_async(damage_amount: int, wdef: Dictionary) -> void:
 				await get_tree().create_timer(intra_gap).timeout
 			var offset: Vector2 = positions[rocket_index % positions.size()]
 			rocket_index += 1
-			# Spawn 520 px above landing spot so rocket falls straight down
 			var land_pos: Vector2 = global_position + offset
-			var spawn_pos: Vector2 = land_pos + Vector2(0.0, -520.0)
-			var bullet: Node2D = aoe_bullet_scene.instantiate()
-			bullet.global_position = spawn_pos
-			bullet.direction = Vector2(0.0, 1.0)  # straight down
-			if bullet.has_method("set_damage"):
-				bullet.set_damage(damage_amount)
-			bullet.weapon_type = "rocket_blaster"
-			bullet.set_damage_type("explosive")
-			bullet.speed = 520.0
-			bullet.lifetime = 2.2
-			bullet.is_aoe = true
-			bullet.aoe_radius = aoe_r
-			bullet.aoe_damage_ratio = 0.55
-			bullet.vfx_explosion_scale = 1.4
-			bullet.modulate = Color(0.8, 0.4, 1.0)
-			get_tree().current_scene.add_child(bullet)
-		# Pause after each group except the last
+			if get_tree().get_nodes_in_group("world_bombs").size() < 4:
+				var bomb: Node2D = mayhem_bomb_scene.instantiate()
+				bomb.set("damage", damage_amount)
+				bomb.set("explosion_radius", aoe_r)
+				get_tree().current_scene.add_child(bomb)
+				bomb.global_position = land_pos + Vector2(0.0, -520.0)
+				if bomb.has_method("start_falling"):
+					bomb.start_falling(land_pos)
 		if group_size != groups.back():
 			await get_tree().create_timer(group_pause).timeout
 
@@ -970,6 +985,8 @@ func heal(amount: int) -> void:
 
 
 func take_damage(amount: int) -> void:
+	if capsule_landing:
+		return  # invulnerable during capsule entry
 	# Shield absorb
 	if _shield_active:
 		_shield_active = false
@@ -981,9 +998,24 @@ func take_damage(amount: int) -> void:
 	health = max(health, 0)
 	health_changed.emit(health, max_health)
 	camera_shake(3.0 + float(final_amount) * 0.15)
+	_flash_damage_vignette()
 	if health <= 0:
 		camera_shake(8.0)
 		player_died.emit()
+
+
+func _flash_damage_vignette() -> void:
+	var canvas: CanvasLayer = CanvasLayer.new()
+	canvas.layer = 50
+	var rect: ColorRect = ColorRect.new()
+	rect.color = Color(0.72, 0.0, 0.0, 0.0)
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(rect)
+	add_child(canvas)
+	var tw: Tween = rect.create_tween()
+	tw.tween_property(rect, "color:a", 0.40, 0.04)
+	tw.tween_property(rect, "color:a", 0.0, 0.32)
+	tw.tween_callback(canvas.queue_free)
 
 
 func camera_shake(intensity: float) -> void:
@@ -1154,6 +1186,14 @@ func _handle_perk_inputs() -> void:
 		heal_charges -= 1
 		health = min(health + heal_amount, max_health)
 		health_changed.emit(health, max_health)
+
+
+func _apply_base_perks() -> void:
+	## Applies persistent base perk levels (meta-progression) at run start.
+	for perk_id in Session.base_perk_levels.keys():
+		var level: int = Session.get_base_perk_level(str(perk_id))
+		for _i in range(level):
+			apply_upgrade(str(perk_id))
 
 
 func apply_upgrade(upgrade_id: String) -> void:
