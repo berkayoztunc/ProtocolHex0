@@ -119,10 +119,12 @@ func _create_weapon_card(weapon: Dictionary, is_active: bool, is_held: bool) -> 
 	var root := Control.new()
 	root.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 	root.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.set_meta("was_ready", bool(weapon.get("ready", true)))
 	root.set_meta("flashing", false)
 	var _kt: String = str(weapon.get("key", "")).strip_edges().trim_prefix("[").trim_suffix("]")
 	root.set_meta("slot_key", int(_kt) if not _kt.is_empty() else 0)
+	root.gui_input.connect(func(event: InputEvent) -> void: _on_card_gui_input(event, root))
 
 	# Sprite2D: slot frame scaled to SLOT_SIZE
 	var frame := Sprite2D.new()
@@ -197,6 +199,7 @@ func _create_weapon_card(weapon: Dictionary, is_active: bool, is_held: bool) -> 
 		else:
 			dim.color = Color(0.0, 0.0, 0.0, CD_ALPHA)
 			dim.offset_top = float(SLOT_SIZE) * (1.0 - cd_pct)
+		dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		root.add_child(dim)
 
 		# Countdown label — rendered above the dim overlay
@@ -233,6 +236,33 @@ func _load_tex(path: String) -> Texture2D:
 	return load(path) as Texture2D
 
 
+# --- Touch / click helpers --------------------------------------------------
+
+func _on_card_gui_input(event: InputEvent, card: Control) -> void:
+	var pressed := false
+	if event is InputEventMouseButton:
+		var mbe := event as InputEventMouseButton
+		pressed = mbe.button_index == MOUSE_BUTTON_LEFT and mbe.pressed
+	elif event is InputEventScreenTouch:
+		pressed = (event as InputEventScreenTouch).pressed
+	if not pressed:
+		return
+	var sk: int = int(card.get_meta("slot_key", 0))
+	if sk > 0:
+		_fire_slot_action("weapon_slot_%d" % sk)
+
+
+func _fire_slot_action(action_name: String) -> void:
+	if not InputMap.has_action(action_name):
+		return
+	Input.action_press(action_name)
+	get_tree().create_timer(0.05, false, false, false).timeout.connect(
+		func() -> void: Input.action_release(action_name)
+	)
+
+
+# ----------------------------------------------------------------------------
+
 func _build_recall_card() -> void:
 	if _recall_card != null:
 		return
@@ -240,6 +270,17 @@ func _build_recall_card() -> void:
 	root.name = "RecallCard"
 	root.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 	root.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	root.gui_input.connect(func(event: InputEvent) -> void:
+		var pressed := false
+		if event is InputEventMouseButton:
+			var mbe := event as InputEventMouseButton
+			pressed = mbe.button_index == MOUSE_BUTTON_LEFT and mbe.pressed
+		elif event is InputEventScreenTouch:
+			pressed = (event as InputEventScreenTouch).pressed
+		if pressed:
+			_fire_slot_action("recall")
+	)
 
 	# Frame
 	var frame := Sprite2D.new()

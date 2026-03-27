@@ -111,6 +111,8 @@ func _ready() -> void:
 	game_over_restart_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	game_over_menu_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	modal_backdrop.process_mode = Node.PROCESS_MODE_ALWAYS
+	perk_tree_button.process_mode = Node.PROCESS_MODE_ALWAYS
+	menu_button.process_mode = Node.PROCESS_MODE_ALWAYS
 	_hide_builtin_bar_visuals()
 	_prepare_game_over_sprite_ui()
 	if health_fill != null:
@@ -605,13 +607,15 @@ func _on_controls_toggle_button_pressed() -> void:
 
 
 func _on_perk_tree_button_pressed() -> void:
-	pass  # Perk tree only opens via P key
+	perk_tree_requested.emit()
 
 
 func _setup_modal_buttons() -> void:
 	# Task list toggle button
 	_task_btn = Button.new()
 	_task_btn.text = "Tasks"
+	_task_btn.custom_minimum_size = Vector2(102, 38)
+	_task_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	_style_utility_button(_task_btn)
 	_task_btn.pressed.connect(_on_task_button_pressed)
 	top_right_container.add_child(_task_btn)
@@ -619,6 +623,8 @@ func _setup_modal_buttons() -> void:
 	# Bag / inventory toggle button
 	_bag_btn = Button.new()
 	_bag_btn.text = "Inventory"
+	_bag_btn.custom_minimum_size = Vector2(102, 38)
+	_bag_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	_style_utility_button(_bag_btn)
 	_bag_btn.pressed.connect(_on_bag_button_pressed)
 	top_right_container.add_child(_bag_btn)

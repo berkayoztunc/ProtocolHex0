@@ -390,6 +390,34 @@ func _gui_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		accept_event()
 
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		var clip_rect_t := Rect2(_clip_region.global_position, _clip_region.size)
+		var in_clip_t := clip_rect_t.has_point(touch.position)
+		if touch.pressed:
+			if in_clip_t:
+				_is_dragging = true
+				_last_mouse_pos = touch.position
+				_drag_motion = 0.0
+				accept_event()
+		else:
+			if _is_dragging:
+				_is_dragging = false
+				var was_tap := _drag_motion <= CLICK_DRAG_THRESHOLD
+				if was_tap and in_clip_t:
+					_handle_click(touch.position)
+					accept_event()
+
+	elif event is InputEventScreenDrag and _is_dragging:
+		var drag := event as InputEventScreenDrag
+		var delta := drag.position - _last_mouse_pos
+		_drag_motion += delta.length()
+		_h_scroll_offset = clampf(_h_scroll_offset - delta.x, 0.0, _max_h_scroll)
+		_scroll_offset = clampf(_scroll_offset - delta.y, 0.0, _max_scroll)
+		_apply_scroll()
+		_last_mouse_pos = drag.position
+		accept_event()
+
 
 # ---------- input ----------
 
@@ -402,18 +430,23 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _handle_click(click_pos: Vector2) -> void:
-	if _clip_region == null:
+	if _clip_region == null or _content_root == null:
 		return
 	# Only process clicks inside the scroll area
 	var clip_rect := Rect2(_clip_region.global_position, _clip_region.size)
 	if not clip_rect.has_point(click_pos):
 		return
+	# Convert to _content_root local space — reliable regardless of scroll/CanvasLayer
+	var local_click: Vector2 = _content_root.to_local(click_pos)
 	for perk_id in _cards:
 		var card: PerkCard = _cards[perk_id]
-		if card.get_card_rect_global().has_point(click_pos):
+		var hit_rect := Rect2(card.position - _display_size * 0.5, _display_size)
+		if hit_rect.has_point(local_click):
 			if card.is_selectable:
 				perk_selected.emit(perk_id)
 				get_viewport().set_input_as_handled()
+			else:
+				card._play_disabled_feedback()
 			return
 
 
