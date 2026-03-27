@@ -1,4 +1,4 @@
-# Asset Import Checklist — GENI HERO
+# Asset Import Checklist — Protocol: Hex0
 
 ## 1) Dosya Teslim Kontrolü
 - [ ] Tüm dosyalar PNG ve şeffaf arka plan

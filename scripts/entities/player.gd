@@ -549,7 +549,7 @@ func _do_sonic_jump(damage_amount: int, wdef: Dictionary) -> void:
 	var start_pos: Vector2 = global_position
 	var dest: Vector2 = global_position + input_dir * dist
 
-	# Hazard alanına girme — dash yolunda son güvenli noktada dur
+	# Entering hazard zone — stop at last safe point on dash path
 	var _haz_bg: Node = get_tree().get_first_node_in_group("background_tiler")
 	if _haz_bg != null and _haz_bg.has_method("is_hazard_at_world") \
 			and _haz_bg.is_hazard_at_world(dest):
@@ -1010,6 +1010,7 @@ func _flash_damage_vignette() -> void:
 	var rect: ColorRect = ColorRect.new()
 	rect.color = Color(0.72, 0.0, 0.0, 0.0)
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	canvas.add_child(rect)
 	add_child(canvas)
 	var tw: Tween = rect.create_tween()

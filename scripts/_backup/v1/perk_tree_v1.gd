@@ -6,13 +6,13 @@ signal perk_selected(upgrade_id: String)
 
 # Layout: category -> row, col positions for each perk
 const PERK_LAYOUT: Dictionary = {
-	# Row 0 - Temel İstatistikler
+	# Row 0 - Basic Statistics
 	"attack_speed": {"row": 0, "col": 0},
 	"weapon_damage": {"row": 0, "col": 2},
 	"max_health": {"row": 0, "col": 4},
 	"move_speed": {"row": 0, "col": 6},
 
-	# Row 1 - Gelişmiş Yetenekler
+	# Row 1 - Advanced Abilities
 	"crit_chance": {"row": 1, "col": 0},
 	"cooldown_mastery": {"row": 1, "col": 1},
 	"weapon_projectile": {"row": 1, "col": 2},
@@ -20,7 +20,7 @@ const PERK_LAYOUT: Dictionary = {
 	"dash": {"row": 1, "col": 6},
 	"xp_magnet": {"row": 1, "col": 7},
 
-	# Row 2 - İleri Seviye
+	# Row 2 - Advanced Level
 	"pierce": {"row": 2, "col": 0},
 	"burn_dot": {"row": 2, "col": 1},
 	"rear_targeting": {"row": 2, "col": 2},
@@ -28,7 +28,7 @@ const PERK_LAYOUT: Dictionary = {
 	"armor": {"row": 2, "col": 4},
 	"xp_multiplier": {"row": 2, "col": 7},
 
-	# Row 3 - Uzmanlık
+	# Row 3 - Expertise
 	"unlock_aoe_projectile": {"row": 3, "col": 0},
 	"unlock_beam_projectile": {"row": 3, "col": 1},
 	"full_spread": {"row": 3, "col": 2},
@@ -36,27 +36,27 @@ const PERK_LAYOUT: Dictionary = {
 	"shield": {"row": 3, "col": 4},
 	"luck": {"row": 3, "col": 7},
 
-	# Row 4 - Pasif Silahlar
+	# Row 4 - Passive Weapons
 	"unlock_nano": {"row": 4, "col": 0},
 	"unlock_tesla": {"row": 4, "col": 1},
 	"unlock_scatter": {"row": 4, "col": 2},
 	"unlock_orbital_sentinel": {"row": 4, "col": 3},
 	"unlock_bouncing_projectile": {"row": 4, "col": 4},
 
-	# Row 5 - Pasif Güçlendirme
+	# Row 5 - Passive Strengthening
 	"upgrade_nano": {"row": 5, "col": 0},
 	"upgrade_tesla": {"row": 5, "col": 1},
 	"upgrade_scatter": {"row": 5, "col": 2},
 	"upgrade_orbital": {"row": 5, "col": 3},
 
-	# Row 6 - Aktif Silahlar
+	# Row 6 - Active Weapons
 	"unlock_railgun": {"row": 6, "col": 0},
 	"unlock_void": {"row": 6, "col": 1},
 	"unlock_arc": {"row": 6, "col": 2},
 	"unlock_phase": {"row": 6, "col": 3},
 	"unlock_gravity": {"row": 6, "col": 4},
 
-	# Row 7 - Aktif Güçlendirme
+	# Row 7 - Active Strengthening
 	"upgrade_railgun": {"row": 7, "col": 0},
 	"upgrade_void": {"row": 7, "col": 1},
 	"upgrade_arc": {"row": 7, "col": 2},
@@ -65,14 +65,14 @@ const PERK_LAYOUT: Dictionary = {
 }
 
 const CATEGORY_LABELS: Dictionary = {
-	0: "TEMEL İSTATİSTİKLER",
-	1: "GELİŞMİŞ YETENEKLER",
-	2: "İLERİ SEVİYE",
-	3: "UZMANLIK",
-	4: "PASİF SİLAHLAR",
-	5: "PASİF GÜÇLENDİRME",
-	6: "AKTİF SİLAHLAR",
-	7: "AKTİF GÜÇLENDİRME",
+	0: "BASIC STATISTICS",
+	1: "ADVANCED ABILITIES",
+	2: "ADVANCED LEVEL",
+	3: "EXPERTISE",
+	4: "PASSIVE WEAPONS",
+	5: "PASSIVE STRENGTHENING",
+	6: "ACTIVE WEAPONS",
+	7: "ACTIVE STRENGTHENING",
 }
 
 const NODE_WIDTH: int = 180
@@ -153,7 +153,7 @@ func _build_tree() -> void:
 
 	# Title
 	var title: Label = Label.new()
-	title.text = "PERK AĞACI"
+	title.text = "PERK TREE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(30.0, _layout_scale, 1, 24.0)))
 	title.add_theme_color_override("font_color", Color(0.9, 0.85, 0.5))
@@ -163,7 +163,7 @@ func _build_tree() -> void:
 
 	# Close instruction
 	var close_hint: Label = Label.new()
-	close_hint.text = "[P] veya [ESC] ile kapat"
+	close_hint.text = "[P] or [ESC] to close"
 	close_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	close_hint.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(16.0, _layout_scale, 1, 13.0)))
 	close_hint.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
@@ -172,7 +172,7 @@ func _build_tree() -> void:
 	add_child(close_hint)
 
 	var points_label: Label = Label.new()
-	points_label.text = "Kullanılabilir Perk Puanı: %d" % _available_points
+	points_label.text = "Available Perk Points: %d" % _available_points
 	points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	points_label.add_theme_font_size_override("font_size", int(UiTextureUtils.scale_dimension(18.0, _layout_scale, 1, 14.0)))
 	points_label.add_theme_color_override("font_color", Color(0.6, 0.9, 0.6) if _available_points > 0 else Color(0.55, 0.55, 0.55))
@@ -372,7 +372,7 @@ func _create_perk_node(perk_id: String, perk_data: Dictionary, stacks: int, max_
 
 	if is_selectable:
 		name_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.55))
-		stack_label.text = "💎 %d — SEÇ" % next_cost
+		stack_label.text = "💎 %d — SELECT" % next_cost
 		stack_label.add_theme_color_override("font_color", Color(0.45, 1.0, 0.55))
 
 	vbox.add_child(name_label)

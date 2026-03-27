@@ -49,7 +49,7 @@ func _build_ui() -> void:
 	root_vbox.add_child(header)
 
 	var title: Label = Label.new()
-	title.text = "KALICI PERK YÜKSELTMELERİ"
+	title.text = "PERMANENT PERK UPGRADES"
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color(0.4, 0.9, 1.0))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -81,7 +81,7 @@ func _build_ui() -> void:
 	root_vbox.add_child(sep2)
 
 	var back_btn: Button = Button.new()
-	back_btn.text = "← Geri"
+	back_btn.text = "← Back"
 	back_btn.add_theme_font_size_override("font_size", 14)
 	back_btn.custom_minimum_size = Vector2(140, 40)
 	back_btn.pressed.connect(_on_back_pressed)
@@ -183,7 +183,7 @@ func _build_perk_card(perk_id: String, perk_data: Dictionary) -> PanelContainer:
 
 	if current_level >= BASE_PERK_MAX_LEVEL:
 		var max_lbl: Label = Label.new()
-		max_lbl.text = "MAKS SEVİYE"
+		max_lbl.text = "MAX LEVEL"
 		max_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		max_lbl.add_theme_font_size_override("font_size", 11)
 		max_lbl.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4))
@@ -198,7 +198,7 @@ func _build_perk_card(perk_id: String, perk_data: Dictionary) -> PanelContainer:
 			parts.append("Btry:%d" % int(next_cost.get("battery", 0)))
 		if int(next_cost.get("nanochips", 0)) > 0:
 			parts.append("Chip:%d" % int(next_cost.get("nanochips", 0)))
-		cost_lbl.text = "\n".join(parts) if not parts.is_empty() else "Ücretsiz"
+		cost_lbl.text = "\n".join(parts) if not parts.is_empty() else "Free"
 		cost_lbl.add_theme_font_size_override("font_size", 10)
 		cost_lbl.add_theme_color_override("font_color", Color(0.85, 0.75, 0.4))
 		cost_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -206,7 +206,7 @@ func _build_perk_card(perk_id: String, perk_data: Dictionary) -> PanelContainer:
 
 		var can_afford: bool = _can_afford(next_cost)
 		var upgrade_btn: Button = Button.new()
-		upgrade_btn.text = "Yükselt"
+		upgrade_btn.text = "Upgrade"
 		upgrade_btn.custom_minimum_size = Vector2(100, 30)
 		upgrade_btn.add_theme_font_size_override("font_size", 11)
 		upgrade_btn.disabled = not can_afford

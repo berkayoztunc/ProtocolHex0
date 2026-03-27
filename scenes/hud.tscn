@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://kmekytd466jx" path="res://UI.png" id="3_5ysmq"]
 [ext_resource type="Texture2D" uid="uid://byu6embeoyy6w" path="res://assets/ui/icons/icon_dash.png" id="4_hd3ao"]
 [ext_resource type="Texture2D" uid="uid://1mq3q22t2pjs" path="res://assets/ui/icons/icon_bomb.png" id="5_0i1j5"]
+[ext_resource type="Script" path="res://scripts/ui/minimap.gd" id="6_minimap"]
 
 [node name="HUD" type="CanvasLayer" unique_id=590231360]
 script = ExtResource("1_hud")
@@ -472,6 +473,16 @@ offset_bottom = -8.023407
 theme_override_font_sizes/font_size = 8
 text = "Test"
 horizontal_alignment = 1
+
+[node name="Minimap" type="Control" parent="."]
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 44.0
+offset_top = 116.0
+offset_right = 234.0
+offset_bottom = 246.0
+mouse_filter = 2
+script = ExtResource("6_minimap")
 
 [connection signal="pressed" from="TopRightContainer/PerkTreeButton" to="." method="_on_perk_tree_button_pressed"]
 [connection signal="pressed" from="TopRightContainer/MenuButton" to="." method="_on_menu_button_pressed"]

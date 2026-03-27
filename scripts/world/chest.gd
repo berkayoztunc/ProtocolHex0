@@ -33,7 +33,7 @@ func _setup_contact_label() -> void:
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.position = Vector2(-40.0, -56.0)
 	_label.size = Vector2(80.0, 20.0)
-	_label.text = "SANDIK"
+	_label.text = "CHEST"
 	add_child(_label)
 
 
@@ -88,7 +88,7 @@ func _process(delta: float) -> void:
 				_label.text = "%.1fs" % remaining
 	else:
 		if _label != null:
-			_label.text = "SANDIK"
+			_label.text = "CHEST"
 
 
 func collect() -> void:

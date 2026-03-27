@@ -10,10 +10,11 @@ config_version=5
 
 [application]
 
-config/name="GeniHero"
+config/name="Protocol: Hex0"
 run/main_scene="res://scenes/start_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
+boot_splash/image="uid://b2a4qhb82itj8"
+config/icon="uid://cgm8i8w14qh5i"
 
 [autoload]
 

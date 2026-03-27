@@ -17,8 +17,8 @@ var _base_scale: Vector2 = Vector2.ONE
 
 
 func _ready() -> void:
-	# Editörde ayarlanan scale/pozisyonlara dokunma
-	# Sadece label referanslarını al
+	# Do not touch scale/positions set in the editor
+	# Just get label references
 	_name_label = get_node_or_null("NameLabel") as Label
 	_stack_label = get_node_or_null("StackLabel") as Label
 	
@@ -31,7 +31,7 @@ func _ready() -> void:
 
 
 func get_card_size() -> Vector2:
-	# Render edilen gerçek boyut = region boyutu × scale
+	# Rendered actual size = region size × scale
 	if texture:
 		var ts: Vector2
 		if region_enabled:
@@ -82,7 +82,7 @@ func _update_stack_text(stacks: int, max_stacks: int, selectable: bool) -> void:
 			text = "◇ %d" % next_cost
 
 	if selectable:
-		text = "◆ %d — SEÇ" % next_cost
+		text = "◆ %d — SELECT" % next_cost
 
 	_stack_label.text = text
 

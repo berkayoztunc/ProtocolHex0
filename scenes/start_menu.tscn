@@ -60,7 +60,7 @@ theme_override_constants/separation = 18
 
 [node name="Title" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=536893317]
 layout_mode = 2
-text = "GENI HERO"
+text = "Protocol: Hex0"
 horizontal_alignment = 1
 
 [node name="NameInput" type="LineEdit" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=648213198]
@@ -136,12 +136,12 @@ texture = ExtResource("3_m7x51")
 region_enabled = true
 region_rect = Rect2(139.28964, 16.820171, 143.93811, 21.798317)
 
-[node name="UpgradeButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=3347210001]
+[node name="UpgradeButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=-947757295]
 layout_mode = 2
-text = "Geliştir"
+text = "Upgrade"
 flat = true
 
-[node name="buttonSprite2" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/UpgradeButton" unique_id=3347210002]
+[node name="buttonSprite2" type="Sprite2D" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/UpgradeButton" unique_id=-947757294]
 self_modulate = Color(0.79, 0.79, 0.79, 1)
 show_behind_parent = true
 position = Vector2(218.87502, 16)
@@ -243,7 +243,7 @@ anchor_bottom = 1.0
 offset_top = -30.0
 grow_horizontal = 2
 grow_vertical = 0
-text = "v2.0 — GENI HERO"
+text = "v2.0 — Protocol: Hex0"
 horizontal_alignment = 1
 
 [node name="DetailContainer" type="CenterContainer" parent="." unique_id=776688948]
@@ -284,6 +284,6 @@ region_rect = Rect2(10.09346, 151.8615, 247.45705, 244.46965)
 [connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ContinueButton" to="." method="_on_continue_button_pressed"]
 [connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SettingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ControlsButton" to="." method="_on_controls_button_pressed"]
-[connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/UpgradeButton" to="." method="_on_upgrade_button_pressed"]
+[connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="value_changed" from="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SettingsPanel/MasterVolumeSlider" to="." method="_on_master_volume_slider_value_changed"]

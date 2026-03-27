@@ -1,8 +1,8 @@
 extends Node2D
 
-## Hazard nesneleri (lav, su, radyasyon) için dinamik StaticBody2D collision.
-## BackgroundTiler hücre sistemiyle eşleşir — hücre başına tek büyük collider.
-## Layer 5 (bit 4 = değer 16) → "hazard" collision layer kullanır.
+## Dynamic StaticBody2D collision for hazard objects (lava, water, radiation).
+## Matches the BackgroundTiler cell system — one large collider per cell.
+## Layer 5 (bit 4 = value 16) → uses "hazard" collision layer.
 
 @export var viewport_margin_cells: int = 2
 
@@ -11,7 +11,7 @@ var _background: Node2D = null
 
 
 func _ready() -> void:
-	# Hazard collision geçici olarak devre dışı — yeniden yapılacak
+	# Hazard collision temporarily disabled — to be reworked
 	pass
 
 

@@ -57,6 +57,8 @@ func _ready() -> void:
 	lifetime_timer.start()
 	lifetime_timer.timeout.connect(queue_free)
 	body_entered.connect(_on_body_entered)
+	if target_group == "player":
+		collision_mask = 1
 	if not is_orbit:
 		rotation = direction.angle()
 	$ColorRect.visible = false

@@ -1,6 +1,6 @@
 """
 background_tiler.gd patch:
-- hex tile export bloğunu sadeleştir (bigtile_cell_size, bigtile1_chance, bigtile_alpha, hex_tile_size kaldır)
+- simplify the hex tile export block (remove bigtile_cell_size, bigtile1_chance, bigtile_alpha, hex_tile_size)
 - hex_brightness defaultunu 0.68 yap
 - _draw_hex_tiles fonksiyonunu yeniden yaz: sadece bigtile1/bigtile2
 """
@@ -11,7 +11,7 @@ PATH = "/Users/berkay/Desktop/work/geni-hero/scripts/world/background_tiler.gd"
 with open(PATH, "r", encoding="utf-8") as f:
     src = f.read()
 
-# ── 1. Export bloğu: yeni (sadeleştirilmiş) hale getir ───────────────────────
+# ── 1. Export block: replace with new (simplified) version ─────────────────────
 OLD_EXPORTS = re.compile(
     r'## .{0,10} Hex tile arka plan modu .+?@export var bigtile_alpha: float = 1\.0',
     re.DOTALL
@@ -30,7 +30,7 @@ NEW_EXPORTS = (
 )
 
 src_new, n = OLD_EXPORTS.subn(NEW_EXPORTS, src, count=1)
-assert n == 1, "Export bloğu bulunamadı!"
+assert n == 1, "Export block not found!"
 
 # ── 2. _draw_hex_tiles fonksiyonu: yeniden yaz ──────────────────────────────
 OLD_FN = re.compile(
@@ -79,9 +79,9 @@ NEW_FN = (
 )
 
 src_new2, n2 = OLD_FN.subn(NEW_FN, src_new, count=1)
-assert n2 == 1, "Fonksiyon bloğu bulunamadı!"
+assert n2 == 1, "Function block not found!"
 
 with open(PATH, "w", encoding="utf-8") as f:
     f.write(src_new2)
 
-print("Patch OK — export blok ve _draw_hex_tiles güncellendi.")
+print("Patch OK — export block and _draw_hex_tiles updated.")

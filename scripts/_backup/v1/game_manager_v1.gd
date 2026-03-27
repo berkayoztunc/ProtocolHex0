@@ -19,58 +19,58 @@ var perk_tree_instance: Control = null
 var perk_points: int = 0
 
 var upgrade_catalog: Dictionary = {
-	# --- Tier 1: Temel İstatistikler (Maliyet: 1) ---
-	"attack_speed": {"id": "attack_speed", "name": "Saldırı Hızı", "description": "Atış bekleme süresi azalır.", "rarity": "common", "category": "combat", "prerequisites": []},
-	"weapon_damage": {"id": "weapon_damage", "name": "Saldırı Değeri", "description": "Silah ve mermi hasarı artar.", "rarity": "common", "category": "combat", "prerequisites": []},
-	"max_health": {"id": "max_health", "name": "Maksimum Can", "description": "Maksimum can +20 artar.", "rarity": "common", "category": "defense", "prerequisites": []},
-	"move_speed": {"id": "move_speed", "name": "Hız", "description": "Hareket hızı artar.", "rarity": "common", "category": "mobility", "prerequisites": []},
+	# --- Tier 1: Basic Statistics (Cost: 1) ---
+	"attack_speed": {"id": "attack_speed", "name": "Attack Speed", "description": "Attack cooldown is reduced.", "rarity": "common", "category": "combat", "prerequisites": []},
+	"weapon_damage": {"id": "weapon_damage", "name": "Attack Power", "description": "Weapon and bullet damage increases.", "rarity": "common", "category": "combat", "prerequisites": []},
+	"max_health": {"id": "max_health", "name": "Maximum Health", "description": "Maximum health +20.", "rarity": "common", "category": "defense", "prerequisites": []},
+	"move_speed": {"id": "move_speed", "name": "Speed", "description": "Movement speed increases.", "rarity": "common", "category": "mobility", "prerequisites": []},
 
-	# --- Tier 2: Gelişmiş Yetenekler (Maliyet: 2) ---
-	"crit_chance": {"id": "crit_chance", "name": "Kritik Şansı", "description": "Kritik vuruş şansı +%8 artar.", "rarity": "uncommon", "category": "combat", "prerequisites": ["attack_speed"]},
-	"cooldown_mastery": {"id": "cooldown_mastery", "name": "Sistem Optimizasyonu", "description": "Silah bekleme süreleri azalır.", "rarity": "uncommon", "category": "combat", "prerequisites": ["attack_speed"]},
-	"weapon_projectile": {"id": "weapon_projectile", "name": "Ammo Adedi", "description": "Her atışta çıkan mermi sayısı artar.", "rarity": "uncommon", "category": "combat", "prerequisites": ["weapon_damage"]},
-	"life_regen": {"id": "life_regen", "name": "Can Yenileme", "description": "Saniyede +1.5 can yenilenir.", "rarity": "uncommon", "category": "defense", "prerequisites": ["max_health"]},
-	"dash": {"id": "dash", "name": "Faz Kayması", "description": "+2 dash şarjı. Shift ile kullan.", "rarity": "uncommon", "category": "mobility", "prerequisites": ["move_speed"]},
-	"xp_magnet": {"id": "xp_magnet", "name": "Toplama Alanı", "description": "XP ve sandık toplama alanı genişler.", "rarity": "uncommon", "category": "mobility", "prerequisites": ["move_speed"]},
+	# --- Tier 2: Advanced Abilities (Cost: 2) ---
+	"crit_chance": {"id": "crit_chance", "name": "Critical Chance", "description": "Critical hit chance +8%.", "rarity": "uncommon", "category": "combat", "prerequisites": ["attack_speed"]},
+	"cooldown_mastery": {"id": "cooldown_mastery", "name": "System Optimization", "description": "Weapon cooldowns are reduced.", "rarity": "uncommon", "category": "combat", "prerequisites": ["attack_speed"]},
+	"weapon_projectile": {"id": "weapon_projectile", "name": "Ammo Count", "description": "Number of bullets per shot increases.", "rarity": "uncommon", "category": "combat", "prerequisites": ["weapon_damage"]},
+	"life_regen": {"id": "life_regen", "name": "Life Regen", "description": "Regenerate +1.5 health per second.", "rarity": "uncommon", "category": "defense", "prerequisites": ["max_health"]},
+	"dash": {"id": "dash", "name": "Phase Shift", "description": "+2 dash charges. Use with Shift.", "rarity": "uncommon", "category": "mobility", "prerequisites": ["move_speed"]},
+	"xp_magnet": {"id": "xp_magnet", "name": "Collection Area", "description": "XP and chest collection area expands.", "rarity": "uncommon", "category": "mobility", "prerequisites": ["move_speed"]},
 
-	# --- Tier 3: İleri Seviye (Maliyet: 3) ---
-	"pierce": {"id": "pierce", "name": "Delici Mermi", "description": "Mermiler +1 ekstra düşmandan geçer.", "rarity": "rare", "category": "combat", "prerequisites": ["crit_chance"]},
-	"burn_dot": {"id": "burn_dot", "name": "Yakıcı Atış", "description": "Vurduğun düşmanlara yanma şansı.", "rarity": "rare", "category": "combat", "prerequisites": ["crit_chance"]},
-	"rear_targeting": {"id": "rear_targeting", "name": "Arka Nişan", "description": "İleri ve geri aynı anda ateş eder.", "rarity": "rare", "category": "targeting", "prerequisites": ["weapon_projectile"]},
-	"side_sweep": {"id": "side_sweep", "name": "Yan Tarama", "description": "Sol ve sağ yönde ateş eder.", "rarity": "rare", "category": "targeting", "prerequisites": ["weapon_projectile"]},
-	"armor": {"id": "armor", "name": "Savunma Değeri", "description": "Alınan hasar +3 azalır.", "rarity": "rare", "category": "defense", "prerequisites": ["life_regen"]},
-	"xp_multiplier": {"id": "xp_multiplier", "name": "XP Verimi", "description": "Kazanılan XP +%20 artar.", "rarity": "rare", "category": "utility", "prerequisites": ["xp_magnet"]},
-	"unlock_nano": {"id": "unlock_nano", "name": "Nano Swarm", "description": "Hızlı atışlı nano mermiler. Pasif silah.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["cooldown_mastery"]},
-	"unlock_tesla": {"id": "unlock_tesla", "name": "Tesla Emitter", "description": "Zincirleme elektrik şimşeği. Pasif silah.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["crit_chance"]},
-	"unlock_scatter": {"id": "unlock_scatter", "name": "Scatter Cannon", "description": "Geniş açılı 7 pellet. Pasif silah.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["weapon_projectile"]},
-	"unlock_bouncing_projectile": {"id": "unlock_bouncing_projectile", "name": "Sekebilen Mermi", "description": "Hedefler arasında seken mermi tipini açar.", "rarity": "rare", "category": "projectile", "prerequisites": ["weapon_projectile"]},
+	# --- Tier 3: Advanced Level (Cost: 3) ---
+	"pierce": {"id": "pierce", "name": "Pierce Bullet", "description": "Bullets pierce +1 extra enemy.", "rarity": "rare", "category": "combat", "prerequisites": ["crit_chance"]},
+	"burn_dot": {"id": "burn_dot", "name": "Burning Shot", "description": "Chance to apply burn to hit enemies.", "rarity": "rare", "category": "combat", "prerequisites": ["crit_chance"]},
+	"rear_targeting": {"id": "rear_targeting", "name": "Rear Targeting", "description": "Fires forward and backward simultaneously.", "rarity": "rare", "category": "targeting", "prerequisites": ["weapon_projectile"]},
+	"side_sweep": {"id": "side_sweep", "name": "Side Sweep", "description": "Fires to the left and right.", "rarity": "rare", "category": "targeting", "prerequisites": ["weapon_projectile"]},
+	"armor": {"id": "armor", "name": "Defense Value", "description": "Incoming damage reduced by +3.", "rarity": "rare", "category": "defense", "prerequisites": ["life_regen"]},
+	"xp_multiplier": {"id": "xp_multiplier", "name": "XP Efficiency", "description": "XP gained increases by +20%.", "rarity": "rare", "category": "utility", "prerequisites": ["xp_magnet"]},
+	"unlock_nano": {"id": "unlock_nano", "name": "Nano Swarm", "description": "Rapid-fire nano bullets. Passive weapon.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["cooldown_mastery"]},
+	"unlock_tesla": {"id": "unlock_tesla", "name": "Tesla Emitter", "description": "Chain lightning. Passive weapon.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["crit_chance"]},
+	"unlock_scatter": {"id": "unlock_scatter", "name": "Scatter Cannon", "description": "Wide-angle 7 pellets. Passive weapon.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["weapon_projectile"]},
+	"unlock_bouncing_projectile": {"id": "unlock_bouncing_projectile", "name": "Bouncing Bullet", "description": "Unlocks a bouncing bullet type between targets.", "rarity": "rare", "category": "projectile", "prerequisites": ["weapon_projectile"]},
 
-	# --- Tier 4: Uzmanlık (Maliyet: 4) ---
-	"unlock_aoe_projectile": {"id": "unlock_aoe_projectile", "name": "Patlayıcı Mermi", "description": "AOE vuran mermi tipini açar.", "rarity": "epic", "category": "projectile", "prerequisites": ["pierce"]},
-	"unlock_beam_projectile": {"id": "unlock_beam_projectile", "name": "Işın Mermi", "description": "Işın şeklinde mermi tipini açar.", "rarity": "epic", "category": "projectile", "prerequisites": ["burn_dot"]},
-	"full_spread": {"id": "full_spread", "name": "Tam Yelpaze", "description": "İleri ve ±45° yelpaze ateşi.", "rarity": "epic", "category": "targeting", "prerequisites": ["rear_targeting"]},
-	"orbital_fire": {"id": "orbital_fire", "name": "Orbital Ateş", "description": "Spiral pattern ile dairesel ateş.", "rarity": "epic", "category": "targeting", "prerequisites": ["side_sweep"]},
-	"shield": {"id": "shield", "name": "Enerji Kalkanı", "description": "30 saniyede bir ölümcül darbeyi engeller.", "rarity": "epic", "category": "defense", "prerequisites": ["armor"]},
-	"luck": {"id": "luck", "name": "Şans", "description": "Sandık ve yüksek kalite XP düşme ihtimali artar.", "rarity": "epic", "category": "utility", "prerequisites": ["xp_multiplier"]},
-	"unlock_orbital_sentinel": {"id": "unlock_orbital_sentinel", "name": "Orbital Sentinel", "description": "Etrafında dönen enerji küreleri. Pasif silah.", "rarity": "epic", "category": "passive_weapon", "prerequisites": ["cooldown_mastery"]},
+	# --- Tier 4: Expertise (Cost: 4) ---
+	"unlock_aoe_projectile": {"id": "unlock_aoe_projectile", "name": "Explosive Bullet", "description": "Unlocks an AOE bullet type.", "rarity": "epic", "category": "projectile", "prerequisites": ["pierce"]},
+	"unlock_beam_projectile": {"id": "unlock_beam_projectile", "name": "Beam Bullet", "description": "Unlocks a beam-type bullet.", "rarity": "epic", "category": "projectile", "prerequisites": ["burn_dot"]},
+	"full_spread": {"id": "full_spread", "name": "Full Spread", "description": "Forward and ±45° spread fire.", "rarity": "epic", "category": "targeting", "prerequisites": ["rear_targeting"]},
+	"orbital_fire": {"id": "orbital_fire", "name": "Orbital Fire", "description": "Circular fire in a spiral pattern.", "rarity": "epic", "category": "targeting", "prerequisites": ["side_sweep"]},
+	"shield": {"id": "shield", "name": "Energy Shield", "description": "Blocks one lethal strike every 30 seconds.", "rarity": "epic", "category": "defense", "prerequisites": ["armor"]},
+	"luck": {"id": "luck", "name": "Luck", "description": "Increases chance of chest drops and high-quality XP.", "rarity": "epic", "category": "utility", "prerequisites": ["xp_multiplier"]},
+	"unlock_orbital_sentinel": {"id": "unlock_orbital_sentinel", "name": "Orbital Sentinel", "description": "Orbiting energy orbs. Passive weapon.", "rarity": "epic", "category": "passive_weapon", "prerequisites": ["cooldown_mastery"]},
 
-	# --- Tier 5: Pasif Güçlendirme & Aktif Silahlar (Maliyet: 5) ---
-	"upgrade_nano": {"id": "upgrade_nano", "name": "Nano Güçlendirme", "description": "Nano Swarm hasarını artır.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["unlock_nano"]},
-	"upgrade_tesla": {"id": "upgrade_tesla", "name": "Tesla Güçlendirme", "description": "Tesla Emitter hasarını artır.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["unlock_tesla"]},
-	"upgrade_scatter": {"id": "upgrade_scatter", "name": "Scatter Güçlendirme", "description": "Scatter Cannon hasarını artır.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["unlock_scatter"]},
-	"upgrade_orbital": {"id": "upgrade_orbital", "name": "Orbital Güçlendirme", "description": "Orbital Sentinel hasarını artır.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["unlock_orbital_sentinel"]},
-	"unlock_railgun": {"id": "unlock_railgun", "name": "Railgun", "description": "Railgun silah slotunu aç. [1] ile aktive et.", "rarity": "epic", "category": "active_weapon", "prerequisites": ["pierce"]},
-	"unlock_void": {"id": "unlock_void", "name": "Void Launcher", "description": "Void Launcher silah slotunu aç. [2] ile aktive et.", "rarity": "epic", "category": "active_weapon", "prerequisites": ["burn_dot"]},
-	"unlock_arc": {"id": "unlock_arc", "name": "Arc Blaster", "description": "Arc Blaster silah slotunu aç. [3] ile aktive et.", "rarity": "epic", "category": "active_weapon", "prerequisites": ["unlock_tesla"]},
-	"unlock_phase": {"id": "unlock_phase", "name": "Phase Disruptor", "description": "Phase Disruptor silah slotunu aç. [4] ile aktive et.", "rarity": "epic", "category": "active_weapon", "prerequisites": ["shield"]},
-	"unlock_gravity": {"id": "unlock_gravity", "name": "Gravity Pulse", "description": "Gravity Pulse silah slotunu aç. [5] ile aktive et.", "rarity": "legendary", "category": "active_weapon", "prerequisites": ["unlock_orbital_sentinel"]},
+	# --- Tier 5: Passive Strengthening & Active Weapons (Cost: 5) ---
+	"upgrade_nano": {"id": "upgrade_nano", "name": "Nano Upgrade", "description": "Increase Nano Swarm damage.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["unlock_nano"]},
+	"upgrade_tesla": {"id": "upgrade_tesla", "name": "Tesla Upgrade", "description": "Increase Tesla Emitter damage.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["unlock_tesla"]},
+	"upgrade_scatter": {"id": "upgrade_scatter", "name": "Scatter Upgrade", "description": "Increase Scatter Cannon damage.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["unlock_scatter"]},
+	"upgrade_orbital": {"id": "upgrade_orbital", "name": "Orbital Upgrade", "description": "Increase Orbital Sentinel damage.", "rarity": "rare", "category": "passive_weapon", "prerequisites": ["unlock_orbital_sentinel"]},
+	"unlock_railgun": {"id": "unlock_railgun", "name": "Railgun", "description": "Unlock Railgun weapon slot. Activate with [1].", "rarity": "epic", "category": "active_weapon", "prerequisites": ["pierce"]},
+	"unlock_void": {"id": "unlock_void", "name": "Void Launcher", "description": "Unlock Void Launcher weapon slot. Activate with [2].", "rarity": "epic", "category": "active_weapon", "prerequisites": ["burn_dot"]},
+	"unlock_arc": {"id": "unlock_arc", "name": "Arc Blaster", "description": "Unlock Arc Blaster weapon slot. Activate with [3].", "rarity": "epic", "category": "active_weapon", "prerequisites": ["unlock_tesla"]},
+	"unlock_phase": {"id": "unlock_phase", "name": "Phase Disruptor", "description": "Unlock Phase Disruptor weapon slot. Activate with [4].", "rarity": "epic", "category": "active_weapon", "prerequisites": ["shield"]},
+	"unlock_gravity": {"id": "unlock_gravity", "name": "Gravity Pulse", "description": "Unlock Gravity Pulse weapon slot. Activate with [5].", "rarity": "legendary", "category": "active_weapon", "prerequisites": ["unlock_orbital_sentinel"]},
 
-	# --- Tier 6: Aktif Silah Güçlendirme (Maliyet: 6) ---
-	"upgrade_railgun": {"id": "upgrade_railgun", "name": "Railgun Güçlendirme", "description": "Railgun hasarını artır.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_railgun"]},
-	"upgrade_void": {"id": "upgrade_void", "name": "Void Güçlendirme", "description": "Void Launcher hasarını artır.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_void"]},
-	"upgrade_arc": {"id": "upgrade_arc", "name": "Arc Güçlendirme", "description": "Arc Blaster hasarını artır.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_arc"]},
-	"upgrade_phase": {"id": "upgrade_phase", "name": "Phase Güçlendirme", "description": "Phase Disruptor hasarını artır.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_phase"]},
-	"upgrade_gravity": {"id": "upgrade_gravity", "name": "Gravity Güçlendirme", "description": "Gravity Pulse hasarını artır.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_gravity"]},
+	# --- Tier 6: Active Weapon Upgrades (Cost: 6) ---
+	"upgrade_railgun": {"id": "upgrade_railgun", "name": "Railgun Upgrade", "description": "Increase Railgun damage.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_railgun"]},
+	"upgrade_void": {"id": "upgrade_void", "name": "Void Upgrade", "description": "Increase Void Launcher damage.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_void"]},
+	"upgrade_arc": {"id": "upgrade_arc", "name": "Arc Upgrade", "description": "Increase Arc Blaster damage.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_arc"]},
+	"upgrade_phase": {"id": "upgrade_phase", "name": "Phase Upgrade", "description": "Increase Phase Disruptor damage.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_phase"]},
+	"upgrade_gravity": {"id": "upgrade_gravity", "name": "Gravity Upgrade", "description": "Increase Gravity Pulse damage.", "rarity": "rare", "category": "active_weapon", "prerequisites": ["unlock_gravity"]},
 }
 
 @onready var player: CharacterBody2D = $Player
@@ -402,7 +402,7 @@ func _on_chest_opened(_pos: Vector2) -> void:
 			hud.show_notification("🛡 Kalkan Aktif!")
 		"magnet":
 			player.magnet_collect_all()
-			hud.show_notification("🧲 Mıknatıs!")
+			hud.show_notification("🧲 Magnet!")
 		"bomb":
 			player.bomb_charges += 1
 			player.perk_charges_changed.emit(player.bomb_charges, player.heal_charges)
@@ -410,7 +410,7 @@ func _on_chest_opened(_pos: Vector2) -> void:
 		"perk_points":
 			var amount: int = _roll_perk_point_amount()
 			perk_points += amount
-			hud.show_notification("⭐ +%d Perk Puanı!" % amount)
+			hud.show_notification("⭐ +%d Perk Points!" % amount)
 	_persist_run_state()
 	MockApiClient.queue_event("chest_opened", {"reward": reward, "kills": kill_count})
 

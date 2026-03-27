@@ -234,7 +234,7 @@ func _layout_notification_layer() -> void:
 		_notification_container.add_theme_constant_override("separation", int(UiTextureUtils.scale_dimension(6.0, hud_scale, 1, 4.0)))
 
 
-func show_level_up(options: Array[Dictionary], title: String = "Level Up! Bir yükseltme seç") -> void:
+func show_level_up(options: Array[Dictionary], title: String = "Level Up! Choose an upgrade") -> void:
 	if options.size() < 3:
 		return
 	level_up_title.text = title
@@ -403,7 +403,7 @@ func set_projectile_switch_enabled(enabled: bool) -> void:
 
 
 func update_targeting_display(mode_name: String) -> void:
-	targeting_label.text = "Nişan [Tab]: %s" % mode_name
+	targeting_label.text = "Targeting [Tab]: %s" % mode_name
 
 
 func update_active_weapons(weapons_data: Array[Dictionary]) -> void:

@@ -22,7 +22,7 @@ var elapsed_seconds: float = 0.0
 var upgrade_stacks: Dictionary = {}
 var weapon_display_timer: float = 0.0
 var perk_tree_instance: Control = null
-var perk_points: int = 200
+var perk_points: int = 0
 
 # --- Meta-resource & recall ---
 var _task_list: Array[Dictionary] = []
@@ -91,6 +91,10 @@ func _ready() -> void:
 	# Init zone task list & inventory display
 	_init_task_list()
 	hud.show_task_list(_task_list)
+	# Sync task states with banked vault items from previous runs
+	_check_zone_tasks()
+	for task_entry in _task_list:
+		hud.update_task(task_entry as Dictionary)
 	_update_inventory_hud()
 	# Spawn map-source pickups + initial meta resources + hero capsule
 	_spawn_map_pickups()
@@ -219,7 +223,7 @@ func _spawn_enemy() -> void:
 	var angle: float = randf() * TAU
 	var dist: float = randf_range(min_spawn_distance, max_spawn_distance)
 	enemy.global_position = player.global_position + Vector2(cos(angle), sin(angle)) * dist
-	# Hazard alanında spawn etme — farklı açı dene (maks 10 deneme)
+	# Do not spawn in hazard area — try different angle (max 10 attempts)
 	var _haz_bg: Node = get_tree().get_first_node_in_group("background_tiler")
 	if _haz_bg != null and _haz_bg.has_method("is_hazard_at_world"):
 		var _retry: int = 0
@@ -392,6 +396,11 @@ func _on_player_died() -> void:
 	game_over = true
 	_in_wave = false
 	spawn_timer.stop()
+	# Bank any zone items collected this run into vault so they aren't lost on death
+	for item_id in _zone_items.keys():
+		var count: int = int(_zone_items.get(item_id, 0))
+		if count > 0:
+			Session.add_to_vault(str(item_id), count)
 	var held_def: Variant = ConfigService.get_value("weapons.definitions.%s" % player.current_held_weapon, null)
 	var weapon_name: String = "Plasma Rifle"
 	if held_def != null and typeof(held_def) == TYPE_DICTIONARY:
@@ -764,7 +773,7 @@ func _on_chest_opened(_pos: Vector2) -> void:
 	var heal_amount: int = maxi(1, int(float(player.max_health) * 0.30))
 	player.health = mini(player.health + heal_amount, player.max_health)
 	player.health_changed.emit(player.health, player.max_health)
-	hud.show_notification("❤ +%d Can! Perk puanı kazandın (P ile aç)" % heal_amount)
+	hud.show_notification("❤ +%d HP! Earned perk points (press P)" % heal_amount)
 	# Also award a perk point so player can pick
 	perk_points += 1
 	hud.update_perk_points(perk_points)
@@ -878,12 +887,17 @@ func _init_task_list() -> void:
 
 func _zone_item_display_name(item_id: String) -> String:
 	match item_id:
-		"nano_cores":    return "Nano Çekirdek"
-		"energy_cells":  return "Enerji Hücresi"
+		"nano_cores":    return "Nano Core"
+		"energy_cells":  return "Energy Cell"
 		"scrap_metal":   return "Hurda Metal"
-		"data_shards":   return "Veri Kırıkları"
-		"power_shards":  return "Güç Kırıkları"
-		"data_cores":    return "Veri Çekirdekleri"
+		"data_shards":   return "Data Shards"
+		"power_shards":  return "Power Shards"
+		"data_cores":    return "Data Cores"
+		"void_matter":   return "Void Matter"
+		"quantum_chips": return "Quantum Chip"
+		"dark_prism":    return "Dark Prism"
+		"omega_shard":   return "Omega Shard"
+		"stellar_core":  return "Stellar Core"
 		_: return item_id.replace("_", " ").capitalize()
 
 
@@ -929,7 +943,7 @@ func _spawn_enemy_loot_deferred(item_id: String, spawn_pos: Vector2) -> void:
 			_check_zone_tasks()
 			for task_entry in _task_list:
 				hud.update_task(task_entry as Dictionary)
-			hud.show_notification("Görev eşyası toplandı!", 1.5)
+			hud.show_notification("Quest item collected!", 1.5)
 			_spawn_dot_burst(pickup.global_position, Color(0.25, 1.0, 0.4, 0.9), 5, 35.0, 80.0, 0.22)
 		)
 
@@ -939,7 +953,8 @@ func _check_zone_tasks() -> void:
 	for i in _task_list.size():
 		var t: Dictionary = _task_list[i] as Dictionary
 		var item_id: String = str(t.get("id", ""))
-		var current: int = int(_zone_items.get(item_id, 0))
+		# Count items collected this run + items already banked in vault from previous runs
+		var current: int = int(_zone_items.get(item_id, 0)) + Session.get_vault_count(item_id)
 		var required: int = int(t.get("required", 1))
 		(_task_list[i] as Dictionary)["current"] = current
 		(_task_list[i] as Dictionary)["done"] = current >= required
@@ -947,7 +962,7 @@ func _check_zone_tasks() -> void:
 			all_done = false
 	if all_done and not _task_list.is_empty() and not _tasks_all_done:
 		_tasks_all_done = true
-		hud.show_notification("Tüm görevler tamamlandı! Geri dönmek için R bas.", 5.0)
+		hud.show_notification("All tasks completed! Press R to return.", 5.0)
 
 
 # ===  MAP PICKUPS & INITIAL SPAWNS  ===
@@ -1008,7 +1023,7 @@ func _on_zone_item_picked_up(item_type: String) -> void:
 	_check_zone_tasks()
 	for task_entry in _task_list:
 		hud.update_task(task_entry as Dictionary)
-	hud.show_notification("Harita eşyası toplandı!", 2.5)
+	hud.show_notification("Map item collected!", 2.5)
 	if player:
 		_spawn_dot_burst(player.global_position, Color(0.25, 1.0, 0.4, 0.9), 5, 35.0, 80.0, 0.22)
 
@@ -1053,9 +1068,9 @@ func _spawn_meta_resource_deferred(pos: Vector2, resource_type: String) -> void:
 
 func _update_inventory_hud() -> void:
 	hud.update_inventory(
-		Session.get_inventory_count("scrap"),
-		Session.get_inventory_count("battery"),
-		Session.get_inventory_count("nanochips")
+		Session.get_bag_count("scrap"),
+		Session.get_bag_count("battery"),
+		Session.get_bag_count("nanochips")
 	)
 
 
@@ -1066,9 +1081,9 @@ func _update_inventory_hud() -> void:
 func _try_spawn_recall_zone() -> void:
 	if game_over:
 		return
-	# Görevler tamamlanmadan recall açılamaz
+	# Recall cannot be opened before tasks are completed
 	if not _tasks_all_done and not _task_list.is_empty():
-		hud.show_notification("Görevler tamamlanmadan geri dönemezsin!", 3.0)
+		hud.show_notification("Cannot return before completing tasks!", 3.0)
 		return
 	# Only one recall zone at a time
 	if not get_tree().get_nodes_in_group("recall_zone").is_empty():

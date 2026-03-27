@@ -394,7 +394,7 @@ func _layout_notification_layer() -> void:
 		_notification_container.add_theme_constant_override("separation", 6)
 
 
-func show_level_up(options: Array[Dictionary], title: String = "Level Up! Bir yükseltme seç") -> void:
+func show_level_up(options: Array[Dictionary], title: String = "Level Up! Choose an upgrade") -> void:
 	if options.size() < 3:
 		return
 	if level_up_title != null:
@@ -601,14 +601,14 @@ func _on_perk_tree_button_pressed() -> void:
 func _setup_modal_buttons() -> void:
 	# Task list toggle button
 	_task_btn = Button.new()
-	_task_btn.text = "Görevler"
+	_task_btn.text = "Tasks"
 	_style_utility_button(_task_btn)
 	_task_btn.pressed.connect(_on_task_button_pressed)
 	top_right_container.add_child(_task_btn)
 	top_right_container.move_child(_task_btn, 0)
 	# Bag / inventory toggle button
 	_bag_btn = Button.new()
-	_bag_btn.text = "Çanta"
+	_bag_btn.text = "Inventory"
 	_style_utility_button(_bag_btn)
 	_bag_btn.pressed.connect(_on_bag_button_pressed)
 	top_right_container.add_child(_bag_btn)
@@ -631,7 +631,7 @@ func _on_projectile_switch_button_pressed() -> void:
 
 func update_weapon_display(weapon_name: String) -> void:
 	if weapon_label != null:
-		weapon_label.text = "Silah: %s" % weapon_name
+		weapon_label.text = "Weapon: %s" % weapon_name
 	var weapon_id: String = weapon_name.to_lower().replace(" ", "_")
 	if weapon_label != null:
 		_update_wrapped_control_icon(weapon_label, _get_weapon_icon_path(weapon_id))
@@ -639,7 +639,7 @@ func update_weapon_display(weapon_name: String) -> void:
 
 func update_projectile_display(projectile_name: String) -> void:
 	if projectile_label != null:
-		projectile_label.text = "Mermi Tipi: %s" % projectile_name
+		projectile_label.text = "Ammo Type: %s" % projectile_name
 
 
 func set_projectile_switch_enabled(enabled: bool) -> void:
@@ -649,7 +649,7 @@ func set_projectile_switch_enabled(enabled: bool) -> void:
 
 func update_targeting_display(mode_name: String) -> void:
 	if targeting_label != null:
-		targeting_label.text = "Nişan [Tab]: %s" % mode_name
+		targeting_label.text = "Targeting [Tab]: %s" % mode_name
 
 
 func update_active_weapons(weapons_data: Array[Dictionary]) -> void:
@@ -666,17 +666,17 @@ func _get_weapon_display_color(weapon_name: String) -> Color:
 	# Map weapon names to their config colors
 	var color_map: Dictionary = {
 		"Plasma Rifle": Color(0.3, 0.8, 1.0),
-		"Burst Tarama": Color(0.0, 1.0, 0.7),
+		"Burst Sweep": Color(0.0, 1.0, 0.7),
 		"Tesla Emitter": Color(0.6, 0.8, 1.0),
-		"Pompalı Seri": Color(1.0, 0.7, 0.2),
+		"Rapid Fire": Color(1.0, 0.7, 0.2),
 		"Orbital Sentinel": Color(1.0, 0.9, 0.3),
-		"Alev Modu": Color(1.0, 0.3, 0.0),
-		"Patlama Modu": Color(1.0, 0.7, 0.0),
+		"Flame Mode": Color(1.0, 0.3, 0.0),
+		"Explosion Mode": Color(1.0, 0.7, 0.0),
 		"Railgun": Color(1.0, 0.2, 0.2),
-		"Roket Fırlatıcı": Color(1.0, 0.5, 0.1),
+		"Rocket Launcher": Color(1.0, 0.5, 0.1),
 		"Arc Blaster": Color(0.4, 0.7, 1.0),
-		"Kriyojen Alan": Color(0.0, 0.8, 1.0),
-		"Enerji Dalgası": Color(0.3, 0.6, 1.0),
+		"Cryogen Field": Color(0.0, 0.8, 1.0),
+		"Energy Wave": Color(0.3, 0.6, 1.0),
 	}
 	for key in color_map:
 		if weapon_name.to_lower().contains(key.to_lower()):
@@ -894,7 +894,7 @@ func _ensure_inventory_panel() -> void:
 	margin.add_child(vbox)
 	# Title
 	var title: Label = Label.new()
-	title.text = "[ ENVANTER ]"
+	title.text = "[ INVENTORY ]"
 	title.add_theme_font_size_override("font_size", 9)
 	title.add_theme_color_override("font_color", Color(0.6, 0.7, 1.0, 0.8))
 	vbox.add_child(title)
@@ -905,9 +905,9 @@ func _ensure_inventory_panel() -> void:
 		"nanochips": Color(0.6,  0.4,  1.0)
 	}
 	const RESOURCE_LABELS: Dictionary = {
-		"scrap":     "Hurda",
-		"battery":   "Batarya",
-		"nanochips": "Nanochip"
+		"scrap":     "Scrap",
+		"battery":   "Battery",
+		"nanochips": "Nanochips"
 	}
 	for res_key in ["scrap", "battery", "nanochips"]:
 		var row: HBoxContainer = HBoxContainer.new()
@@ -933,7 +933,7 @@ func _ensure_inventory_panel() -> void:
 		_inv_labels[res_key] = count_lbl
 	add_child(_inventory_panel)
 	_inventory_panel.process_mode = Node.PROCESS_MODE_ALWAYS
-	_inventory_panel.visible = false  # Hidden by default — toggle via Çanta button
+	_inventory_panel.visible = false  # Hidden by default — toggle via Inventory button
 
 
 func update_inventory(scrap: int, battery: int, nanochips: int) -> void:
@@ -984,7 +984,7 @@ func show_task_list(tasks: Array[Dictionary]) -> void:
 	vbox.add_theme_constant_override("separation", 3)
 	margin.add_child(vbox)
 	var title: Label = Label.new()
-	title.text = "[ GÖREVLER ]"
+	title.text = "[ TASKS ]"
 	title.add_theme_font_size_override("font_size", 9)
 	title.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4, 0.8))
 	vbox.add_child(title)
@@ -1012,7 +1012,7 @@ func show_task_list(tasks: Array[Dictionary]) -> void:
 		_task_item_labels[task_id] = {"label": lbl, "check": check}
 	add_child(_task_panel)
 	_task_panel.process_mode = Node.PROCESS_MODE_ALWAYS
-	_task_panel.visible = false  # Hidden by default — toggle via Görevler button
+	_task_panel.visible = false  # Hidden by default — toggle via Tasks button
 
 
 func update_task(task: Dictionary) -> void:
@@ -1080,7 +1080,7 @@ func show_level_complete(stats: Dictionary) -> void:
 	margin.add_child(vbox)
 	# Title
 	var title: Label = Label.new()
-	title.text = "BÖLÜM TAMAMLANDI!"
+	title.text = "LEVEL COMPLETE!"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
@@ -1090,7 +1090,7 @@ func show_level_complete(stats: Dictionary) -> void:
 	# Stats
 	var minutes: int = int(stats.get("time", 0)) / 60
 	var seconds: int = int(stats.get("time", 0)) % 60
-	var stats_text: String = "Öldürme: %d\nSeviye: %d\nSüre: %02d:%02d" % [
+	var stats_text: String = "Kills: %d\nLevel: %d\nTime: %02d:%02d" % [
 		int(stats.get("kills", 0)),
 		int(stats.get("level", 1)),
 		minutes, seconds
@@ -1108,7 +1108,7 @@ func show_level_complete(stats: Dictionary) -> void:
 		var items_parts: Array[String] = []
 		for k in items.keys():
 			items_parts.append("%s: %d" % [str(k), int(items[k])])
-		items_lbl.text = "Toplanan: " + ", ".join(items_parts)
+		items_lbl.text = "Collected: " + ", ".join(items_parts)
 		items_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		items_lbl.add_theme_font_size_override("font_size", 11)
 		items_lbl.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
@@ -1122,7 +1122,7 @@ func show_level_complete(stats: Dictionary) -> void:
 				vault_parts.append("%s: +%d" % [str(k), int(vault_added[k])])
 		if not vault_parts.is_empty():
 			var vault_lbl: Label = Label.new()
-			vault_lbl.text = "✓ Kasaya eklendi: " + ", ".join(vault_parts)
+			vault_lbl.text = "✓ Added to vault: " + ", ".join(vault_parts)
 			vault_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			vault_lbl.add_theme_font_size_override("font_size", 11)
 			vault_lbl.add_theme_color_override("font_color", Color(0.4, 1.0, 0.6))
@@ -1131,7 +1131,7 @@ func show_level_complete(stats: Dictionary) -> void:
 	vbox.add_child(sep2)
 	# Inventory summary (meta-resource progress)
 	var inv_lbl: Label = Label.new()
-	inv_lbl.text = "Envanter: %d Hurda, %d Pil, %d Nanochip" % [
+	inv_lbl.text = "Inventory: %d Scrap, %d Battery, %d Nanochips" % [
 		Session.get_inventory_count("scrap"),
 		Session.get_inventory_count("battery"),
 		Session.get_inventory_count("nanochips")
@@ -1144,7 +1144,7 @@ func show_level_complete(stats: Dictionary) -> void:
 	vbox.add_child(sep3)
 	# Menu button
 	var menu_btn: Button = Button.new()
-	menu_btn.text = "Ana Menü"
+	menu_btn.text = "Main Menu"
 	menu_btn.add_theme_font_size_override("font_size", 14)
 	menu_btn.pressed.connect(func() -> void:
 		get_tree().paused = false
@@ -1169,7 +1169,7 @@ func show_recall_cooldown(seconds: float) -> void:
 
 func show_recall_ready() -> void:
 	_ensure_recall_label()
-	_recall_status_label.text = "R: Hazır"
+	_recall_status_label.text = "R: Ready"
 	_recall_status_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
 	_recall_status_label.visible = true
 	if _skill_bar != null and is_instance_valid(_skill_bar) and _skill_bar.has_method("update_recall_state"):

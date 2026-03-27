@@ -7,9 +7,10 @@ var pending_continue: bool = false
 var current_run: Dictionary = {}
 var last_run: Dictionary = {}
 
-# ── Kalıcı profil verisi (run'dan bağımsız) ──────────────────
+# ── Persistent profile data (independent of run) ──────────────
 var current_zone_id: String = "zone_1"
-var inventory: Dictionary = {"scrap": 0, "battery": 0, "nanochips": 0}
+var inventory: Dictionary = {"scrap": 0, "battery": 0, "nanochips": 0}  # Permanent — spent on base perk upgrades
+var bag: Dictionary = {"scrap": 0, "battery": 0, "nanochips": 0}  # Current-run pickup bag — resets each run
 var vault: Dictionary = {}  # Permanent zone-item storage (nano_cores, energy_cells, etc.)
 var bag_capacity: int = 20
 var base_perk_levels: Dictionary = {}
@@ -34,6 +35,7 @@ func start_new_run(name: String) -> void:
 		player_name = "Hero"
 	pending_continue = false
 	current_run = _new_run_template()
+	bag = {"scrap": 0, "battery": 0, "nanochips": 0}  # Reset run bag on every new run
 	save_profile()
 
 
@@ -54,8 +56,17 @@ func record_run_state(run_state: Dictionary, kills: int) -> void:
 func finalize_run() -> void:
 	if current_run.is_empty():
 		return
+	_flush_bag_to_inventory()
 	last_run = current_run.duplicate(true)
 	save_profile()
+
+func _flush_bag_to_inventory() -> void:
+	## Transfer everything in the run bag into permanent inventory, then clear the bag.
+	for resource_type in bag.keys():
+		if not inventory.has(resource_type):
+			inventory[resource_type] = 0
+		inventory[resource_type] = int(inventory[resource_type]) + int(bag[resource_type])
+	bag = {"scrap": 0, "battery": 0, "nanochips": 0}
 
 
 func load_profile() -> void:
@@ -91,6 +102,12 @@ func load_profile() -> void:
 	var parsed_vault: Variant = parsed_dict.get("vault", {})
 	if typeof(parsed_vault) == TYPE_DICTIONARY:
 		vault = (parsed_vault as Dictionary).duplicate(true)
+	var parsed_bag: Variant = parsed_dict.get("bag", {})
+	if typeof(parsed_bag) == TYPE_DICTIONARY:
+		bag = (parsed_bag as Dictionary).duplicate(true)
+		for key in ["scrap", "battery", "nanochips"]:
+			if not bag.has(key):
+				bag[key] = 0
 
 
 func save_profile() -> void:
@@ -99,6 +116,7 @@ func save_profile() -> void:
 		"last_run": last_run,
 		"current_zone_id": current_zone_id,
 		"inventory": inventory,
+		"bag": bag,
 		"vault": vault,
 		"base_perk_levels": base_perk_levels,
 		"bag_capacity": bag_capacity,
@@ -130,24 +148,30 @@ func is_zone_completed(zone_id: String) -> bool:
 func can_pick_up(amount: int = 1) -> bool:
 	## Returns true if adding `amount` meta-resources would not exceed bag_capacity.
 	var total: int = 0
-	for key in inventory.keys():
-		total += int(inventory[key])
+	for key in bag.keys():
+		total += int(bag[key])
 	return total + amount <= bag_capacity
 
 
 func add_to_inventory(resource_type: String, amount: int = 1) -> bool:
-	## Returns false and does nothing if bag is full.
+	## Adds to the current-run bag. Returns false if bag is full.
 	if not can_pick_up(amount):
 		return false
-	if not inventory.has(resource_type):
-		inventory[resource_type] = 0
-	inventory[resource_type] = int(inventory[resource_type]) + amount
+	if not bag.has(resource_type):
+		bag[resource_type] = 0
+	bag[resource_type] = int(bag[resource_type]) + amount
 	save_profile()
 	return true
 
 
 func get_inventory_count(resource_type: String) -> int:
+	## Returns permanent (post-flush) inventory. Used by base perk upgrade screen.
 	return int(inventory.get(resource_type, 0))
+
+
+func get_bag_count(resource_type: String) -> int:
+	## Returns items currently in the run bag. Used by the HUD during gameplay.
+	return int(bag.get(resource_type, 0))
 
 
 # ── Vault API (zone-item permanent storage) ─────────────────

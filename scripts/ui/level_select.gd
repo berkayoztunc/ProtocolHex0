@@ -1,12 +1,31 @@
 extends Control
 
-const ZONE_IDS: Array[String] = ["zone_1", "zone_2", "zone_3", "zone_4"]
-const ZONE_COLORS: Array[Color] = [
-	Color(0.2, 0.8, 0.7),   # zone_1 teal
-	Color(0.9, 0.8, 0.1),   # zone_2 yellow
-	Color(0.9, 0.5, 0.1),   # zone_3 orange
-	Color(0.8, 0.1, 0.1),   # zone_4 red
+# Zone IDs and colors are generated dynamically from config at runtime.
+# ZONE_PALETTE cycles through for as many zones as config defines.
+const ZONE_PALETTE: Array[Color] = [
+	Color(0.2, 0.8, 0.7),   # teal
+	Color(0.3, 0.8, 0.3),   # green
+	Color(0.9, 0.8, 0.1),   # yellow
+	Color(1.0, 0.6, 0.1),   # amber
+	Color(0.9, 0.4, 0.1),   # orange
+	Color(0.9, 0.2, 0.2),   # red
+	Color(0.8, 0.1, 0.4),   # crimson
+	Color(0.7, 0.1, 0.7),   # purple
+	Color(0.5, 0.1, 0.9),   # violet
+	Color(0.2, 0.2, 1.0),   # blue
+	Color(0.0, 0.6, 1.0),   # sky
+	Color(0.0, 0.9, 0.9),   # cyan
+	Color(0.4, 0.0, 0.8),   # dark violet
+	Color(0.8, 0.0, 0.6),   # magenta
+	Color(1.0, 0.3, 0.6),   # pink
+	Color(0.9, 0.7, 0.0),   # gold
+	Color(1.0, 0.5, 0.0),   # deep amber
+	Color(0.6, 0.0, 1.0),   # indigo
+	Color(0.0, 1.0, 0.6),   # mint
+	Color(1.0, 1.0, 1.0),   # white (final zone)
 ]
+
+var ZONE_IDS: Array[String] = []
 
 const CARD_WIDTH: float = 300.0
 const CARD_HEIGHT: float = 400.0
@@ -26,6 +45,12 @@ var _tween: Tween = null
 # ── build ──────────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	# Populate ZONE_IDS dynamically from config (sorted by level)
+	var zones_cfg: Dictionary = ConfigService.get_value("zones", {}) as Dictionary
+	var sorted_ids: Array = zones_cfg.keys()
+	sorted_ids.sort_custom(func(a, b): return int(zones_cfg[a].get("level", 0)) < int(zones_cfg[b].get("level", 0)))
+	for zid in sorted_ids:
+		ZONE_IDS.append(zid as String)
 	_build_ui()
 	_snap_to_index(_current_index, false)
 
@@ -65,7 +90,7 @@ func _build_ui() -> void:
 	var zones: Variant = ConfigService.get_value("zones", {})
 	for i in ZONE_IDS.size():
 		var zone_id: String = ZONE_IDS[i]
-		var zone_data: Variant = zones.get(zone_id, {}) if zones is Dictionary else {}
+		var zone_data: Variant = (zones as Dictionary).get(zone_id, {}) if zones is Dictionary else {}
 		var card := _build_card(i, zone_id, zone_data)
 		card.position = Vector2(i * CARD_STRIDE, 0.0)
 		_cards_container.add_child(card)
@@ -93,7 +118,7 @@ func _build_ui() -> void:
 
 	# Back button
 	var back_btn := Button.new()
-	back_btn.text = "← Geri"
+	back_btn.text = "Back"
 	back_btn.flat = false
 	back_btn.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	back_btn.offset_left = 24.0
@@ -105,7 +130,7 @@ func _build_ui() -> void:
 
 
 func _build_card(index: int, zone_id: String, zone_data: Dictionary) -> Control:
-	var zone_color: Color = ZONE_COLORS[index] if index < ZONE_COLORS.size() else Color.WHITE
+	var zone_color: Color = ZONE_PALETTE[index % ZONE_PALETTE.size()]
 	var display_name: String = zone_data.get("display_name", zone_id)
 	var level_num: int = zone_data.get("level", index + 1)
 	var description: String = zone_data.get("description", "")
@@ -146,7 +171,7 @@ func _build_card(index: int, zone_id: String, zone_data: Dictionary) -> Control:
 	# Completed badge
 	if Session.is_zone_completed(zone_id):
 		var done_lbl := Label.new()
-		done_lbl.text = "✓ Tamamlandı"
+		done_lbl.text = "✓ Completed"
 		done_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		done_lbl.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))
 		done_lbl.add_theme_font_size_override("font_size", 13)
@@ -184,13 +209,42 @@ func _build_card(index: int, zone_id: String, zone_data: Dictionary) -> Control:
 		desc_lbl.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
 		vbox.add_child(desc_lbl)
 
-	# Required items count
-	var req_lbl := Label.new()
-	req_lbl.text = "Required item types: %d" % req_count
-	req_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	req_lbl.add_theme_font_size_override("font_size", 12)
-	req_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-	vbox.add_child(req_lbl)
+	# Required items vault progress
+	if required_items is Dictionary and req_count > 0:
+		var items_header := Label.new()
+		items_header.text = "Required Items:"
+		items_header.add_theme_font_size_override("font_size", 11)
+		items_header.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		vbox.add_child(items_header)
+		for raw_item_id in (required_items as Dictionary).keys():
+			var item_id: String = str(raw_item_id)
+			var item_def: Variant = (required_items as Dictionary)[item_id]
+			var item_req: int = int((item_def as Dictionary).get("count", 1)) if item_def is Dictionary else int(item_def)
+			var vault_n: int = Session.get_vault_count(item_id)
+			var clamped: int = mini(vault_n, item_req)
+			var done: bool = vault_n >= item_req
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 4)
+			vbox.add_child(row)
+			var dot := Label.new()
+			dot.text = "✓" if done else "·"
+			dot.add_theme_font_size_override("font_size", 11)
+			dot.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3) if done else Color(0.5, 0.5, 0.5))
+			row.add_child(dot)
+			var name_disp: String = _zone_item_display_name(item_id)
+			var item_lbl := Label.new()
+			item_lbl.text = "%s: %d/%d" % [name_disp, clamped, item_req]
+			item_lbl.add_theme_font_size_override("font_size", 11)
+			item_lbl.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3) if done else Color(0.85, 0.85, 0.85))
+			item_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_child(item_lbl)
+	elif req_count == 0:
+		var req_lbl := Label.new()
+		req_lbl.text = "No items required"
+		req_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		req_lbl.add_theme_font_size_override("font_size", 12)
+		req_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		vbox.add_child(req_lbl)
 
 	# Spacer to push button down
 	var spacer := Control.new()
@@ -199,7 +253,7 @@ func _build_card(index: int, zone_id: String, zone_data: Dictionary) -> Control:
 
 	# Enter button
 	var enter_btn := Button.new()
-	enter_btn.text = "Giriş →"
+	enter_btn.text = "Enter"
 	enter_btn.flat = false
 	var btn_style := StyleBoxFlat.new()
 	btn_style.bg_color = zone_color.darkened(0.35)
@@ -213,7 +267,11 @@ func _build_card(index: int, zone_id: String, zone_data: Dictionary) -> Control:
 	enter_btn.add_theme_stylebox_override("normal", btn_style)
 	enter_btn.add_theme_color_override("font_color", Color.WHITE)
 	enter_btn.add_theme_font_size_override("font_size", 16)
-	enter_btn.pressed.connect(_on_enter_pressed.bind(zone_id))
+	if is_locked:
+		enter_btn.disabled = true
+		enter_btn.text = "Locked"
+	else:
+		enter_btn.pressed.connect(_on_enter_pressed.bind(zone_id))
 	vbox.add_child(enter_btn)
 
 	return card
@@ -318,3 +376,17 @@ func _on_enter_pressed(zone_id: String) -> void:
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/start_menu.tscn")
+
+
+func _zone_item_display_name(item_id: String) -> String:
+	match item_id:
+		"nano_cores":    return "Nano Core"
+		"energy_cells":  return "Energy Cell"
+		"power_shards":  return "Power Shard"
+		"data_cores":    return "Data Core"
+		"void_matter":   return "Void Matter"
+		"quantum_chips": return "Quantum Chip"
+		"dark_prism":    return "Dark Prism"
+		"omega_shard":   return "Omega Shard"
+		"stellar_core":  return "Stellar Core"
+		_: return item_id.replace("_", " ").capitalize()

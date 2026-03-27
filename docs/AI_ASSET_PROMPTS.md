@@ -1,4 +1,4 @@
-# AI Asset Prompt Pack — GENI HERO
+# AI Asset Prompt Pack — Protocol: Hex0
 
 Bu dosya, `ART_DIRECTION_UI_CHARACTER.md` içindeki kurallara göre doğrudan görsel üretim için hazırlanmıştır.
 

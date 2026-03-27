@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tüm background tile import dosyalarına nearest-neighbour filter ekler.
+Adds nearest-neighbour filter to all background tile import files.
 texture_filter=0  → Nearest (pixel-perfect, no bleeding)
 texture_repeat=1  → Enabled (seamless tiling)
 """
@@ -30,12 +30,12 @@ for pat in patterns:
         with open(path, "r") as f:
             content = f.read()
 
-        # Zaten texture_filter varsa sadece değerini güncelle
+        # If texture_filter already exists, just update its value
         if "texture_filter" in content:
             content = re.sub(r"texture_filter=\d+", "texture_filter=0", content)
             content = re.sub(r"texture_repeat=\d+", "texture_repeat=1", content)
         else:
-            # compress/mode satırının hemen altına ekle
+            # Insert right below the compress/mode line
             content = re.sub(
                 r"(compress/mode=\d+\n)",
                 r"\1" + EXTRA_PARAMS,
@@ -51,4 +51,4 @@ for pat in patterns:
         print(f"  ✓ {path}")
         updated += 1
 
-print(f"\n{updated} import dosyası güncellendi.")
+print(f"\n{updated} import file(s) updated.")

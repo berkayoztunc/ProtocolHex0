@@ -248,7 +248,7 @@ func _build_header(panel_x: float, panel_y: float, panel_w: float) -> void:
 	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var title := Label.new()
-	title.text = "◆ PERK AĞACI ◆"
+	title.text = "◆ PERK TREE ◆"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.position = Vector2(0, 6)
 	title.size = Vector2(panel_w, 34)
@@ -256,7 +256,7 @@ func _build_header(panel_x: float, panel_y: float, panel_w: float) -> void:
 	header.add_child(title)
 
 	var pts := Label.new()
-	pts.text = "★ Kullanılabilir Perk Puanı: %d" % _available_points
+	pts.text = "★ Available Perk Points: %d" % _available_points
 	pts.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pts.position = Vector2(0, 42)
 	pts.size = Vector2(panel_w, 28)
@@ -264,7 +264,7 @@ func _build_header(panel_x: float, panel_y: float, panel_w: float) -> void:
 	header.add_child(pts)
 
 	var hint := Label.new()
-	hint.text = "[P / ESC] Kapat  ·  Tekerlek: dikey · Shift+Tekerlek: yatay · Sol tık+sürükle: pan"
+	hint.text = "[P / ESC] Close  ·  Wheel: vertical · Shift+Wheel: horizontal · Left click+drag: pan"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.position = Vector2(0, 72)
 	hint.size = Vector2(panel_w, 18)

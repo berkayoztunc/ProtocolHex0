@@ -15,17 +15,27 @@ var _base_y: float = 0.0
 var _item_tex: Texture2D = null
 
 const TYPE_COLORS: Dictionary = {
-	"nano_cores":   Color(0.3, 0.8, 1.0),
-	"energy_cells": Color(1.0, 0.9, 0.1),
-	"power_shards": Color(0.5, 1.0, 0.3),
-	"data_cores":   Color(1.0, 0.4, 0.8),
+	"nano_cores":    Color(0.3, 0.8, 1.0),
+	"energy_cells":  Color(1.0, 0.9, 0.1),
+	"power_shards":  Color(0.5, 1.0, 0.3),
+	"data_cores":    Color(1.0, 0.4, 0.8),
+	"void_matter":   Color(0.6, 0.1, 0.9),
+	"quantum_chips": Color(0.0, 0.9, 0.9),
+	"dark_prism":    Color(0.5, 0.0, 0.5),
+	"omega_shard":   Color(1.0, 0.75, 0.0),
+	"stellar_core":  Color(1.0, 1.0, 1.0),
 }
 
 const TYPE_LABELS: Dictionary = {
-	"nano_cores":   "Nano Çekirdek",
-	"energy_cells": "Enerji Hücresi",
-	"power_shards": "Güç Kırığı",
-	"data_cores":   "Veri Çekirdeği",
+	"nano_cores":    "Nano Core",
+	"energy_cells":  "Energy Cell",
+	"power_shards":  "Power Shard",
+	"data_cores":    "Data Core",
+	"void_matter":   "Void Matter",
+	"quantum_chips": "Quantum Chip",
+	"dark_prism":    "Dark Prism",
+	"omega_shard":   "Omega Shard",
+	"stellar_core":  "Stellar Core",
 }
 
 const TYPE_SPRITES: Dictionary = {

@@ -277,7 +277,7 @@ var config: Dictionary = {
 		"definitions": {
 			"plasma_rifle": {
 				"name": "Plasma Rifle",
-				"description": "Temel plazma silahı. Tek hedefe hassas atış.",
+				"description": "Basic plasma weapon. Precise single-target fire.",
 				"is_passive": true,
 				"is_held": true,
 				"base_damage": 10,
@@ -297,7 +297,7 @@ var config: Dictionary = {
 			},
 			"railgun": {
 				"name": "Rail Gun",
-				"description": "100 kirmizi delici isin mermisi burst atar, ~5 sn. [Aktif Skill]",
+				"description": "Bursts 100 red piercing beam bullets, ~5 sec. [Active Skill]",
 				"is_passive": false,
 				"slot_key": 1,
 				"active_duration_sec": 5.0,
@@ -318,8 +318,8 @@ var config: Dictionary = {
 				"upgrade_speed_step": 0.1
 			},
 			"rocket_blaster": {
-				"name": "Roket Blaster",
-				"description": "En yakin 5 hedefe kilitli 5 roket, 0.2sn araliklarla ates eder. [Aktif Skill]",
+				"name": "Rocket Blaster",
+				"description": "Locks 5 rockets onto 5 nearest targets, fires 0.2 sec apart. [Active Skill]",
 				"is_passive": false,
 				"is_burst_then_done": true,
 				"is_rocket_blaster": true,
@@ -345,7 +345,7 @@ var config: Dictionary = {
 			},
 			"octo_gun": {
 				"name": "Octo Gun",
-				"description": "En yakin 6 hedefe ayni anda 20 sn boyunca ates eder. [Aktif Skill]",
+				"description": "Fires at 6 nearest targets simultaneously for 10 sec. [Active Skill]",
 				"is_passive": false,
 				"slot_key": 3,
 				"active_duration_sec": 10.0,
@@ -367,7 +367,7 @@ var config: Dictionary = {
 			},
 			"arc_blaster": {
 				"name": "Arc Blaster",
-				"description": "En yakin hedefe 8 mermi x 3 tur geri iter. [Aktif Skill]",
+				"description": "Fires 8 bullets x 3 bursts at nearest enemy, pushing it back. [Active Skill]",
 				"is_passive": false,
 				"slot_key": 4,
 				"active_duration_sec": 6.0,
@@ -392,7 +392,7 @@ var config: Dictionary = {
 			},
 			"sonic_jumper": {
 				"name": "Sonic Jumper",
-				"description": "Hareket yonune sicrama, mavi kalkan ile hasara girer. [Aktif Skill]",
+				"description": "Dashes in movement direction, deals damage with blue shield. [Active Skill]",
 				"is_passive": false,
 				"is_dash_skill": true,
 				"slot_key": 5,
@@ -406,8 +406,8 @@ var config: Dictionary = {
 				"upgrade_speed_step": 0.0
 			},
 			"blitz_bomb": {
-				"name": "Blitz Bom",
-				"description": "En yakin dusmana buz bombasi, varinca AoE dondurur. [Aktif Skill]",
+				"name": "Blitz Bomb",
+				"description": "Launches ice bomb at nearest enemy, AoE freezes on impact. [Active Skill]",
 				"is_passive": false,
 				"slot_key": 6,
 				"active_duration_sec": 0.2,
@@ -432,8 +432,8 @@ var config: Dictionary = {
 				"upgrade_speed_step": 0.0
 			},
 			"spin_laser": {
-				"name": "Helix Lazer",
-				"description": "360 donen kirmizi lazer, 3 tur hasar verir. [Aktif Skill]",
+				"name": "Helix Laser",
+				"description": "360° rotating red laser, deals damage 3 rounds. [Active Skill]",
 				"is_passive": false,
 				"is_spin_laser": true,
 				"slot_key": 7,
@@ -448,7 +448,7 @@ var config: Dictionary = {
 			},
 			"orbital_mayhem": {
 				"name": "Orbital Mayhem",
-				"description": "Kisa duraklama, ekrana roket yagmuru, sandik spawn. [Aktif Skill]",
+				"description": "Brief pause, rocket rain on screen, spawns a chest. [Active Skill]",
 				"is_passive": false,
 				"is_orbital_mayhem": true,
 				"slot_key": 8,
@@ -462,8 +462,8 @@ var config: Dictionary = {
 				"upgrade_speed_step": 0.0
 			},
 			"magnetic_field": {
-				"name": "Manyetik Alan",
-				"description": "Haritadaki tum exp gemleri aninda toplar. [Aktif Skill]",
+				"name": "Magnetic Field",
+				"description": "Instantly collects all XP gems on the map. [Active Skill]",
 				"is_passive": false,
 				"is_magnet_skill": true,
 				"slot_key": 9,
@@ -479,30 +479,30 @@ var config: Dictionary = {
 		"targeting_modes": {
 			"forward": {
 				"name": "Forward",
-				"description": "En yakın düşmana ateş eder.",
+				"description": "Fires at the nearest enemy.",
 				"type": "nearest"
 			},
 			"rear_guard": {
 				"name": "Rear Guard",
-				"description": "İleri ve geri yönde aynı anda ateş eder.",
+				"description": "Fires forward and backward simultaneously.",
 				"type": "dual",
 				"angle_offsets": [0.0, 180.0]
 			},
 			"side_sweep": {
 				"name": "Side Sweep",
-				"description": "Sol ve sağ yönde ateş eder.",
+				"description": "Fires left and right.",
 				"type": "dual",
 				"angle_offsets": [90.0, -90.0]
 			},
 			"full_spread": {
 				"name": "Full Spread",
-				"description": "İleri ve ±45° yelpaze ateşi.",
+				"description": "Forward and ±45° fan fire.",
 				"type": "fan",
 				"angle_offsets": [0.0, 45.0, -45.0]
 			},
 			"orbital_fire": {
 				"name": "Orbital Fire",
-				"description": "Dairesel spiral pattern ile ateş eder.",
+				"description": "Fires in a circular spiral pattern.",
 				"type": "spiral"
 			}
 		}
@@ -614,58 +614,251 @@ var config: Dictionary = {
 	# ══════════════════════════════════════════════════════════════
 	# ZONE / LVL SISTEMI
 	# ══════════════════════════════════════════════════════════════
+	
 	"zones": {
 		"zone_1": {
 			"display_name": "Sector Alpha",
 			"level": 1,
 			"unlock_requires_zone": "",
 			"required_items": {
-				"nano_cores":   {"count": 5, "source": "enemy"},
+				"nano_cores": {"count": 5, "source": "enemy"},
 				"energy_cells": {"count": 3, "source": "enemy"}
 			},
 			"meta_resource_spawn_weight": 1.0,
-			"description": "İlk sektör. Temel kaynaklar toplanabilir."
+			"description": "First sector. Basic resources can be gathered."
 		},
 		"zone_2": {
 			"display_name": "Sector Beta",
 			"level": 2,
 			"unlock_requires_zone": "zone_1",
 			"required_items": {
-				"nano_cores":   {"count": 8,  "source": "enemy"},
-				"energy_cells": {"count": 6,  "source": "enemy"},
-				"power_shards": {"count": 4,  "source": "map"}
+				"nano_cores": {"count": 8, "source": "enemy"},
+				"energy_cells": {"count": 6, "source": "enemy"},
+				"power_shards": {"count": 4, "source": "map"}
 			},
 			"meta_resource_spawn_weight": 1.3,
-			"description": "Tehlike artıyor. Gelişmiş düşmanlar aktif."
+			"description": "Danger escalating. Advanced enemies active."
 		},
 		"zone_3": {
 			"display_name": "Sector Gamma",
 			"level": 3,
 			"unlock_requires_zone": "zone_2",
 			"required_items": {
-				"nano_cores":   {"count": 12, "source": "enemy"},
+				"nano_cores": {"count": 12, "source": "enemy"},
 				"energy_cells": {"count": 10, "source": "enemy"},
-				"power_shards": {"count": 8,  "source": "map"}
+				"power_shards": {"count": 8, "source": "map"}
 			},
 			"meta_resource_spawn_weight": 1.6,
-			"description": "Yüksek taktik gerektirir. Elite spawner aktif."
+			"description": "High tactics required. Elite spawner active."
 		},
 		"zone_4": {
 			"display_name": "Sector Delta",
 			"level": 4,
 			"unlock_requires_zone": "zone_3",
 			"required_items": {
-				"nano_cores":   {"count": 18, "source": "enemy"},
+				"nano_cores": {"count": 18, "source": "enemy"},
 				"energy_cells": {"count": 15, "source": "enemy"},
 				"power_shards": {"count": 14, "source": "map"},
-				"data_cores":   {"count": 6,  "source": "map"}
+				"data_cores": {"count": 6, "source": "map"}
 			},
 			"meta_resource_spawn_weight": 2.0,
-			"description": "Son bilinen sektör. Tüm düşman tipleri aktif."
+			"description": "Beyond known limits. All enemy types active."
+		},
+		"zone_5": {
+			"display_name": "Sector Epsilon",
+			"level": 5,
+			"unlock_requires_zone": "zone_4",
+			"required_items": {
+				"nano_cores": {"count": 25, "source": "enemy"},
+				"power_shards": {"count": 20, "source": "map"},
+				"data_cores": {"count": 12, "source": "map"}
+			},
+			"meta_resource_spawn_weight": 2.4,
+			"description": "Dense radiation zone. Armor reinforcement recommended."
+		},
+		"zone_6": {
+			"display_name": "Sector Zeta",
+			"level": 6,
+			"unlock_requires_zone": "zone_5",
+			"required_items": {
+				"energy_cells": {"count": 30, "source": "enemy"},
+				"data_cores": {"count": 18, "source": "map"},
+				"void_matter": {"count": 2, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 2.8,
+			"description": "Void remnants discovered. Strange signals detected."
+		},
+		"zone_7": {
+			"display_name": "Sector Eta",
+			"level": 7,
+			"unlock_requires_zone": "zone_6",
+			"required_items": {
+				"nano_cores": {"count": 40, "source": "enemy"},
+				"power_shards": {"count": 35, "source": "map"},
+				"void_matter": {"count": 5, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 3.2,
+			"description": "Enemy patrols intensified. Stealth is vital."
+		},
+		"zone_8": {
+			"display_name": "Sector Theta",
+			"level": 8,
+			"unlock_requires_zone": "zone_7",
+			"required_items": {
+				"energy_cells": {"count": 50, "source": "enemy"},
+				"data_cores": {"count": 25, "source": "map"},
+				"void_matter": {"count": 10, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 3.6,
+			"description": "Under storm clouds, visibility very low."
+		},
+		"zone_9": {
+			"display_name": "Sector Iota",
+			"level": 9,
+			"unlock_requires_zone": "zone_8",
+			"required_items": {
+				"nano_cores": {"count": 65, "source": "enemy"},
+				"power_shards": {"count": 50, "source": "map"},
+				"quantum_chips": {"count": 4, "source": "map"}
+			},
+			"meta_resource_spawn_weight": 4.0,
+			"description": "High-tech remnants. Defense systems active."
+		},
+		"zone_10": {
+			"display_name": "Sector Kappa",
+			"level": 10,
+			"unlock_requires_zone": "zone_9",
+			"required_items": {
+				"data_cores": {"count": 40, "source": "map"},
+				"void_matter": {"count": 15, "source": "enemy"},
+				"quantum_chips": {"count": 8, "source": "map"}
+			},
+			"meta_resource_spawn_weight": 4.5,
+			"description": "Approaching command center. Heavy siege conditions."
+		},
+		"zone_11": {
+			"display_name": "Sector Lambda",
+			"level": 11,
+			"unlock_requires_zone": "zone_10",
+			"required_items": {
+				"energy_cells": {"count": 80, "source": "enemy"},
+				"power_shards": {"count": 70, "source": "map"},
+				"quantum_chips": {"count": 15, "source": "map"}
+			},
+			"meta_resource_spawn_weight": 5.0,
+			"description": "Gravity anomalies detected. Movement restricted."
+		},
+		"zone_12": {
+			"display_name": "Sector Mu",
+			"level": 12,
+			"unlock_requires_zone": "zone_11",
+			"required_items": {
+				"nano_cores": {"count": 100, "source": "enemy"},
+				"void_matter": {"count": 25, "source": "enemy"},
+				"dark_prism": {"count": 3, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 5.5,
+			"description": "Dark energy density increasing. Light sources insufficient."
+		},
+		"zone_13": {
+			"display_name": "Sector Nu",
+			"level": 13,
+			"unlock_requires_zone": "zone_12",
+			"required_items": {
+				"data_cores": {"count": 60, "source": "map"},
+				"quantum_chips": {"count": 25, "source": "map"},
+				"dark_prism": {"count": 7, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 6.0,
+			"description": "Labyrinthine structure among ancient ruins."
+		},
+		"zone_14": {
+			"display_name": "Sector Xi",
+			"level": 14,
+			"unlock_requires_zone": "zone_13",
+			"required_items": {
+				"energy_cells": {"count": 120, "source": "enemy"},
+				"void_matter": {"count": 40, "source": "enemy"},
+				"dark_prism": {"count": 12, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 6.5,
+			"description": "Outer perimeter of enemy headquarters."
+		},
+		"zone_15": {
+			"display_name": "Sector Omicron",
+			"level": 15,
+			"unlock_requires_zone": "zone_14",
+			"required_items": {
+				"nano_cores": {"count": 150, "source": "enemy"},
+				"quantum_chips": {"count": 40, "source": "map"},
+				"omega_shard": {"count": 1, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 7.0,
+			"description": "Critical threshold. Point of no return."
+		},
+		"zone_16": {
+			"display_name": "Nebula Horizon",
+			"level": 16,
+			"unlock_requires_zone": "zone_15",
+			"required_items": {
+				"void_matter": {"count": 60, "source": "enemy"},
+				"dark_prism": {"count": 20, "source": "enemy"},
+				"omega_shard": {"count": 3, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 7.5,
+			"description": "Reality bent, misty region."
+		},
+		"zone_17": {
+			"display_name": "The Shattered Rim",
+			"level": 17,
+			"unlock_requires_zone": "zone_16",
+			"required_items": {
+				"energy_cells": {"count": 200, "source": "enemy"},
+				"quantum_chips": {"count": 60, "source": "map"},
+				"omega_shard": {"count": 6, "source": "enemy"}
+			},
+			"meta_resource_spawn_weight": 8.0,
+			"description": "Shattered planet remnants. Oxygen level critical."
+		},
+		"zone_18": {
+			"display_name": "Void Nexus",
+			"level": 18,
+			"unlock_requires_zone": "zone_17",
+			"required_items": {
+				"dark_prism": {"count": 35, "source": "enemy"},
+				"omega_shard": {"count": 10, "source": "enemy"},
+				"stellar_core": {"count": 2, "source": "map"}
+			},
+			"meta_resource_spawn_weight": 9.0,
+			"description": "Center of void. Time flows differently here."
+		},
+		"zone_19": {
+			"display_name": "Celestial Gate",
+			"level": 19,
+			"unlock_requires_zone": "zone_18",
+			"required_items": {
+				"nano_cores": {"count": 250, "source": "enemy"},
+				"omega_shard": {"count": 15, "source": "enemy"},
+				"stellar_core": {"count": 5, "source": "map"}
+			},
+			"meta_resource_spawn_weight": 10.0,
+			"description": "Final gate protected by divine forces."
+		},
+		"zone_20": {
+			"display_name": "The Singularity",
+			"level": 20,
+			"unlock_requires_zone": "zone_19",
+			"required_items": {
+				"void_matter": {"count": 100, "source": "enemy"},
+				"omega_shard": {"count": 25, "source": "enemy"},
+				"stellar_core": {"count": 10, "source": "map"}
+			},
+			"meta_resource_spawn_weight": 12.0,
+			"description": "End and beginning of all. Ultimate challenge."
 		}
 	},
 	# ══════════════════════════════════════════════════════════════
-	# RECALL SİSTEMİ
+	# RECALL SYSTEM
 	# ══════════════════════════════════════════════════════════════
 	"recall": {
 		"countdown": 10.0,
@@ -684,8 +877,8 @@ var config: Dictionary = {
 		}
 	},
 	# ══════════════════════════════════════════════════════════════
-	# BASE PERK UPGRADE MALİYETLERİ
-	# Her giriş: [ {level1_cost}, {level2_cost}, {level3_cost} ]
+	# BASE PERK UPGRADE COSTS
+	# Each entry: [{level1_cost}, {level2_cost}, {level3_cost}]
 	# ══════════════════════════════════════════════════════════════
 	"base_perk_upgrade_costs": {
 		"p_max_health":       [{"scrap": 10, "battery": 0,  "nanochips": 0},  {"scrap": 20, "battery": 5,  "nanochips": 0},  {"scrap": 35, "battery": 15, "nanochips": 5}],
