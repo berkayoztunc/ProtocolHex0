@@ -58,7 +58,9 @@ const HUD_BAR_SCALE := 3
 const HUD_BAR_WIDTH := HUD_BAR_TEXTURE_WIDTH * HUD_BAR_SCALE
 const HUD_BAR_HEIGHT := HUD_BAR_STRIP_HEIGHT * HUD_BAR_SCALE
 const SkillBarScene: PackedScene = preload("res://scenes/skill_bar.tscn")
+const MobileJoystickScene: PackedScene = preload("res://scenes/mobile_joystick.tscn")
 
+var _mobile_joystick: Control = null
 var option_ids: Array[String] = []
 var _notification_container: VBoxContainer = null
 var _notification_layer: MarginContainer = null
@@ -144,6 +146,14 @@ func _ready() -> void:
 		alert_stripe.visible = false
 	_ensure_inventory_panel()
 	_setup_modal_buttons()
+	if MobileDetector.is_mobile():
+		_setup_mobile_controls()
+
+
+func _setup_mobile_controls() -> void:
+	_mobile_joystick = MobileJoystickScene.instantiate()
+	_mobile_joystick.z_index = 10
+	add_child(_mobile_joystick)
 
 
 func update_skill_bar(weapons_data: Array) -> void:

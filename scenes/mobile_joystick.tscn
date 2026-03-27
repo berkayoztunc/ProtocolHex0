@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://mobile_joystick001"]
+
+[ext_resource type="Script" path="res://scripts/ui/mobile_joystick.gd" id="1_jscript"]
+
+[node name="MobileJoystick" type="Control"]
+script = ExtResource("1_jscript")
