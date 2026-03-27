@@ -2,10 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=./protocolhex0.html">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
   <title>Protocol: Hex0</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+    iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    #rotate-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #000;
+      color: #fff;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      font-size: 1.2rem;
+      text-align: center;
+      gap: 1rem;
+    }
+    #rotate-overlay svg {
+      width: 64px;
+      height: 64px;
+      fill: #fff;
+      animation: spin 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes spin {
+      from { transform: rotate(-30deg); }
+      to   { transform: rotate(30deg); }
+    }
+  </style>
 </head>
 <body>
-  <p>Loading… <a href="./protocolhex0.html">Click here if not redirected.</a></p>
+  <div id="rotate-overlay">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 20.29 1.1 16.05.02l.43 2.5zM21.48 20H18v-2h-2v2H4V4h12v2h2V4c0-1.1-.9-2-2-2H4C2.9 2 2 2.9 2 4v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-1h-2v1zM7.52 21.48l-.43 2.5c4.24-1.08 7.39-4.82 7.9-11h-1.5c-.36 3.76-2.7 6.93-5.97 8.5z"/>
+    </svg>
+    <span>Lütfen cihazınızı yatay çevirin</span>
+    <span style="font-size:0.85rem;opacity:0.7">Please rotate your device to landscape</span>
+  </div>
+
+  <iframe id="game-frame" src="" allowfullscreen></iframe>
+
+  <script>
+    var frame = document.getElementById('game-frame');
+    var overlay = document.getElementById('rotate-overlay');
+    var loaded = false;
+
+    function isMobile() {
+      return window.innerWidth <= 1024 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    }
+
+    function checkOrientation() {
+      var isPortrait = window.innerHeight > window.innerWidth;
+      if (isMobile() && isPortrait) {
+        // Portrait: show overlay, unload game
+        overlay.style.display = 'flex';
+        if (loaded) {
+          frame.src = '';
+          loaded = false;
+        }
+      } else {
+        // Landscape (or desktop): hide overlay, load game
+        overlay.style.display = 'none';
+        if (!loaded) {
+          frame.src = './protocolhex0.html';
+          loaded = true;
+        }
+      }
+    }
+
+    // Screen Orientation API lock (Android Chrome)
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(function () {});
+    }
+
+    window.addEventListener('resize', checkOrientation);
+    checkOrientation();
+  </script>
 </body>
 </html>

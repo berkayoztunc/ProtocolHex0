@@ -264,13 +264,33 @@ func _build_header(panel_x: float, panel_y: float, panel_w: float) -> void:
 	header.add_child(pts)
 
 	var hint := Label.new()
-	hint.text = "[P / ESC] Close  ·  Wheel: vertical · Shift+Wheel: horizontal · Left click+drag: pan"
+	hint.text = "[P / ESC / ✕] Close  ·  Wheel: vertical · Shift+Wheel: horizontal · Drag: pan"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.position = Vector2(0, 72)
 	hint.size = Vector2(panel_w, 18)
 	hint.add_theme_font_size_override("font_size", 13)
 	hint.modulate = Color(0.75, 0.8, 1.0, 0.85)
 	header.add_child(hint)
+
+	# ── Close button (top-right corner) ──
+	var close_btn := Button.new()
+	close_btn.text = "✕  Close"
+	close_btn.add_theme_font_size_override("font_size", 15)
+	close_btn.custom_minimum_size = Vector2(96, 32)
+	close_btn.position = Vector2(panel_w - 104.0, 4.0)
+	close_btn.size = Vector2(100.0, 32.0)
+	close_btn.process_mode = Node.PROCESS_MODE_ALWAYS
+	var close_sb := StyleBoxFlat.new()
+	close_sb.bg_color = Color(0.55, 0.12, 0.12, 0.85)
+	close_sb.set_corner_radius_all(4)
+	close_btn.add_theme_stylebox_override("normal", close_sb)
+	var close_sb_hover := StyleBoxFlat.new()
+	close_sb_hover.bg_color = Color(0.80, 0.18, 0.18, 0.95)
+	close_sb_hover.set_corner_radius_all(4)
+	close_btn.add_theme_stylebox_override("hover", close_sb_hover)
+	close_btn.add_theme_stylebox_override("pressed", close_sb)
+	close_btn.pressed.connect(_close_tree)
+	header.add_child(close_btn)
 
 	# ── Tab buttons ──
 	var tab_names: Dictionary = UpgradeCatalogs.TAB_NAMES
@@ -452,6 +472,11 @@ func _handle_click(click_pos: Vector2) -> void:
 
 func _on_card_pressed(perk_id: String) -> void:
 	perk_selected.emit(perk_id)
+
+
+func _close_tree() -> void:
+	queue_free()
+	get_tree().paused = false
 
 
 func _on_tab_pressed(tab_id: int) -> void:
